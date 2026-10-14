@@ -455,7 +455,7 @@ async function loadBatchOptions() {
   });
 }
 // ----------------------------------------------------
-// IMPORT EXCEL PESERTA MASAL DENGAN PILIHAN BATCH
+// IMPORT EXCEL PESERTA MASAL (AUTO PARSE TANGGAL LAHIR)
 // ----------------------------------------------------
 function importExcelPeserta() {
   const selectedBatchId = document.getElementById('importSelectBatch').value;
@@ -469,7 +469,8 @@ function importExcelPeserta() {
   reader.onload = async (e) => {
     try {
       const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
+      // Tambahkan { cellDates: true, raw: false } agar SheetJS mengurai tanggal dengan benar
+      const workbook = XLSX.read(data, { type: 'array', cellDates: true, raw: false });
       const sheetName = workbook.SheetNames[0];
       const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
@@ -478,18 +479,28 @@ function importExcelPeserta() {
       }
 
       const usersToInsert = rows.map(r => {
-        const rawNama = r.Nama || r.nama || r["Nama Lengkap"] || "";
-        const rawTglLahir = String(r.TanggalLahir || r.tanggallahir || r["Tanggal Lahir"] || "").trim();
+        const rawNama = String(r.Nama || r.nama || r["Nama Lengkap"] || "").trim();
+        let rawTglLahir = r.TanggalLahir || r.tanggallahir || r["Tanggal Lahir"] || "";
         const rawNIK = String(r.NIK || r.nik || "-").trim();
         const rawPerusahaan = String(r.Perusahaan || r.perusahaan || r["Nama Perusahaan"] || "PT Mandiri Maha Daya").trim();
 
-        // Bersihkan tanggal lahir ke format DDMMYYYY untuk password & id_sertifikat
+        // Evaluasi & Ekstrak Tanggal Lahir menjadi string
+        if (rawTglLahir instanceof Date) {
+          const d = rawTglLahir.getDate().toString().padStart(2, '0');
+          const m = (rawTglLahir.getMonth() + 1).toString().padStart(2, '0');
+          const y = rawTglLahir.getFullYear();
+          rawTglLahir = `${d}-${m}-${y}`;
+        } else {
+          rawTglLahir = String(rawTglLahir).trim();
+        }
+
+        // Ambil hanya digit angka (DDMMYYYY) untuk password & id_sertifikat
         const cleanTgl = rawTglLahir.replace(/[^0-9]/g, ''); 
         
         // Buat username tanpa spasi & huruf kecil
-        const formattedUsername = rawNama.toString().replace(/\s+/g, '').toLowerCase();
+        const formattedUsername = rawNama.replace(/\s+/g, '').toLowerCase();
         
-        // Formating ID Sertifikat: namalengkap_DDMMYYYY
+        // Format ID Sertifikat: namalengkap_DDMMYYYY
         const idSertifikat = `${formattedUsername}_${cleanTgl}`;
 
         return {
@@ -497,16 +508,18 @@ function importExcelPeserta() {
           password: cleanTgl,
           nama: rawNama,
           nik: rawNIK,
+          tgl_lahir: rawTglLahir, // Menyimpan string tanggal lahir di database
           perusahaan: rawPerusahaan,
-          training_id: selectedBatchId, // Batch Pelatihan dari Dropdown
+          training_id: selectedBatchId,
           id_sertifikat: idSertifikat,
           role: 'peserta'
         };
       });
 
       const { error } = await supabaseClient.from('users').upsert(usersToInsert);
-      if (error) alert("Gagal mengimpor data peserta: " + error.message);
-      else {
+      if (error) {
+        alert("Gagal mengimpor data peserta: " + error.message);
+      } else {
         alert(`✅ Berhasil mengimpor ${usersToInsert.length} akun peserta ke dalam Batch: ${selectedBatchId}!`);
         fileInput.value = '';
         document.getElementById('importSelectBatch').value = '';
