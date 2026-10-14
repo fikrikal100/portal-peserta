@@ -700,7 +700,7 @@ async function simpanPesertaManual() {
   const digits = tglLahirRaw.replace(/[^0-9]/g, '');
 
   if (digits.length !== 8) {
-    return alert("Format Tanggal Lahir salah! Harap masukkan 8 digit angka, contoh: 12-05-1998 atau 12051998.");
+    return alert("Format Tanggal Lahir salah! Harap masukkan 8 digit angka, contoh: 20-12-1998 atau 20121998.");
   }
 
   const day = digits.substring(0, 2);
