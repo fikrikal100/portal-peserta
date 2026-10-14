@@ -380,6 +380,41 @@ function changeMonth(dir) {
   renderCalendar();
 }
 // ----------------------------------------------------
+// HELPER KALENDER: TOGGLE, RESET, & RENDER BADGES
+// ----------------------------------------------------
+function toggleDateSelection(dateStr) {
+  const idx = selectedBatchDates.indexOf(dateStr);
+  if (idx > -1) {
+    selectedBatchDates.splice(idx, 1);
+  } else {
+    selectedBatchDates.push(dateStr);
+  }
+  selectedBatchDates.sort();
+  renderCalendar();
+}
+
+function resetSelectedDates() {
+  selectedBatchDates = [];
+  renderCalendar();
+}
+
+function renderSelectedBadges() {
+  const countEl = document.getElementById('textSelectedDatesCount');
+  if (countEl) countEl.innerText = `${selectedBatchDates.length} Hari`;
+
+  const container = document.getElementById('containerSelectedBadges');
+  if (!container) return;
+
+  container.innerHTML = '';
+  selectedBatchDates.forEach(d => {
+    container.innerHTML += `
+      <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+        ${d} <i onclick="toggleDateSelection('${d}')" class="fa-solid fa-xmark cursor-pointer hover:text-red-600"></i>
+      </span>
+    `;
+  });
+}
+// ----------------------------------------------------
 // 6. FITUR ADMIN: BUAT BATCH PELATIHAN
 // ----------------------------------------------------
 async function simpanBatchTraining() {
