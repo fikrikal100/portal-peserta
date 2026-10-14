@@ -234,9 +234,9 @@
         </div>
       </div>
 
-      <!-- KELOLA BATCH TRAINING DENGAN TANGGAL -->
+      <!-- KELOLA BATCH TRAINING DENGAN KALENDER MULTI-SELECT -->
       <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-4">
-        <h3 class="font-bold text-sm text-emerald-900 border-b pb-2"><i class="fa-solid fa-calendar-plus mr-1.5"></i> 1. Buat Batch Pelatihan K3 & Atur Tanggal</h3>
+        <h3 class="font-bold text-sm text-emerald-900 border-b pb-2"><i class="fa-solid fa-calendar-plus mr-1.5"></i> 1. Buat Batch Pelatihan K3 & Pilih Tanggal Pelatihan</h3>
         
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           <div>
@@ -271,51 +271,48 @@
             <label class="font-semibold text-slate-700">Nomor Batch Pelatihan</label>
             <input type="text" id="adminInputBatch" placeholder="Contoh: Batch 45" class="w-full p-2.5 border rounded-xl mt-1 bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
           </div>
-          <div>
-            <label class="font-semibold text-slate-700">Tanggal Mulai Pelatihan</label>
-            <input type="date" id="adminTglMulai" class="w-full p-2.5 border rounded-xl mt-1 bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
-          </div>
-          <div>
-            <label class="font-semibold text-slate-700">Tanggal Selesai Pelatihan</label>
-            <input type="date" id="adminTglSelesai" class="w-full p-2.5 border rounded-xl mt-1 bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
-          </div>
         </div>
 
-        <button onclick="simpanBatchTraining()" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-4 py-2.5 rounded-xl font-bold shadow transition flex items-center gap-1.5">
-          <i class="fa-solid fa-floppy-disk"></i> Simpan Batch Pelatihan
+        <!-- KALENDER MULTI-SELECT TERINTEGRASI -->
+        <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-3">
+          <div class="flex justify-between items-center border-b pb-2">
+            <label class="font-bold text-xs text-slate-800"><i class="fa-solid fa-calendar-days text-emerald-700 mr-1"></i> Klik Tanggal-Tanggal Sesi Pelatihan (Bisa Lompat Hari)</label>
+            <div class="flex items-center gap-2">
+              <button onclick="changeMonth(-1)" class="px-2 py-0.5 bg-white border rounded text-xs font-bold shadow-sm hover:bg-slate-100"><i class="fa-solid fa-chevron-left"></i></button>
+              <span id="calendarMonthYear" class="text-xs font-bold text-emerald-900">Oktober 2026</span>
+              <button onclick="changeMonth(1)" class="px-2 py-0.5 bg-white border rounded text-xs font-bold shadow-sm hover:bg-slate-100"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-500">
+            <div class="text-red-500">Min</div>
+            <div>Sen</div>
+            <div>Sel</div>
+            <div>Rab</div>
+            <div>Kam</div>
+            <div>Jum</div>
+            <div class="text-emerald-700">Sab</div>
+          </div>
+
+          <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-xs">
+            <!-- Rendered via JS -->
+          </div>
+
+          <div class="pt-2 flex justify-between items-center text-xs border-t">
+            <p class="text-slate-500">Tanggal Terpilih: <b id="textSelectedDatesCount" class="text-emerald-800">0 Hari</b></p>
+            <button onclick="resetSelectedDates()" class="text-[11px] text-red-600 hover:underline font-semibold">Reset Pilihan</button>
+          </div>
+          <div id="containerSelectedBadges" class="flex flex-wrap gap-1"></div>
+        </div>
+
+        <button onclick="simpanBatchTraining()" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-5 py-3 rounded-xl font-bold shadow transition flex items-center gap-1.5 w-full justify-center">
+          <i class="fa-solid fa-floppy-disk"></i> Simpan Batch & Tanggal Pelatihan
         </button>
-      </div>
-
-      <!-- KALENDER DIGITAL INTERAKTIF ADMIN -->
-      <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-4">
-        <div class="flex justify-between items-center border-b pb-2">
-          <h3 class="font-bold text-sm text-emerald-900"><i class="fa-solid fa-calendar-days mr-1.5"></i> 2. Pemilih & Kalender Pelatihan Digital</h3>
-          <div class="flex gap-2">
-            <button onclick="changeMonth(-1)" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-bold"><i class="fa-solid fa-chevron-left"></i></button>
-            <span id="calendarMonthYear" class="text-xs font-bold text-slate-700 py-1">Oktober 2026</span>
-            <button onclick="changeMonth(1)" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-bold"><i class="fa-solid fa-chevron-right"></i></button>
-          </div>
-        </div>
-
-        <!-- GRID KALENDER DIGITAL -->
-        <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-500 mb-1">
-          <div class="text-red-500">Min</div>
-          <div>Sen</div>
-          <div>Sel</div>
-          <div>Rab</div>
-          <div>Kam</div>
-          <div>Jum</div>
-          <div class="text-emerald-700">Sab</div>
-        </div>
-        <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-xs">
-          <!-- Rendered via JS -->
-        </div>
-        <p class="text-[11px] text-slate-400 italic">*Klik tanggal untuk memilih tanggal sesi aktif pelatihan.</p>
       </div>
 
       <!-- IMPORT PESERTA MASAL & SERTIFIKAT -->
       <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-4">
-        <h3 class="font-bold text-sm text-emerald-900 border-b pb-2"><i class="fa-solid fa-file-import mr-1.5"></i> 3. Import Akun Peserta & Upload Sertifikat Masal</h3>
+        <h3 class="font-bold text-sm text-emerald-900 border-b pb-2"><i class="fa-solid fa-file-import mr-1.5"></i> 2. Import Akun Peserta & Upload Sertifikat Masal</h3>
         
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <!-- IMPORT EXCEL -->
@@ -342,7 +339,7 @@
 
       <!-- DOWNLOAD REKAP ABSENSI -->
       <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-4">
-        <h3 class="font-bold text-sm text-emerald-900 border-b pb-2"><i class="fa-solid fa-file-export mr-1.5"></i> 4. Cetak Rekapan Kehadiran per Batch Pelatihan</h3>
+        <h3 class="font-bold text-sm text-emerald-900 border-b pb-2"><i class="fa-solid fa-file-export mr-1.5"></i> 3. Cetak Rekapan Kehadiran per Batch Pelatihan</h3>
         <div class="flex flex-col sm:flex-row gap-2">
           <select id="adminSelectBatchRekap" class="w-full p-2.5 border rounded-xl text-xs bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
             <option value="">-- Pilih Batch Training --</option>
@@ -358,6 +355,9 @@
   </div>
 
   <script>
+    // ----------------------------------------------------
+    // 1. INISIALISASI SUPABASE
+    // ----------------------------------------------------
     const SUPABASE_URL = "https://bxgzkfvqwkzbnikvvjhp.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4Z3prZnZxd2t6Ym5pa3Z2amhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5MjQ1NjMsImV4cCI6MjEwNzUwMDU2M30.mSC45wlyGiP2V6UpCTeIJWZs9HVu7Z4ZaqucUFqDqDg";
 
@@ -365,7 +365,11 @@
 
     let currentSessionUser = null;
     let currCalDate = new Date();
+    let selectedBatchDates = []; // Menampung array tanggal pilihan Admin
 
+    // ----------------------------------------------------
+    // 2. LOGIKA LOGIN & SESSION
+    // ----------------------------------------------------
     async function prosesLogin() {
       const u = document.getElementById('loginUsername').value.trim().toLowerCase();
       const p = document.getElementById('loginPassword').value.trim();
@@ -457,7 +461,15 @@
       
       const tInfo = user.trainings;
       document.getElementById('pesertaTraining').innerText = tInfo ? tInfo.judul : (user.training_id || '-');
-      document.getElementById('pesertaJadwal').innerText = tInfo ? `${tInfo.tgl_mulai} s/d ${tInfo.tgl_selesai}` : 'Sesuai Jadwal Sesi';
+      
+      if (tInfo && tInfo.jadwal_tanggal && tInfo.jadwal_tanggal.length > 0) {
+        const sorted = [...tInfo.jadwal_tanggal].sort();
+        document.getElementById('pesertaJadwal').innerText = `${sorted[0]} s/d ${sorted[sorted.length-1]} (${sorted.length} Hari Pelatihan)`;
+      } else if (tInfo) {
+        document.getElementById('pesertaJadwal').innerText = `${tInfo.tgl_mulai} s/d ${tInfo.tgl_selesai}`;
+      } else {
+        document.getElementById('pesertaJadwal').innerText = 'Sesuai Jadwal Sesi';
+      }
 
       if (user.url_sertifikat) {
         document.getElementById('boxSertifikatPeserta').classList.remove('hidden');
@@ -468,6 +480,9 @@
       loadMatriksAbsensiUser();
     }
 
+    // ----------------------------------------------------
+    // 3. LOGIKA ABSENSI REAL-TIME & MATRIKS SUPABASE
+    // ----------------------------------------------------
     async function loadMatriksAbsensiUser() {
       if (!currentSessionUser) return;
 
@@ -483,17 +498,27 @@
       const tbody = document.getElementById('tbodyMatriksAbsensi');
       tbody.innerHTML = '';
 
-      if (!training || !training.tgl_mulai || !training.tgl_selesai) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3 text-slate-400">Jadwal belum diset oleh Panitia.</td></tr>`;
+      let listTanggal = [];
+
+      // A. Jika ada array jadwal_tanggal pilihan Admin
+      if (training && training.jadwal_tanggal && training.jadwal_tanggal.length > 0) {
+        listTanggal = [...training.jadwal_tanggal].sort();
+      } 
+      // B. Fallback ke rentang tanggal mulai - selesai
+      else if (training && training.tgl_mulai && training.tgl_selesai) {
+        let start = new Date(training.tgl_mulai);
+        let end = new Date(training.tgl_selesai);
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          listTanggal.push(d.toISOString().split('T')[0]);
+        }
+      }
+
+      if (listTanggal.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3 text-slate-400">Jadwal pelatihan belum diatur oleh Panitia.</td></tr>`;
         return;
       }
 
-      let start = new Date(training.tgl_mulai);
-      let end = new Date(training.tgl_selesai);
-
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const dateStr = d.toISOString().split('T')[0];
-
+      listTanggal.forEach(dateStr => {
         const s1 = logs.find(l => l.tanggal === dateStr && Number(l.sesi) === 1);
         const s2 = logs.find(l => l.tanggal === dateStr && Number(l.sesi) === 2);
 
@@ -517,9 +542,12 @@
             <td class="px-3 py-2.5">${statusTotal}</td>
           </tr>
         `;
-      }
+      });
     }
 
+    // ----------------------------------------------------
+    // 4. KAMERA & ABSENSI REAL-TIME
+    // ----------------------------------------------------
     async function startCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -592,6 +620,9 @@
       }
     }
 
+    // ----------------------------------------------------
+    // 5. KALENDER MULTI-SELECT PILIHAN ADMIN
+    // ----------------------------------------------------
     function renderCalendar() {
       const grid = document.getElementById('calendarGrid');
       grid.innerHTML = '';
@@ -611,12 +642,49 @@
 
       for (let day = 1; day <= totalDays; day++) {
         const dateString = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isSelected = selectedBatchDates.includes(dateString);
+
+        const btnClass = isSelected 
+          ? "bg-emerald-700 text-white font-bold rounded-xl p-2 text-center shadow ring-2 ring-emerald-500 transition"
+          : "bg-white border text-slate-700 font-semibold rounded-xl p-2 text-center hover:bg-emerald-50 transition";
+
         grid.innerHTML += `
-          <button onclick="selectDateCalendar('${dateString}')" class="p-2 border rounded-xl hover:bg-emerald-100 text-slate-700 font-semibold focus:ring-2 focus:ring-emerald-500 transition">
+          <button onclick="toggleDateSelection('${dateString}')" class="${btnClass}">
             ${day}
           </button>
         `;
       }
+
+      renderSelectedBadges();
+    }
+
+    function toggleDateSelection(dateStr) {
+      const idx = selectedBatchDates.indexOf(dateStr);
+      if (idx > -1) {
+        selectedBatchDates.splice(idx, 1);
+      } else {
+        selectedBatchDates.push(dateStr);
+      }
+      selectedBatchDates.sort();
+      renderCalendar();
+    }
+
+    function resetSelectedDates() {
+      selectedBatchDates = [];
+      renderCalendar();
+    }
+
+    function renderSelectedBadges() {
+      document.getElementById('textSelectedDatesCount').innerText = `${selectedBatchDates.length} Hari`;
+      const container = document.getElementById('containerSelectedBadges');
+      container.innerHTML = '';
+      selectedBatchDates.forEach(d => {
+        container.innerHTML += `
+          <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+            ${d} <i onclick="toggleDateSelection('${d}')" class="fa-solid fa-xmark cursor-pointer hover:text-red-600"></i>
+          </span>
+        `;
+      });
     }
 
     function changeMonth(dir) {
@@ -624,37 +692,34 @@
       renderCalendar();
     }
 
-    function selectDateCalendar(dateStr) {
-      document.getElementById('adminTglMulai').value = dateStr;
-      document.getElementById('adminTglSelesai').value = dateStr;
-      alert(`Tanggal terpilih: ${dateStr}. Tanggal telah diisikan ke form Batch Training.`);
-    }
-
+    // ----------------------------------------------------
+    // 6. BUAT BATCH DENGAN ARRAY TANGGAL MULTI-SELECT
+    // ----------------------------------------------------
     async function simpanBatchTraining() {
       const masterId = document.getElementById('adminSelectMasterTraining').value;
       const batchNum = document.getElementById('adminInputBatch').value.trim();
-      const tglMulai = document.getElementById('adminTglMulai').value;
-      const tglSelesai = document.getElementById('adminTglSelesai').value;
       
-      if (!batchNum || !tglMulai || !tglSelesai) {
-        return alert("Harap isi Nomor Batch, Tanggal Mulai, dan Tanggal Selesai!");
-      }
+      if (!batchNum) return alert("Harap isi Nomor Batch!");
+      if (selectedBatchDates.length === 0) return alert("Harap pilih minimal 1 tanggal pada kalender!");
 
       const trainingId = `${masterId}-${batchNum.replace(/\s+/g, '-').toUpperCase()}`;
+      const sortedDates = [...selectedBatchDates].sort();
 
       const { error } = await supabaseClient.from('trainings').upsert([{
         id: trainingId,
         master_training_id: masterId,
         batch_number: batchNum,
         judul: `Pelatihan ${masterId} - ${batchNum}`,
-        tgl_mulai: tglMulai,
-        tgl_selesai: tglSelesai
+        tgl_mulai: sortedDates[0],
+        tgl_selesai: sortedDates[sortedDates.length - 1],
+        jadwal_tanggal: sortedDates
       }]);
 
       if (error) alert("Gagal menyimpan batch: " + error.message);
       else {
-        alert(`Batch Training Berhasil Dibuat: ${trainingId} (${tglMulai} s/d ${tglSelesai})`);
+        alert(`✅ Batch Training Berhasil Dibuat: ${trainingId}\n\nJadwal Terpilih (${sortedDates.length} Hari):\n` + sortedDates.join(", "));
         loadBatchOptions();
+        resetSelectedDates();
       }
     }
 
@@ -663,10 +728,14 @@
       const select = document.getElementById('adminSelectBatchRekap');
       select.innerHTML = '<option value="">-- Pilih Batch Training --</option>';
       (data || []).forEach(b => {
-        select.innerHTML += `<option value="${b.id}">${b.judul} (${b.tgl_mulai} s/d ${b.tgl_selesai})</option>`;
+        const totalHari = b.jadwal_tanggal ? b.jadwal_tanggal.length : '-';
+        select.innerHTML += `<option value="${b.id}">${b.judul} (${totalHari} Hari Sesi)</option>`;
       });
     }
 
+    // ----------------------------------------------------
+    // 7. IMPORT EXCEL & UPLOAD SERTIFIKAT
+    // ----------------------------------------------------
     function importExcelPeserta() {
       const fileInput = document.getElementById('fileExcelPeserta');
       const file = fileInput.files[0];
