@@ -4,121 +4,186 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portal Absensi & Sertifikasi - PT Mandiri Maha Daya</title>
+  <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- SheetJS untuk Parsing Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-100 min-h-screen text-slate-800">
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans pb-16">
 
-  <!-- NAVIGATION BAR -->
-  <nav class="bg-emerald-800 text-white p-4 shadow-lg flex justify-between items-center">
+  <!-- NAVBAR UTAMA -->
+  <nav class="bg-emerald-800 text-white p-4 shadow-lg sticky top-0 z-50 flex justify-between items-center">
     <div class="flex items-center space-x-3">
-      <div class="bg-white p-1 rounded-full text-emerald-800 font-bold text-xs px-2">MMD</div>
-      <h1 class="font-bold text-lg">PT Mandiri Maha Daya</h1>
+      <div class="bg-white p-1 rounded-full text-emerald-800 font-bold text-xs px-2 shadow">MMD</div>
+      <div>
+        <h1 class="font-bold text-base leading-tight">PT Mandiri Maha Daya</h1>
+        <p class="text-[10px] text-emerald-200">Portal Absensi & Sertifikasi K3</p>
+      </div>
     </div>
-    <button id="btnLogout" onclick="logout()" class="hidden bg-red-600 hover:bg-red-700 text-xs px-3 py-1.5 rounded">Keluar</button>
+    <button id="btnLogout" onclick="logout()" class="hidden bg-red-600 hover:bg-red-700 text-xs px-3 py-1.5 rounded-lg font-semibold transition">
+      Keluar
+    </button>
   </nav>
 
   <!-- CONTAINER UTAMA -->
   <div class="max-w-4xl mx-auto p-4">
 
-    <!-- 1. FORM LOGIN -->
-    <div id="sectionLogin" class="bg-white p-6 rounded-xl shadow-md max-w-md mx-auto mt-10">
-      <h2 class="text-xl font-bold text-emerald-900 mb-2 text-center">Masuk Portal K3</h2>
-      <p class="text-xs text-slate-500 mb-6 text-center">Masukan Username (Nama tanpa spasi) & Password (Tanggal Lahir KTP)</p>
+    <!-- 1. SECTION LOGIN -->
+    <div id="sectionLogin" class="bg-white p-6 sm:p-8 rounded-2xl shadow-md max-w-md mx-auto mt-6 border border-slate-200">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center mx-auto mb-3 font-bold text-xl">
+          K3
+        </div>
+        <h2 class="text-xl font-bold text-emerald-900">Masuk Portal K3</h2>
+        <p class="text-xs text-slate-500 mt-1">Gunakan Username (Nama tanpa spasi) & Password (Tanggal Lahir KTP)</p>
+      </div>
       
       <div class="space-y-4">
         <div>
-          <label class="text-xs font-semibold text-slate-600">Username</label>
-          <input type="text" id="loginUsername" placeholder="contoh: fikrihaikal" class="w-full p-2.5 border rounded-lg text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none">
+          <label class="text-xs font-semibold text-slate-700">Username</label>
+          <input type="text" id="loginUsername" placeholder="Contoh: fikrihaikal" class="w-full p-3 border rounded-xl text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none transition bg-slate-50">
         </div>
         <div>
-          <label class="text-xs font-semibold text-slate-600">Password / Tanggal Lahir</label>
-          <input type="password" id="loginPassword" placeholder="contoh: 12051998" class="w-full p-2.5 border rounded-lg text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none">
+          <label class="text-xs font-semibold text-slate-700">Password / Tanggal Lahir</label>
+          <input type="password" id="loginPassword" placeholder="Contoh: 12051998" class="w-full p-3 border rounded-xl text-sm mt-1 focus:ring-2 focus:ring-emerald-500 outline-none transition bg-slate-50">
         </div>
-        <button onclick="prosesLogin()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-2.5 rounded-lg font-semibold text-sm transition">Masuk Portal</button>
+        <button id="btnLogin" onclick="prosesLogin()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-3 rounded-xl font-bold text-sm shadow-md transition active:scale-95">
+          Masuk Portal
+        </button>
       </div>
     </div>
 
     <!-- 2. DASHBOARD PESERTA -->
-    <div id="sectionPeserta" class="hidden space-y-4">
-      <div class="bg-white p-5 rounded-xl shadow">
-        <h2 class="text-lg font-bold text-emerald-900" id="pesertaNama">Selamat Datang</h2>
-        <p class="text-xs text-slate-500" id="pesertaDetail">PT Mandiri Maha Daya</p>
-      </div>
-
-      <!-- UNDUH SERTIFIKAT -->
-      <div id="boxSertifikat" class="hidden bg-emerald-50 border border-emerald-200 p-4 rounded-xl flex justify-between items-center">
+    <div id="sectionPeserta" class="hidden space-y-5">
+      <!-- HEADER PROFIL PESERTA -->
+      <div class="bg-emerald-900 text-white p-5 rounded-2xl shadow-md flex justify-between items-center">
         <div>
-          <h3 class="font-bold text-emerald-900 text-sm">Sertifikat K3 Tersedia!</h3>
-          <p class="text-xs text-slate-600">Sertifikat pelatihan kamu sudah dapat diunduh.</p>
+          <span class="bg-emerald-700 text-emerald-100 text-[10px] px-2.5 py-1 rounded-full font-semibold">PESERTA PELATIHAN</span>
+          <h2 class="text-lg font-bold mt-1" id="pesertaNama">Nama Peserta</h2>
+          <p class="text-xs text-emerald-200" id="pesertaDetail">Perusahaan | ID: -</p>
         </div>
-        <a id="btnDownloadSertifikat" target="_blank" class="bg-emerald-700 text-white text-xs px-4 py-2 rounded-lg font-semibold hover:bg-emerald-800">Unduh PDF</a>
       </div>
 
-      <!-- ABSENSI CAM -->
-      <div class="bg-white p-5 rounded-xl shadow space-y-3">
-        <h3 class="font-bold text-sm text-slate-700">Absensi Pelatihan (Selfie & GPS)</h3>
-        <video id="webcam" autoplay playsinline class="w-full h-48 bg-black rounded-lg object-cover"></video>
-        <button onclick="ambilAbsen()" class="w-full bg-emerald-700 text-white py-2.5 rounded-lg font-semibold text-sm">Kirim Absensi Sesi Ini</button>
+      <!-- BANNER SERTIFIKAT (Jika Sudah Tersedia) -->
+      <div id="boxSertifikat" class="hidden bg-emerald-50 border border-emerald-300 p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div>
+          <h3 class="font-bold text-emerald-900 text-sm">🎓 Sertifikat K3 Anda Tersedia!</h3>
+          <p class="text-xs text-slate-600">Sertifikat resmi pelatihan K3 dari PT Mandiri Maha Daya sudah siap diunduh.</p>
+        </div>
+        <a id="btnDownloadSertifikat" href="#" target="_blank" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-4 py-2.5 rounded-xl font-bold shadow transition whitespace-nowrap">
+          Unduh Sertifikat (PDF)
+        </a>
+      </div>
+
+      <!-- MODUL ABSENSI CAMERA -->
+      <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-4">
+        <div class="flex justify-between items-center">
+          <h3 class="font-bold text-sm text-slate-800">📸 Presensi Sesi Pelatihan (Selfie & GPS)</h3>
+          <span class="text-[11px] bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded-full">Sesi Real-Time</span>
+        </div>
+        
+        <div class="relative overflow-hidden rounded-xl bg-black h-56 flex items-center justify-center">
+          <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>
+        </div>
+        
+        <p class="text-[11px] text-slate-500 text-center">Pastikan wajah terlihat jelas dan izin lokasi (GPS) pada browser sudah diaktifkan.</p>
+
+        <button onclick="ambilAbsen()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-3 rounded-xl font-bold text-sm shadow transition active:scale-95">
+          Kirim Absensi Sesi Ini
+        </button>
       </div>
     </div>
 
     <!-- 3. DASHBOARD ADMIN -->
     <div id="sectionAdmin" class="hidden space-y-6">
       
+      <div class="bg-emerald-900 text-white p-5 rounded-2xl shadow-md">
+        <span class="bg-emerald-700 text-emerald-100 text-[10px] px-2.5 py-1 rounded-full font-semibold">PANITIA / ADMIN</span>
+        <h2 class="text-lg font-bold mt-1">Panel Pengelolaan Portal K3</h2>
+        <p class="text-xs text-emerald-200">PT Mandiri Maha Daya</p>
+      </div>
+
       <!-- KELOLA BATCH TRAINING -->
-      <div class="bg-white p-5 rounded-xl shadow space-y-4">
-        <h3 class="font-bold text-base text-emerald-900">1. Buat Batch Pelatihan K3 Baru</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-4">
+        <h3 class="font-bold text-sm text-emerald-900 border-b pb-2">1. Buat Batch Pelatihan K3 Baru</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="text-xs font-semibold">Pilih Jenis Training K3</label>
-            <select id="adminSelectMasterTraining" class="w-full p-2 border rounded text-xs mt-1">
+            <label class="text-xs font-semibold text-slate-700">Pilih Jenis SKP Training K3</label>
+            <select id="adminSelectMasterTraining" class="w-full p-2.5 border rounded-xl text-xs mt-1 bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
               <option value="AK3U">[SKP Ahli K3 Umum] Ahli K3 Umum</option>
               <option value="P3K">[SKP Kesehatan Kerja] Petugas P3K</option>
               <option value="TKBT1">[SKP Ketinggian] TKBT 1</option>
               <option value="TKBT2">[SKP Ketinggian] TKBT 2</option>
               <option value="TKPK1">[SKP Ketinggian] TKPK 1</option>
+              <option value="TKPK2">[SKP Ketinggian] TKPK 2</option>
+              <option value="TKPK3">[SKP Ketinggian] TKPK 3</option>
+              <option value="PAA_GONDOLA">[SKP Pesawat Angkat Angkut] Gondola</option>
               <option value="PAA_FORKLIFT">[SKP Pesawat Angkat Angkut] Forklift</option>
+              <option value="PAA_ESKAVATOR">[SKP Pesawat Angkat Angkut] Eskavator</option>
+              <option value="PAA_GRIDER">[SKP Pesawat Angkat Angkut] Grider</option>
+              <option value="LST_TEKNISI">[SKP Listrik] Teknisi K3 Listrik</option>
               <option value="LST_AHLI">[SKP Listrik] Ahli K3 Listrik</option>
+              <option value="KST_TEKNISI">[SKP Konstruksi] Teknisi Perancah</option>
+              <option value="KST_SUPERVISI">[SKP Konstruksi] Supervisi Perancah</option>
+              <option value="KST_AHLI_UTAMA">[SKP Konstruksi] Ahli Utama K3 Konstruksi</option>
+              <option value="KST_AHLI_MADYA">[SKP Konstruksi] Ahli Madya K3 Konstruksi</option>
               <option value="KST_AHLI_MUDA">[SKP Konstruksi] Ahli Muda K3 Konstruksi</option>
+              <option value="ELV_OPERATOR">[SKP Elevator] Operator Elevator</option>
+              <option value="ELV_TEKNISI">[SKP Elevator] Teknisi Elevator</option>
+              <option value="B3_TEKNISI">[SKP Bahan Berbahaya] Teknisi Ruang Terbatas</option>
+              <option value="B3_RESCUE">[SKP Bahan Berbahaya] Petugas Rescue Ruang Terbatas</option>
               <option value="B3_GAS_DETECTOR">[SKP Bahan Berbahaya] Petugas Gas Detector</option>
             </select>
           </div>
           <div>
-            <label class="text-xs font-semibold">Nomor Batch Pelatihan</label>
-            <input type="text" id="adminInputBatch" placeholder="Contoh: Batch 45" class="w-full p-2 border rounded text-xs mt-1">
+            <label class="text-xs font-semibold text-slate-700">Nomor Batch Pelatihan</label>
+            <input type="text" id="adminInputBatch" placeholder="Contoh: Batch 45" class="w-full p-2.5 border rounded-xl text-xs mt-1 bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
           </div>
         </div>
-        <button onclick="simpanBatchTraining()" class="bg-emerald-700 text-white text-xs px-4 py-2 rounded font-semibold">Simpan Batch Training</button>
+        <button onclick="simpanBatchTraining()" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-4 py-2.5 rounded-xl font-bold shadow transition">
+          Simpan Batch Training
+        </button>
       </div>
 
       <!-- IMPORT PESERTA MASAL & SERTIFIKAT -->
-      <div class="bg-white p-5 rounded-xl shadow space-y-4">
-        <h3 class="font-bold text-base text-emerald-900">2. Import Masal Akun Peserta & Upload Sertifikat</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="border p-3 rounded-lg">
-            <h4 class="font-semibold text-xs mb-2">Upload Data Peserta (Excel/CSV)</h4>
-            <input type="file" id="fileExcelPeserta" accept=".xlsx, .csv" class="text-xs mb-2">
-            <button onclick="importExcelPeserta()" class="w-full bg-blue-600 text-white text-xs py-2 rounded font-semibold">Proses Import Akun</button>
+      <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-4">
+        <h3 class="font-bold text-sm text-emerald-900 border-b pb-2">2. Import Akun Peserta & Upload Sertifikat Masal</h3>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- IMPORT EXCEL -->
+          <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-3">
+            <h4 class="font-bold text-xs text-slate-800">📊 Upload Data Peserta (Excel/CSV)</h4>
+            <p class="text-[11px] text-slate-500">Kolom wajib: <b>Nama, TanggalLahir, Perusahaan, KodeTraining</b></p>
+            <input type="file" id="fileExcelPeserta" accept=".xlsx, .csv" class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200">
+            <button onclick="importExcelPeserta()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs py-2.5 rounded-xl font-bold shadow transition">
+              Proses Import Akun
+            </button>
           </div>
-          <div class="border p-3 rounded-lg">
-            <h4 class="font-semibold text-xs mb-2">Upload Sertifikat Masal (PDF)</h4>
-            <input type="file" id="fileSertifikatMasal" multiple accept=".pdf" class="text-xs mb-2">
-            <p class="text-[10px] text-slate-500 mb-2">Format nama file: <b>namalengkap_tanggallahir.pdf</b></p>
-            <button onclick="uploadSertifikatMasal()" class="w-full bg-emerald-600 text-white text-xs py-2 rounded font-semibold">Upload & Sync Sertifikat</button>
+
+          <!-- UPLOAD SERTIFIKAT MASAL -->
+          <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-3">
+            <h4 class="font-bold text-xs text-slate-800">📄 Upload Sertifikat Masal (PDF)</h4>
+            <p class="text-[11px] text-slate-500">Format nama file: <b>namalengkap_tanggallahir.pdf</b></p>
+            <input type="file" id="fileSertifikatMasal" multiple accept=".pdf" class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200">
+            <button onclick="uploadSertifikatMasal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs py-2.5 rounded-xl font-bold shadow transition">
+              Upload & Sync Sertifikat
+            </button>
           </div>
         </div>
       </div>
 
       <!-- DOWNLOAD REKAP ABSENSI -->
-      <div class="bg-white p-5 rounded-xl shadow space-y-4">
-        <h3 class="font-bold text-base text-emerald-900">3. Cetak Rekapan Kehadiran per Batch Pelatihan</h3>
-        <div class="flex space-x-2">
-          <select id="adminSelectBatchRekap" class="w-full p-2 border rounded text-xs">
+      <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-4">
+        <h3 class="font-bold text-sm text-emerald-900 border-b pb-2">3. Cetak Rekapan Kehadiran per Batch Pelatihan</h3>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <select id="adminSelectBatchRekap" class="w-full p-2.5 border rounded-xl text-xs bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
             <option value="">-- Pilih Batch Training --</option>
           </select>
-          <button onclick="downloadRekapBatch()" class="bg-emerald-800 text-white text-xs px-4 py-2 rounded font-semibold whitespace-nowrap">Export Rekapan</button>
+          <button onclick="downloadRekapBatch()" class="bg-emerald-800 hover:bg-emerald-900 text-white text-xs px-5 py-2.5 rounded-xl font-bold shadow transition whitespace-nowrap">
+            Export Rekapan
+          </button>
         </div>
       </div>
 
@@ -127,127 +192,26 @@
   </div>
 
   <script>
-    // Inisialisasi Supabase
+    // ----------------------------------------------------
+    // INISIALISASI SUPABASE
+    // ----------------------------------------------------
     const SUPABASE_URL = "https://bxgzkfvqwkzbnikvvjhp.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4Z3prZnZxd2t6Ym5pa3Z2amhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5MjQ1NjMsImV4cCI6MjEwNzUwMDU2M30.mSC45wlyGiP2V6UpCTeIJWZs9HVu7Z4ZaqucUFqDqDg"; 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4Z3prZnZxd2t6Ym5pa3Z2amhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5MjQ1NjMsImV4cCI6MjEwNzUwMDU2M30.mSC45wlyGiP2V6UpCTeIJWZs9HVu7Z4ZaqucUFqDqDg"; // <-- PASTIIN SUDAH DIISI KUNCI ANON ASLI
+
+    let supabase;
+    try {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    } catch (e) {
+      console.error("Gagal inisialisasi Supabase SDK", e);
+    }
 
     let currentSessionUser = null;
 
-    // Login Handler
+    // ----------------------------------------------------
+    // LOGIKA LOGIN PESERTA & ADMIN
+    // ----------------------------------------------------
     async function prosesLogin() {
       const u = document.getElementById('loginUsername').value.trim().toLowerCase();
       const p = document.getElementById('loginPassword').value.trim();
 
-      const { data, error } = await supabase.from('users').select('*').eq('username', u).eq('password', p).single();
-
-      if (error || !data) {
-        alert("Username atau Password Salah!");
-        return;
-      }
-
-      currentSessionUser = data;
-      document.getElementById('sectionLogin').classList.add('hidden');
-      document.getElementById('btnLogout').classList.remove('hidden');
-
-      if (data.role === 'admin') {
-        document.getElementById('sectionAdmin').classList.remove('hidden');
-        loadBatchOptions();
-      } else {
-        document.getElementById('sectionPeserta').classList.remove('hidden');
-        document.getElementById('pesertaNama').innerText = data.nama;
-        document.getElementById('pesertaDetail').innerText = `${data.perusahaan} | ID: ${data.username}`;
-        
-        if (data.url_sertifikat) {
-          document.getElementById('boxSertifikat').classList.remove('hidden');
-          document.getElementById('btnDownloadSertifikat').href = data.url_sertifikat;
-        }
-        startCamera();
-      }
-    }
-
-    function logout() {
-      location.reload();
-    }
-
-    async function startCamera() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        document.getElementById('webcam').srcObject = stream;
-      } catch (err) {
-        console.error("Kamera tidak dapat diakses", err);
-      }
-    }
-
-    // Admin: Simpan Batch Training
-    async function simpanBatchTraining() {
-      const masterId = document.getElementById('adminSelectMasterTraining').value;
-      const batchNum = document.getElementById('adminInputBatch').value.trim();
-      
-      if (!batchNum) return alert("Masukkan nomor batch!");
-
-      const trainingId = `${masterId}-${batchNum.replace(/\s+/g, '-').toUpperCase()}`;
-
-      const { error } = await supabase.from('trainings').insert([{
-        id: trainingId,
-        master_training_id: masterId,
-        batch_number: batchNum,
-        judul: `Pelatihan ${masterId} - ${batchNum}`,
-        tgl_mulai: new Date().toISOString().split('T')[0]
-      }]);
-
-      if (error) alert("Gagal menyimpan batch: " + error.message);
-      else {
-        alert("Batch Training Berhasil Dibuat: " + trainingId);
-        loadBatchOptions();
-      }
-    }
-
-    async function loadBatchOptions() {
-      const { data } = await supabase.from('trainings').select('*');
-      const select = document.getElementById('adminSelectBatchRekap');
-      select.innerHTML = '<option value="">-- Pilih Batch Training --</option>';
-      (data || []).forEach(b => {
-        select.innerHTML += `<option value="${b.id}">${b.judul}</option>`;
-      });
-    }
-
-    // Import Excel Peserta (Poin 3 & 4)
-    function importExcelPeserta() {
-      const fileInput = document.getElementById('fileExcelPeserta');
-      const file = fileInput.files[0];
-      if (!file) return alert("Pilih file Excel lebih dulu!");
-
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-
-        const usersToInsert = rows.map(r => {
-          // Format Username: Nama tanpa spasi & huruf kecil
-          const formattedUsername = String(r.Nama).replace(/\s+/g, '').toLowerCase();
-          // Format ID Sertifikat: nama_tanggallahir
-          const idSertifikat = `${formattedUsername}_${String(r.TanggalLahir).replace(/[^0-9]/g, '')}`;
-
-          return {
-            username: formattedUsername,
-            password: String(r.TanggalLahir), // Password = tanggal lahir KTP
-            nama: r.Nama,
-            perusahaan: r.Perusahaan || 'PT Mandiri Maha Daya',
-            training_id: r.KodeBatch,
-            id_sertifikat: idSertifikat,
-            role: 'peserta'
-          };
-        });
-
-        const { error } = await supabase.from('users').upsert(usersToInsert);
-        if (error) alert("Gagal import: " + error.message);
-        else alert(`Berhasil mengimpor ${usersToInsert.length} akun peserta!`);
-      };
-      reader.readAsArrayBuffer(file);
-    }
-  </script>
-</body>
-</html>
+      if (!u || !p) {
