@@ -683,11 +683,11 @@ function importExcelPeserta() {
 }
 
 // ----------------------------------------------------
-// 7. INPUT PESERTA MANUAL (FORMAT DDMMYYYY)
+// 7. INPUT PESERTA MANUAL (FLEXIBLE FORMAT DD-MM-YYYY)
 // ----------------------------------------------------
 async function simpanPesertaManual() {
   const nama = document.getElementById('manualNama').value.trim();
-  const tglLahirRaw = document.getElementById('manualTglLahir').value;
+  const tglLahirRaw = document.getElementById('manualTglLahir').value.trim();
   const nik = document.getElementById('manualNIK').value.trim();
   const perusahaan = document.getElementById('manualPerusahaan').value.trim();
   const trainingId = document.getElementById('manualSelectBatch').value;
@@ -696,8 +696,19 @@ async function simpanPesertaManual() {
     return alert("Harap lengkapi Nama, Tanggal Lahir, dan Pilih Batch Pelatihan!");
   }
 
-  const parts = tglLahirRaw.split('-'); // [YYYY, MM, DD]
-  const formattedDDMMYYYY = `${parts[2]}${parts[1]}${parts[0]}`;
+  // Bersihkan input tanggal lahir agar hanya menyisakan angka
+  const digits = tglLahirRaw.replace(/[^0-9]/g, '');
+
+  if (digits.length !== 8) {
+    return alert("Format Tanggal Lahir salah! Harap masukkan 8 digit angka, contoh: 12-05-1998 atau 12051998.");
+  }
+
+  const day = digits.substring(0, 2);
+  const month = digits.substring(2, 4);
+  const year = digits.substring(4, 8);
+
+  const formattedDateForDb = `${year}-${month}-${day}`; // Format YYYY-MM-DD untuk database
+  const formattedDDMMYYYY = `${day}${month}${year}`;     // Password akun (DDMMYYYY)
   const formattedUsername = nama.replace(/\s+/g, '').toLowerCase();
   const idSertifikat = `${formattedUsername}_${formattedDDMMYYYY}`;
 
@@ -706,7 +717,7 @@ async function simpanPesertaManual() {
     password: formattedDDMMYYYY,
     nama: nama,
     nik: nik || '-',
-    tgl_lahir: tglLahirRaw,
+    tgl_lahir: formattedDateForDb,
     perusahaan: perusahaan || 'PT Mandiri Maha Daya',
     training_id: trainingId,
     id_sertifikat: idSertifikat,
@@ -728,7 +739,6 @@ async function simpanPesertaManual() {
     loadDatabasePeserta();
   }
 }
-
 // ----------------------------------------------------
 // UPLOAD & SYNC SERTIFIKAT MASAL
 // ----------------------------------------------------
