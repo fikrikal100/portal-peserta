@@ -549,17 +549,17 @@ async function downloadRekapBatchPDF() {
     let htmlBody = `
       <div class="pdf-page" id="pdfTemplateArea">
         <div class="pdf-header text-center">
-          <h2 style="font-size: 16px; font-weight: bold; color: #065f46; margin: 0;">PT MANDIRI MAHA DAYA</h2>
-          <h3 style="font-size: 13px; font-weight: bold; margin: 4px 0;">LAPORAN REKAPITULASI KEHADIRAN PESERTA K3</h3>
+          <h2 style="font-size: 15px; font-weight: bold; color: #065f46; margin: 0;">PT MANDIRI MAHA DAYA</h2>
+          <h3 style="font-size: 12px; font-weight: bold; margin: 3px 0;">LAPORAN REKAPITULASI KEHADIRAN PESERTA K3</h3>
           <p style="font-size: 11px; font-weight: bold; color: #047857; margin: 2px 0;">PROGRAM: ${trainingData.judul.toUpperCase()}</p>
-          <p style="font-size: 10px; color: #64748b; margin: 0;">Jadwal Pelatihan: ${listTanggal[0] || '-'} s/d ${listTanggal[listTanggal.length-1] || '-'} (${listTanggal.length} Hari Sesi)</p>
+          <p style="font-size: 9px; color: #64748b; margin: 0;">Jadwal Pelatihan: ${listTanggal[0] || '-'} s/d ${listTanggal[listTanggal.length-1] || '-'} (${listTanggal.length} Hari Sesi)</p>
         </div>
     `;
 
     listTanggal.forEach((dateStr, hIdx) => {
       htmlBody += `
-        <div style="margin-top: 15px; margin-bottom: 8px;">
-          <h4 style="font-size: 11px; font-weight: bold; color: #065f46; background-color: #ecfdf5; padding: 6px 10px; border-left: 4px solid #047857; margin: 0;">
+        <div style="margin-top: 10px; margin-bottom: 6px;">
+          <h4 style="font-size: 10px; font-weight: bold; color: #065f46; background-color: #ecfdf5; padding: 4px 8px; border-left: 3px solid #047857; margin: 0;">
             HARI KE-${hIdx + 1} : TANGGAL ${dateStr}
           </h4>
         </div>
@@ -568,10 +568,10 @@ async function downloadRekapBatchPDF() {
           <thead>
             <tr>
               <th style="width: 5%;">NO</th>
-              <th style="width: 20%;">NAMA PESERTA / NIK</th>
-              <th style="width: 18%;">PERUSAHAAN</th>
-              <th style="width: 22%;">SESI 1 (PAGI 08.00-12.00)</th>
-              <th style="width: 22%;">SESI 2 (SIANG 13.00-17.00)</th>
+              <th style="width: 22%;">NAMA PESERTA / NIK</th>
+              <th style="width: 20%;">PERUSAHAAN</th>
+              <th style="width: 20%;">SESI 1 (PAGI)</th>
+              <th style="width: 20%;">SESI 2 (SIANG)</th>
               <th style="width: 13%;">STATUS</th>
             </tr>
           </thead>
@@ -616,7 +616,7 @@ async function downloadRekapBatchPDF() {
     });
 
     htmlBody += `
-        <div style="margin-top: 20px; font-size: 9px; color: #64748b; text-align: right;">
+        <div style="margin-top: 15px; font-size: 8px; color: #64748b; text-align: right;">
           Dicetak Otomatis via Portal Mandiri Maha Daya pada ${new Date().toLocaleString('id-ID')}
         </div>
       </div>
@@ -629,7 +629,7 @@ async function downloadRekapBatchPDF() {
       margin:       0,
       filename:     `Laporan_Kehadiran_${selectedBatchId}_A4.pdf`,
       image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
+      html2canvas:  { scale: 2, useCORS: true, scrollY: 0, scrollX: 0 },
       jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
