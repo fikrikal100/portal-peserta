@@ -247,38 +247,37 @@
             <div>
               <label class="font-semibold text-slate-700">Pilih Jenis SKP Training K3</label>
               <select id="adminSelectMasterTraining" class="w-full p-2.5 border rounded-xl mt-1 bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
-  <!-- PROGRAM SKP KEMNAKER -->
-  <option value="AK3U">[SKP] Ahli K3 Umum</option>
-  <option value="P3K">[SKP] Petugas P3K</option>
-  <option value="TKBT1">[SKP] TKBT 1</option>
-  <option value="TKBT2">[SKP] TKBT 2</option>
-  <option value="TKPK1">[SKP] TKPK 1</option>
-  <option value="TKPK2">[SKP] TKPK 2</option>
-  <option value="TKPK3">[SKP] TKPK 3</option>
-  <option value="PAA_GONDOLA">[SKP] Gondola</option>
-  <option value="PAA_FORKLIFT">[SKP] Forklift</option>
-  <option value="PAA_ESKAVATOR">[SKP] Eskavator</option>
-  <option value="PAA_GRIDER">[SKP] Grider</option>
-  <option value="LST_TEKNISI">[SKP] Teknisi K3 Listrik</option>
-  <option value="LST_AHLI">[SKP] Ahli K3 Listrik</option>
-  <option value="KST_TEKNISI">[SKP] Teknisi Perancah</option>
-  <option value="KST_SUPERVISI">[SKP] Supervisi Perancah</option>
-  <option value="KST_AHLI_UTAMA">[SKP] Ahli Utama K3 Konstruksi</option>
-  <option value="KST_AHLI_MADYA">[SKP] Ahli Madya K3 Konstruksi</option>
-  <option value="KST_AHLI_MUDA">[SKP] Ahli Muda K3 Konstruksi</option>
-  <option value="ELV_OPERATOR">[SKP] Operator Elevator</option>
-  <option value="ELV_TEKNISI">[SKP] Teknisi Elevator</option>
-  <option value="B3_TEKNISI">[SKP] Teknisi Ruang Terbatas</option>
-  <option value="B3_RESCUE">[SKP] Petugas Rescue Ruang Terbatas</option>
-  <option value="B3_GAS_DETECTOR">[SKP] Petugas Gas Detector</option>
+                <option value="AK3U">[SKP Ahli K3 Umum] Ahli K3 Umum</option>
+                <option value="P3K">[SKP Kesehatan Kerja] Petugas P3K</option>
+                <option value="TKBT1">[SKP Ketinggian] TKBT 1</option>
+                <option value="TKBT2">[SKP Ketinggian] TKBT 2</option>
+                <option value="TKPK1">[SKP Ketinggian] TKPK 1</option>
+                <option value="TKPK2">[SKP Ketinggian] TKPK 2</option>
+                <option value="TKPK3">[SKP Ketinggian] TKPK 3</option>
+                <option value="PAA_GONDOLA">[SKP Pesawat Angkat Angkut] Gondola</option>
+                <option value="PAA_FORKLIFT">[SKP Pesawat Angkat Angkut] Forklift</option>
+                <option value="PAA_ESKAVATOR">[SKP Pesawat Angkat Angkut] Eskavator</option>
+                <option value="PAA_GRIDER">[SKP Pesawat Angkat Angkut] Grider</option>
+                <option value="LST_TEKNISI">[SKP Listrik] Teknisi K3 Listrik</option>
+                <option value="LST_AHLI">[SKP Listrik] Ahli K3 Listrik</option>
+                <option value="KST_TEKNISI">[SKP Konstruksi] Teknisi Perancah</option>
+                <option value="KST_SUPERVISI">[SKP Konstruksi] Supervisi Perancah</option>
+                <option value="KST_AHLI_UTAMA">[SKP Konstruksi] Ahli Utama K3 Konstruksi</option>
+                <option value="KST_AHLI_MADYA">[SKP Konstruksi] Ahli Madya K3 Konstruksi</option>
+                <option value="KST_AHLI_MUDA">[SKP Konstruksi] Ahli Muda K3 Konstruksi</option>
+                <option value="ELV_OPERATOR">[SKP Elevator] Operator Elevator</option>
+                <option value="ELV_TEKNISI">[SKP Elevator] Teknisi Elevator</option>
+                <option value="B3_TEKNISI">[SKP Bahan Berbahaya] Teknisi Ruang Terbatas</option>
+                <option value="B3_RESCUE">[SKP Bahan Berbahaya] Petugas Rescue Ruang Terbatas</option>
+                <option value="B3_GAS_DETECTOR">[SKP Bahan Berbahaya] Petugas Gas Detector</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-semibold text-slate-700">Nomor Batch Pelatihan</label>
+              <input type="text" id="adminInputBatch" placeholder="Contoh: Batch 45" class="w-full p-2.5 border rounded-xl mt-1 bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
+            </div>
+          </div>
 
-  <!-- PROGRAM NON SKP (BNSP) -->
-  <option value="AK3U_BNSP">(Non SKP) Ahli K3 Umum BNSP</option>
-  <option value="TKPK1_BNSP">(Non SKP) TKPK 1 BNSP</option>
-  <option value="TKPK2_BNSP">(Non SKP) TKPK 2 BNSP</option>
-  <option value="TKBT1_BNSP">(Non SKP) TKBT 1 BNSP</option>
-  <option value="TKBT2_BNSP">(Non SKP) TKBT 2 BNSP</option>
-</select>
           <!-- KALENDER SELEKSI TANGGAL -->
           <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-3">
             <div class="flex justify-between items-center flex-wrap gap-2">
@@ -477,40 +476,32 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
             <div>
               <label class="font-bold text-[11px] text-slate-700 block mb-1">Pilih SKP / Master Training</label>
-             <select id="dbFilterSKP" onchange="onSKPFilterChange()" class="w-full p-2 border rounded-lg bg-white text-xs outline-none focus:ring-1 focus:ring-emerald-500 font-medium text-slate-700">
-  <option value="">-- Semua Master Training (SKP & Non SKP) --</option>
-  <!-- PROGRAM SKP KEMNAKER -->
-  <option value="AK3U">[SKP] Ahli K3 Umum</option>
-  <option value="P3K">[SKP] Petugas P3K</option>
-  <option value="TKBT1">[SKP] TKBT 1</option>
-  <option value="TKBT2">[SKP] TKBT 2</option>
-  <option value="TKPK1">[SKP] TKPK 1</option>
-  <option value="TKPK2">[SKP] TKPK 2</option>
-  <option value="TKPK3">[SKP] TKPK 3</option>
-  <option value="PAA_GONDOLA">[SKP] Gondola</option>
-  <option value="PAA_FORKLIFT">[SKP] Forklift</option>
-  <option value="PAA_ESKAVATOR">[SKP] Eskavator</option>
-  <option value="PAA_GRIDER">[SKP] Grider</option>
-  <option value="LST_TEKNISI">[SKP] Teknisi K3 Listrik</option>
-  <option value="LST_AHLI">[SKP] Ahli K3 Listrik</option>
-  <option value="KST_TEKNISI">[SKP] Teknisi Perancah</option>
-  <option value="KST_SUPERVISI">[SKP] Supervisi Perancah</option>
-  <option value="KST_AHLI_UTAMA">[SKP] Ahli Utama K3 Konstruksi</option>
-  <option value="KST_AHLI_MADYA">[SKP] Ahli Madya K3 Konstruksi</option>
-  <option value="KST_AHLI_MUDA">[SKP] Ahli Muda K3 Konstruksi</option>
-  <option value="ELV_OPERATOR">[SKP] Operator Elevator</option>
-  <option value="ELV_TEKNISI">[SKP] Teknisi Elevator</option>
-  <option value="B3_TEKNISI">[SKP] Teknisi Ruang Terbatas</option>
-  <option value="B3_RESCUE">[SKP] Petugas Rescue Ruang Terbatas</option>
-  <option value="B3_GAS_DETECTOR">[SKP] Petugas Gas Detector</option>
-
-  <!-- PROGRAM NON SKP (BNSP) -->
-  <option value="AK3U_BNSP">(Non SKP) Ahli K3 Umum BNSP</option>
-  <option value="TKPK1_BNSP">(Non SKP) TKPK 1 BNSP</option>
-  <option value="TKPK2_BNSP">(Non SKP) TKPK 2 BNSP</option>
-  <option value="TKBT1_BNSP">(Non SKP) TKBT 1 BNSP</option>
-  <option value="TKBT2_BNSP">(Non SKP) TKBT 2 BNSP</option>
-</select> 
+              <select id="dbFilterSKP" onchange="onSKPFilterChange()" class="w-full p-2 border rounded-lg bg-white text-xs outline-none focus:ring-1 focus:ring-emerald-500 font-medium text-slate-700">
+                <option value="">-- Semua SKP / Master Training --</option>
+                <option value="AK3U">[SKP Ahli K3 Umum] Ahli K3 Umum</option>
+                <option value="P3K">[SKP Kesehatan Kerja] Petugas P3K</option>
+                <option value="TKBT1">[SKP Ketinggian] TKBT 1</option>
+                <option value="TKBT2">[SKP Ketinggian] TKBT 2</option>
+                <option value="TKPK1">[SKP Ketinggian] TKPK 1</option>
+                <option value="TKPK2">[SKP Ketinggian] TKPK 2</option>
+                <option value="TKPK3">[SKP Ketinggian] TKPK 3</option>
+                <option value="PAA_GONDOLA">[SKP Pesawat Angkat Angkut] Gondola</option>
+                <option value="PAA_FORKLIFT">[SKP Pesawat Angkat Angkut] Forklift</option>
+                <option value="PAA_ESKAVATOR">[SKP Pesawat Angkat Angkut] Eskavator</option>
+                <option value="PAA_GRIDER">[SKP Pesawat Angkat Angkut] Grider</option>
+                <option value="LST_TEKNISI">[SKP Listrik] Teknisi K3 Listrik</option>
+                <option value="LST_AHLI">[SKP Listrik] Ahli K3 Listrik</option>
+                <option value="KST_TEKNISI">[SKP Konstruksi] Teknisi Perancah</option>
+                <option value="KST_SUPERVISI">[SKP Konstruksi] Supervisi Perancah</option>
+                <option value="KST_AHLI_UTAMA">[SKP Konstruksi] Ahli Utama K3 Konstruksi</option>
+                <option value="KST_AHLI_MADYA">[SKP Konstruksi] Ahli Madya K3 Konstruksi</option>
+                <option value="KST_AHLI_MUDA">[SKP Konstruksi] Ahli Muda K3 Konstruksi</option>
+                <option value="ELV_OPERATOR">[SKP Elevator] Operator Elevator</option>
+                <option value="ELV_TEKNISI">[SKP Elevator] Teknisi Elevator</option>
+                <option value="B3_TEKNISI">[SKP Bahan Berbahaya] Teknisi Ruang Terbatas</option>
+                <option value="B3_RESCUE">[SKP Bahan Berbahaya] Petugas Rescue Ruang Terbatas</option>
+                <option value="B3_GAS_DETECTOR">[SKP Bahan Berbahaya] Petugas Gas Detector</option>
+              </select>
             </div>
 
             <div>
