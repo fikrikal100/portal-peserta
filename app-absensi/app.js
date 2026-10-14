@@ -563,7 +563,7 @@ async function uploadSertifikatMasal() {
   let gagalLog = [];
 
   for (const pdfFile of pdfFileList) {
-    const rawFileName = pdfFile.name.replace(/\.[^/.]+$/, ""); // contoh: fajarshidiqpermana_tkbt1_27091998
+    const rawFileName = pdfFile.name.replace(/\.[^/.]+$/, ""); // contoh: fikrihaikal_tkbt1_13121998
     const cleanFileName = cleanStringForMatch(rawFileName);
 
     // Matching fleksibel berdasarkan nama/username
@@ -576,7 +576,7 @@ async function uploadSertifikatMasal() {
 
     if (matchedUser) {
       // Bikin nama judul sertifikat yang rapi dari nama file
-      // Contoh: fajarshidiqpermana_tkbt1_27091998 -> "Sertifikat Pelatihan TKBT1"
+      // Contoh: fikrihaikal_tkbt1_13121998 -> "Sertifikat Pelatihan TKBT2"
       const nameParts = rawFileName.split('_');
       let kodeTrainingDisplay = nameParts.length >= 2 ? nameParts[1].toUpperCase() : rawFileName.toUpperCase();
       let judulSertifikat = `Sertifikat Pelatihan K3 - ${kodeTrainingDisplay}`;
