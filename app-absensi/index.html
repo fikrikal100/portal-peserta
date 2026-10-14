@@ -6,13 +6,13 @@
   <title>Portal Absensi & Sertifikasi - PT Mandiri Maha Daya</title>
 
   <!-- Pustaka External (CDN) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<!-- JSZip untuk ekstraksi file ZIP sertifikat masal -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- JSZip untuk ekstraksi file ZIP sertifikat masal -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- File CSS Lokal -->
   <link rel="stylesheet" href="style.css">
@@ -161,23 +161,23 @@
         </div>
       </div>
 
-     <!-- TAB 3: CEK SERTIFIKAT (MULTI SERTIFIKAT) -->
-<div id="tabPesertaSertifikat" class="tab-peserta-content hidden space-y-4">
-  <div class="bg-white p-6 rounded-2xl shadow border border-slate-200 text-center space-y-4">
-    <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
-      <i class="fa-solid fa-certificate"></i>
-    </div>
-    <h3 class="text-base font-bold text-slate-800">Daftar Sertifikat Pelatihan K3 Resmi</h3>
-    <p class="text-xs text-slate-500 max-w-md mx-auto">
-      Berikut adalah seluruh sertifikat pelatihan K3 yang telah Anda selesaikan dan diterbitkan oleh PT Mandiri Maha Daya.
-    </p>
+      <!-- TAB 3: CEK SERTIFIKAT (MULTI SERTIFIKAT) -->
+      <div id="tabPesertaSertifikat" class="tab-peserta-content hidden space-y-4">
+        <div class="bg-white p-6 rounded-2xl shadow border border-slate-200 text-center space-y-4">
+          <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+            <i class="fa-solid fa-certificate"></i>
+          </div>
+          <h3 class="text-base font-bold text-slate-800">Daftar Sertifikat Pelatihan K3 Resmi</h3>
+          <p class="text-xs text-slate-500 max-w-md mx-auto">
+            Berikut adalah seluruh sertifikat pelatihan K3 yang telah Anda selesaikan dan diterbitkan oleh PT Mandiri Maha Daya.
+          </p>
 
-    <!-- CONTAINER DAFTAR KARTU SERTIFIKAT -->
-    <div id="containerListSertifikatPeserta" class="space-y-3 max-w-lg mx-auto text-left">
-      <p class="text-xs text-center text-slate-400 py-4">Memuat daftar sertifikat...</p>
-    </div>
-  </div>
-</div>
+          <!-- CONTAINER DAFTAR KARTU SERTIFIKAT -->
+          <div id="containerListSertifikatPeserta" class="space-y-3 max-w-lg mx-auto text-left">
+            <p class="text-xs text-center text-slate-400 py-4">Memuat daftar sertifikat...</p>
+          </div>
+        </div>
+      </div>
 
       <!-- TAB 4: MODUL PELATIHAN -->
       <div id="tabPesertaModul" class="tab-peserta-content hidden space-y-4">
@@ -265,68 +265,68 @@
           </div>
         </div>
 
-       <!-- KALENDER SELEKSI TANGGAL -->
-<div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-3">
-  <div class="flex justify-between items-center flex-wrap gap-2">
-    <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-      <i class="fa-solid fa-calendar-days text-emerald-700"></i>
-      <span>Klik Tanggal-Tanggal Sesi Pelatihan (Bisa Lompat Hari)</span>
-    </h4>
+        <!-- KALENDER SELEKSI TANGGAL -->
+        <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-3">
+          <div class="flex justify-between items-center flex-wrap gap-2">
+            <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+              <i class="fa-solid fa-calendar-days text-emerald-700"></i>
+              <span>Klik Tanggal-Tanggal Sesi Pelatihan (Bisa Lompat Hari)</span>
+            </h4>
 
-    <!-- NAVIGASI DROPDOWN BULAN & TAHUN -->
-    <div class="flex items-center gap-1">
-      <button onclick="changeMonth(-1)" class="p-1 px-2 border rounded-lg bg-white hover:bg-slate-100 text-xs font-bold text-slate-600">
-        <i class="fa-solid fa-chevron-left"></i>
-      </button>
+            <!-- NAVIGASI DROPDOWN BULAN & TAHUN -->
+            <div class="flex items-center gap-1">
+              <button onclick="changeMonth(-1)" class="p-1 px-2 border rounded-lg bg-white hover:bg-slate-100 text-xs font-bold text-slate-600">
+                <i class="fa-solid fa-chevron-left"></i>
+              </button>
 
-      <!-- DROPDOWN BULAN -->
-      <select id="calSelectMonth" onchange="jumpCalendarMonthYear()" class="text-xs font-bold text-slate-700 border p-1 rounded-lg bg-white outline-none">
-        <option value="0">Januari</option>
-        <option value="1">Februari</option>
-        <option value="2">Maret</option>
-        <option value="3">April</option>
-        <option value="4">Mei</option>
-        <option value="5">Juni</option>
-        <option value="6">Juli</option>
-        <option value="7">Agustus</option>
-        <option value="8">September</option>
-        <option value="9">Oktober</option>
-        <option value="10">November</option>
-        <option value="11">Desember</option>
-      </select>
+              <!-- DROPDOWN BULAN -->
+              <select id="calSelectMonth" onchange="jumpCalendarMonthYear()" class="text-xs font-bold text-slate-700 border p-1 rounded-lg bg-white outline-none">
+                <option value="0">Januari</option>
+                <option value="1">Februari</option>
+                <option value="2">Maret</option>
+                <option value="3">April</option>
+                <option value="4">Mei</option>
+                <option value="5">Juni</option>
+                <option value="6">Juli</option>
+                <option value="7">Agustus</option>
+                <option value="8">September</option>
+                <option value="9">Oktober</option>
+                <option value="10">November</option>
+                <option value="11">Desember</option>
+              </select>
 
-      <!-- DROPDOWN TAHUN -->
-      <select id="calSelectYear" onchange="jumpCalendarMonthYear()" class="text-xs font-bold text-slate-700 border p-1 rounded-lg bg-white outline-none">
-        <!-- Otomatis diisi oleh JavaScript -->
-      </select>
+              <!-- DROPDOWN TAHUN -->
+              <select id="calSelectYear" onchange="jumpCalendarMonthYear()" class="text-xs font-bold text-slate-700 border p-1 rounded-lg bg-white outline-none">
+                <!-- Otomatis diisi oleh JavaScript -->
+              </select>
 
-      <button onclick="changeMonth(1)" class="p-1 px-2 border rounded-lg bg-white hover:bg-slate-100 text-xs font-bold text-slate-600">
-        <i class="fa-solid fa-chevron-right"></i>
-      </button>
-    </div>
-  </div>
+              <button onclick="changeMonth(1)" class="p-1 px-2 border rounded-lg bg-white hover:bg-slate-100 text-xs font-bold text-slate-600">
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
 
-  <!-- HEADER HARI -->
-  <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs">
-    <div class="text-red-600">Min</div>
-    <div class="text-slate-600">Sen</div>
-    <div class="text-slate-600">Sel</div>
-    <div class="text-slate-600">Rab</div>
-    <div class="text-slate-600">Kam</div>
-    <div class="text-slate-600">Jum</div>
-    <div class="text-emerald-700">Sab</div>
-  </div>
+          <!-- HEADER HARI -->
+          <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs">
+            <div class="text-red-600">Min</div>
+            <div class="text-slate-600">Sen</div>
+            <div class="text-slate-600">Sel</div>
+            <div class="text-slate-600">Rab</div>
+            <div class="text-slate-600">Kam</div>
+            <div class="text-slate-600">Jum</div>
+            <div class="text-emerald-700">Sab</div>
+          </div>
 
-  <!-- GRID TANGGAL -->
-  <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-xs"></div>
+          <!-- GRID TANGGAL -->
+          <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-xs"></div>
 
-  <!-- FOOTER DESKRIPSI -->
-  <div class="flex justify-between items-center pt-2 border-t text-xs">
-    <span class="text-slate-600 font-medium">Tanggal Terpilih: <b id="textSelectedDatesCount" class="text-emerald-700">0 Hari</b></span>
-    <button onclick="resetSelectedDates()" class="text-red-600 hover:underline font-semibold">Reset Pilihan</button>
-  </div>
-  <div id="containerSelectedBadges" class="flex flex-wrap gap-1 mt-1"></div>
-</div>
+          <!-- FOOTER DESKRIPSI -->
+          <div class="flex justify-between items-center pt-2 border-t text-xs">
+            <span class="text-slate-600 font-medium">Tanggal Terpilih: <b id="textSelectedDatesCount" class="text-emerald-700">0 Hari</b></span>
+            <button onclick="resetSelectedDates()" class="text-red-600 hover:underline font-semibold">Reset Pilihan</button>
+          </div>
+          <div id="containerSelectedBadges" class="flex flex-wrap gap-1 mt-1"></div>
+        </div>
         <button onclick="simpanBatchTraining()" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-5 py-3 rounded-xl font-bold shadow transition flex items-center gap-1.5 w-full justify-center">
           <i class="fa-solid fa-floppy-disk"></i> Simpan Batch & Tanggal Pelatihan
         </button>
@@ -379,7 +379,7 @@
             </div>
           </div>
 
-        <!-- B. IMPORT EXCEL MASAL -->
+          <!-- B. IMPORT EXCEL MASAL -->
           <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-3 flex flex-col justify-between">
             <div class="space-y-3">
               <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
@@ -408,26 +408,29 @@
               <i class="fa-solid fa-file-arrow-up"></i> Proses Import Excel
             </button>
           </div>
+        </div>
 
-    <!-- C. UPLOAD SERTIFIKAT MASAL (ZIP / PDF) -->
-<div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-3 mt-4">
-  <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-    <i class="fa-solid fa-file-zipper text-amber-600"></i>
-    <span>Upload & Sync Sertifikat Masal (File PDF / Arsip ZIP)</span>
-  </h4>
-  <p class="text-[11px] text-slate-500">
-    Upload beberapa file PDF sekaligus atau <b>1 file .ZIP</b> berisi seluruh PDF sertifikat.<br>
-    Format nama file: <b>namalengkap_kodetraining_tanggallahir.pdf</b><br>
-    (Contoh: <code>fikrihaikal_tkbt1_13121998.pdf</code> atau <code>fikrihaikal_ak3u_13121998.pdf</code>)
-  </p>
-  <div class="flex flex-col sm:flex-row gap-2">
-    <input type="file" id="fileSertifikatMasal" multiple accept=".pdf, .zip" class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200">
-    <button onclick="uploadSertifikatMasal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-5 py-2.5 rounded-lg font-bold shadow transition whitespace-nowrap flex items-center gap-1.5 justify-center">
-      <i class="fa-solid fa-cloud-arrow-up"></i> Upload & Sync
-    </button>
-  </div>
-</div>
-      <!-- DOWNLOAD REKAP ABSENSI PDF A4 -->
+        <!-- C. UPLOAD SERTIFIKAT MASAL (ZIP / PDF) -->
+        <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-3 mt-4">
+          <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+            <i class="fa-solid fa-file-zipper text-amber-600"></i>
+            <span>Upload & Sync Sertifikat Masal (File PDF / Arsip ZIP)</span>
+          </h4>
+          <p class="text-[11px] text-slate-500">
+            Upload beberapa file PDF sekaligus atau <b>1 file .ZIP</b> berisi seluruh PDF sertifikat.<br>
+            Format nama file: <b>namalengkap_kodetraining_tanggallahir.pdf</b><br>
+            (Contoh: <code>fikrihaikal_tkbt1_13121998.pdf</code> atau <code>fikrihaikal_ak3u_13121998.pdf</code>)
+          </p>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input type="file" id="fileSertifikatMasal" multiple accept=".pdf, .zip" class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200">
+            <button onclick="uploadSertifikatMasal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-5 py-2.5 rounded-lg font-bold shadow transition whitespace-nowrap flex items-center gap-1.5 justify-center">
+              <i class="fa-solid fa-cloud-arrow-up"></i> Upload & Sync
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. CETAK REKAP ABSENSI PDF A4 -->
       <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-4">
         <h3 class="font-bold text-sm text-emerald-900 border-b pb-2"><i class="fa-solid fa-file-pdf mr-1.5"></i> 3. Cetak Rekapan Kehadiran per Batch Pelatihan (PDF A4)</h3>
         <div class="flex flex-col sm:flex-row gap-2">
@@ -438,6 +441,80 @@
             <i class="fa-solid fa-file-pdf"></i>
             <span>Export Rekapan PDF A4</span>
           </button>
+        </div>
+      </div>
+
+      <!-- 4. DATABASE PESERTA PELATIHAN (MENU BARU) -->
+      <div class="border border-slate-200 p-5 rounded-2xl bg-white space-y-4 shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3 border-slate-100">
+          <div>
+            <h3 class="font-bold text-sm text-emerald-900 flex items-center gap-2">
+              <i class="fa-solid fa-users-gear text-emerald-700"></i>
+              <span>4. Database Peserta Pelatihan</span>
+            </h3>
+            <p class="text-[11px] text-slate-500 mt-0.5">Filter peserta berdasarkan SKP dan Batch Training untuk melihat akun login & progress absensi.</p>
+          </div>
+        </div>
+
+        <!-- FILTER DROPDOWN SKP & BATCH -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <div>
+            <label class="font-bold text-[11px] text-slate-700 block mb-1">Pilih SKP / Master Training</label>
+            <select id="dbFilterSKP" onchange="onSKPFilterChange()" class="w-full p-2 border rounded-lg bg-white text-xs outline-none focus:ring-1 focus:ring-emerald-500 font-medium text-slate-700">
+              <option value="">-- Semua SKP / Master Training --</option>
+              <option value="AK3U">[SKP Ahli K3 Umum] Ahli K3 Umum</option>
+              <option value="P3K">[SKP Kesehatan Kerja] Petugas P3K</option>
+              <option value="TKBT1">[SKP Ketinggian] TKBT 1</option>
+              <option value="TKBT2">[SKP Ketinggian] TKBT 2</option>
+              <option value="TKPK1">[SKP Ketinggian] TKPK 1</option>
+              <option value="TKPK2">[SKP Ketinggian] TKPK 2</option>
+              <option value="TKPK3">[SKP Ketinggian] TKPK 3</option>
+              <option value="PAA_GONDOLA">[SKP Pesawat Angkat Angkut] Gondola</option>
+              <option value="PAA_FORKLIFT">[SKP Pesawat Angkat Angkut] Forklift</option>
+              <option value="PAA_ESKAVATOR">[SKP Pesawat Angkat Angkut] Eskavator</option>
+              <option value="PAA_GRIDER">[SKP Pesawat Angkat Angkut] Grider</option>
+              <option value="LST_TEKNISI">[SKP Listrik] Teknisi K3 Listrik</option>
+              <option value="LST_AHLI">[SKP Listrik] Ahli K3 Listrik</option>
+              <option value="KST_TEKNISI">[SKP Konstruksi] Teknisi Perancah</option>
+              <option value="KST_SUPERVISI">[SKP Konstruksi] Supervisi Perancah</option>
+              <option value="KST_AHLI_UTAMA">[SKP Konstruksi] Ahli Utama K3 Konstruksi</option>
+              <option value="KST_AHLI_MADYA">[SKP Konstruksi] Ahli Madya K3 Konstruksi</option>
+              <option value="KST_AHLI_MUDA">[SKP Konstruksi] Ahli Muda K3 Konstruksi</option>
+              <option value="ELV_OPERATOR">[SKP Elevator] Operator Elevator</option>
+              <option value="ELV_TEKNISI">[SKP Elevator] Teknisi Elevator</option>
+              <option value="B3_TEKNISI">[SKP Bahan Berbahaya] Teknisi Ruang Terbatas</option>
+              <option value="B3_RESCUE">[SKP Bahan Berbahaya] Petugas Rescue Ruang Terbatas</option>
+              <option value="B3_GAS_DETECTOR">[SKP Bahan Berbahaya] Petugas Gas Detector</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="font-bold text-[11px] text-slate-700 block mb-1">Pilih Batch Training</label>
+            <select id="dbFilterBatch" onchange="loadDatabasePeserta()" class="w-full p-2 border rounded-lg bg-white text-xs outline-none focus:ring-1 focus:ring-emerald-500 font-medium text-slate-700">
+              <option value="">-- Semua Batch --</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- TABEL DATABASE PESERTA -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 font-bold text-[11px]">
+                <th class="p-3 w-10 text-center">NO</th>
+                <th class="p-3">NAMA PESERTA / NIK</th>
+                <th class="p-3">AKUN LOGIN (USER & PASS)</th>
+                <th class="p-3">PERUSAHAAN</th>
+                <th class="p-3">BATCH TRAINING</th>
+                <th class="p-3 text-center">PROGRES ABSENSI</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyDatabasePeserta" class="divide-y divide-slate-100 text-slate-600">
+              <tr>
+                <td colspan="6" class="text-center py-4 text-slate-400 italic text-xs">Silakan pilih SKP atau Batch untuk menampilkan data peserta.</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
