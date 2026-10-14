@@ -455,7 +455,7 @@ async function loadBatchOptions() {
   });
 }
 // ----------------------------------------------------
-// IMPORT EXCEL PESERTA MASAL (AUTO PARSE TANGGAL LAHIR)
+// IMPORT EXCEL PESERTA MASAL (AUTO CONVERT TO YYYY-MM-DD)
 // ----------------------------------------------------
 function importExcelPeserta() {
   const selectedBatchId = document.getElementById('importSelectBatch').value;
@@ -469,7 +469,6 @@ function importExcelPeserta() {
   reader.onload = async (e) => {
     try {
       const data = new Uint8Array(e.target.result);
-      // Tambahkan { cellDates: true, raw: false } agar SheetJS mengurai tanggal dengan benar
       const workbook = XLSX.read(data, { type: 'array', cellDates: true, raw: false });
       const sheetName = workbook.SheetNames[0];
       const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
@@ -484,31 +483,46 @@ function importExcelPeserta() {
         const rawNIK = String(r.NIK || r.nik || "-").trim();
         const rawPerusahaan = String(r.Perusahaan || r.perusahaan || r["Nama Perusahaan"] || "PT Mandiri Maha Daya").trim();
 
-        // Evaluasi & Ekstrak Tanggal Lahir menjadi string
+        let formattedDateForDb = ""; // Akan diisi YYYY-MM-DD
+        let cleanDDMMYYYY = "";       // Akan diisi DDMMYYYY untuk ID Sertifikat & Password
+
         if (rawTglLahir instanceof Date) {
           const d = rawTglLahir.getDate().toString().padStart(2, '0');
           const m = (rawTglLahir.getMonth() + 1).toString().padStart(2, '0');
           const y = rawTglLahir.getFullYear();
-          rawTglLahir = `${d}-${m}-${y}`;
+          formattedDateForDb = `${y}-${m}-${d}`;
+          cleanDDMMYYYY = `${d}${m}${y}`;
         } else {
-          rawTglLahir = String(rawTglLahir).trim();
+          const strTgl = String(rawTglLahir).trim();
+          // Ambil digit angka saja
+          const digits = strTgl.replace(/[^0-9]/g, '');
+          
+          if (digits.length === 8) {
+            // Asumsi input Excel: DD-MM-YYYY (contoh: 15101997 -> d=15, m=10, y=1997)
+            const day = digits.substring(0, 2);
+            const month = digits.substring(2, 4);
+            const year = digits.substring(4, 8);
+            
+            formattedDateForDb = `${year}-${month}-${day}`;
+            cleanDDMMYYYY = digits;
+          } else {
+            formattedDateForDb = strTgl; // Fallback jika format tidak dikenali
+            cleanDDMMYYYY = digits;
+          }
         }
 
-        // Ambil hanya digit angka (DDMMYYYY) untuk password & id_sertifikat
-        const cleanTgl = rawTglLahir.replace(/[^0-9]/g, ''); 
-        
-        // Buat username tanpa spasi & huruf kecil
+        // Format Username tanpa spasi & huruf kecil
         const formattedUsername = rawNama.replace(/\s+/g, '').toLowerCase();
         
-        // Format ID Sertifikat: namalengkap_DDMMYYYY
-        const idSertifikat = `${formattedUsername}_${cleanTgl}`;
+        // Format ID Sertifikat: namalengkap_DDMMYYYY (contoh: fikrihaikal_15101997)
+        const idSertifikat = `${formattedUsername}_${cleanDDMMYYYY}`;
 
         return {
           username: formattedUsername,
-          password: cleanTgl,
+          password: cleanDDMMYYYY,
           nama: rawNama,
           nik: rawNIK,
-          tgl_lahir: rawTglLahir, // Menyimpan string tanggal lahir di database
+          tgl_lahir: formattedDateForDb, // Disimpan sebagai YYYY-MM-DD agar diterima Supabase
           perusahaan: rawPerusahaan,
           training_id: selectedBatchId,
           id_sertifikat: idSertifikat,
