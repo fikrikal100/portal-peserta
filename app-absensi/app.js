@@ -515,7 +515,7 @@ function importExcelPeserta() {
 }
 
 // ----------------------------------------------------
-// UPLOAD & SYNC SERTIFIKAT MASAL (MENCATAT KE TABEL certificates)
+// UPLOAD & SYNC SERTIFIKAT MASAL (SUPPORT MULTI-TRAINING)
 // ----------------------------------------------------
 async function uploadSertifikatMasal() {
   const fileInput = document.getElementById('fileSertifikatMasal');
@@ -524,7 +524,7 @@ async function uploadSertifikatMasal() {
 
   let pdfFileList = [];
 
-  // Ambil data peserta dari database untuk pencocokan nama
+  // Ambil data peserta dari database untuk pencocokan nama/username
   const { data: allUsers, error: uErr } = await supabaseClient
     .from('users')
     .select('username, id_sertifikat, nama');
@@ -566,7 +566,7 @@ async function uploadSertifikatMasal() {
     const rawFileName = pdfFile.name.replace(/\.[^/.]+$/, ""); // contoh: fajarshidiqpermana_tkbt1_27091998
     const cleanFileName = cleanStringForMatch(rawFileName);
 
-    // Matching fleksibel berdasarkan namalengkap_DDMMYYYY atau username
+    // Matching fleksibel berdasarkan nama/username
     const matchedUser = allUsers.find(u => {
       const cleanId = cleanStringForMatch(u.id_sertifikat);
       const cleanUsername = cleanStringForMatch(u.username);
@@ -575,6 +575,12 @@ async function uploadSertifikatMasal() {
     });
 
     if (matchedUser) {
+      // Bikin nama judul sertifikat yang rapi dari nama file
+      // Contoh: fajarshidiqpermana_tkbt1_27091998 -> "Sertifikat Pelatihan TKBT1"
+      const nameParts = rawFileName.split('_');
+      let kodeTrainingDisplay = nameParts.length >= 2 ? nameParts[1].toUpperCase() : rawFileName.toUpperCase();
+      let judulSertifikat = `Sertifikat Pelatihan K3 - ${kodeTrainingDisplay}`;
+
       const storagePath = `${matchedUser.username}_${Date.now()}_${pdfFile.name.replace(/\s+/g, '_')}`;
       
       // 1. Upload file ke Storage Bucket 'sertifikat'
@@ -587,13 +593,13 @@ async function uploadSertifikatMasal() {
           .from('sertifikat')
           .getPublicUrl(storagePath);
 
-        // 2. Simpan baris baru ke tabel 'certificates' (Bisa menampung banyak sertifikat)
+        // 2. Simpan baris baru ke tabel 'certificates'
         const { error: insertErr } = await supabaseClient
           .from('certificates')
           .insert([{
             username: matchedUser.username,
-            training_id: rawFileName,
-            nama_sertifikat: `Sertifikat K3 - ${rawFileName.toUpperCase()}`,
+            training_id: kodeTrainingDisplay,
+            nama_sertifikat: judulSertifikat,
             url_sertifikat: urlData.publicUrl
           }]);
 
@@ -618,7 +624,6 @@ async function uploadSertifikatMasal() {
   alert(pesanHasil);
   fileInput.value = '';
 }
-
 // ----------------------------------------------------
 // 9. EXPORT REKAP ABSENSI PDF A4
 // ----------------------------------------------------
