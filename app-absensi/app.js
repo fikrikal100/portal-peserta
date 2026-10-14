@@ -470,31 +470,117 @@ function importExcelPeserta() {
   reader.readAsArrayBuffer(file);
 }
 
+// ----------------------------------------------------
+// HELPER: CLEAN STRING UNTUK SINKRONISASI NAMA FILE
+// ----------------------------------------------------
+function cleanStringForMatch(str) {
+  if (!str) return '';
+  return str.toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+// ----------------------------------------------------
+// UPLOAD & SYNC SERTIFIKAT (PDF / ZIP MASAL)
+// ----------------------------------------------------
 async function uploadSertifikatMasal() {
   const fileInput = document.getElementById('fileSertifikatMasal');
   const files = fileInput.files;
-  if (!files.length) return alert("Pilih minimal 1 file PDF sertifikat!");
+  if (!files.length) return alert("Pilih file PDF atau file .ZIP sertifikat lebih dulu!");
 
-  let sukses = 0;
+  let pdfFileList = [];
+
+  // 1. Ambil seluruh data peserta dari Supabase untuk pencocokan
+  const { data: allUsers, error: uErr } = await supabaseClient
+    .from('users')
+    .select('username, id_sertifikat, nama, password');
+
+  if (uErr || !allUsers) {
+    return alert("Gagal mengambil data peserta dari database: " + (uErr ? uErr.message : 'Data kosong'));
+  }
+
+  // 2. Jika file yang diunggah adalah ZIP, ekstrak isi PDF di dalamnya
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
-    const filenameWithoutExt = file.name.replace(/\.[^/.]+$/, "").toLowerCase();
-
-    const { data: uploadData, error: uploadErr } = await supabaseClient.storage
-      .from('sertifikat')
-      .upload(`public/${file.name}`, file, { upsert: true });
-
-    if (!uploadErr) {
-      const { data: urlData } = supabaseClient.storage.from('sertifikat').getPublicUrl(`public/${file.name}`);
-      
-      await supabaseClient.from('users')
-        .update({ url_sertifikat: urlData.publicUrl })
-        .eq('id_sertifikat', filenameWithoutExt);
-
-      sukses++;
+    if (file.name.endsWith('.zip')) {
+      try {
+        const zip = await JSZip.loadAsync(file);
+        for (const relativePath in zip.files) {
+          const zipEntry = zip.files[relativePath];
+          if (!zipEntry.dir && relativePath.toLowerCase().endsWith('.pdf')) {
+            const blob = await zipEntry.async('blob');
+            const cleanName = relativePath.split('/').pop();
+            pdfFileList.push(new File([blob], cleanName, { type: 'application/pdf' }));
+          }
+        }
+      } catch (e) {
+        alert("Gagal mengurai file ZIP: " + e.message);
+      }
+    } else if (file.name.toLowerCase().endsWith('.pdf')) {
+      pdfFileList.push(file);
     }
   }
-  alert(`Selesai memproses ${sukses} dari ${files.length} sertifikat!`);
+
+  if (pdfFileList.length === 0) {
+    return alert("Tidak ditemukan file PDF sertifikat yang valid!");
+  }
+
+  let sukses = 0;
+  let gagalLog = [];
+
+  // 3. Proses Upload & Sync masing-masing PDF
+  for (const pdfFile of pdfFileList) {
+    // Normalisasi nama file (hapus ekstensi .pdf & karakter khusus)
+    const rawFileName = pdfFile.name.replace(/\.[^/.]+$/, "");
+    const cleanFileName = cleanStringForMatch(rawFileName);
+
+    // Cari peserta yang id_sertifikat, username, atau kombinasi nama+password cocok
+    const matchedUser = allUsers.find(u => {
+      const cleanId = cleanStringForMatch(u.id_sertifikat);
+      const cleanUsername = cleanStringForMatch(u.username);
+      const cleanNamaPass = cleanStringForMatch(`${u.nama}${u.password}`);
+      
+      return (cleanId && cleanFileName.includes(cleanId)) ||
+             (cleanUsername && cleanFileName.includes(cleanUsername)) ||
+             (cleanNamaPass && cleanFileName.includes(cleanNamaPass));
+    });
+
+    if (matchedUser) {
+      // Upload file PDF ke Bucket Supabase Storage 'sertifikat'
+      const storagePath = `public/${Date.now()}_${pdfFile.name.replace(/\s+/g, '_')}`;
+      const { error: uploadErr } = await supabaseClient.storage
+        .from('sertifikat')
+        .upload(storagePath, pdfFile, { upsert: true });
+
+      if (!uploadErr) {
+        const { data: urlData } = supabaseClient.storage
+          .from('sertifikat')
+          .getPublicUrl(storagePath);
+
+        // Update URL sertifikat pada data peserta di Supabase
+        const { error: updateErr } = await supabaseClient
+          .from('users')
+          .update({ url_sertifikat: urlData.publicUrl })
+          .eq('username', matchedUser.username);
+
+        if (!updateErr) {
+          sukses++;
+        } else {
+          gagalLog.push(`${pdfFile.name} (Gagal update database)`);
+        }
+      } else {
+        gagalLog.push(`${pdfFile.name} (Gagal upload storage: ${uploadErr.message})`);
+      }
+    } else {
+      gagalLog.push(`${pdfFile.name} (Peserta tidak ditemukan di database)`);
+    }
+  }
+
+  let pesanHasil = `✅ Selesai memproses ${sukses} dari ${pdfFileList.length} sertifikat!`;
+  if (gagalLog.length > 0) {
+    pesanHasil += `\n\nDetail kendala (${gagalLog.length} file):\n- ` + gagalLog.join('\n- ');
+  }
+
+  alert(pesanHasil);
+  fileInput.value = '';
 }
 
 // ----------------------------------------------------
