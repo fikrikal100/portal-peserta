@@ -461,7 +461,6 @@ function importExcelPeserta() {
         const rawPerusahaan = String(r.Perusahaan || r.perusahaan || r["Nama Perusahaan"] || "PT Mandiri Maha Daya").trim();
 
         // Bersihkan tanggal lahir ke format DDMMYYYY untuk password & id_sertifikat
-        // Contoh input Excel: "13-12-1998" -> "13121998"
         const cleanTgl = rawTglLahir.replace(/[^0-9]/g, ''); 
         
         // Buat username tanpa spasi & huruf kecil
@@ -476,7 +475,7 @@ function importExcelPeserta() {
           nama: rawNama,
           nik: rawNIK,
           perusahaan: rawPerusahaan,
-          training_id: selectedBatchId, // Menggunakan Batch Pelatihan yang dipilih dari Dropdown
+          training_id: selectedBatchId, // Batch Pelatihan dari Dropdown
           id_sertifikat: idSertifikat,
           role: 'peserta'
         };
@@ -544,49 +543,6 @@ async function simpanPesertaManual() {
 }
 
 // ----------------------------------------------------
-// 8. IMPORT EXCEL
-// ----------------------------------------------------
-function importExcelPeserta() {
-  const fileInput = document.getElementById('fileExcelPeserta');
-  const file = fileInput.files[0];
-  if (!file) return alert("Pilih file Excel lebih dulu!");
-
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    try {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const sheetName = workbook.SheetNames[0];
-      const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-
-      const usersToInsert = rows.map(r => {
-        const formattedUsername = String(r.Nama).replace(/\s+/g, '').toLowerCase();
-        const idSertifikat = `${formattedUsername}_${String(r.TanggalLahir).replace(/[^0-9]/g, '')}`;
-
-        return {
-          username: formattedUsername,
-          password: String(r.TanggalLahir),
-          nama: r.Nama,
-          nik: r.NIK ? String(r.NIK) : '-',
-          perusahaan: r.Perusahaan || 'PT Mandiri Maha Daya',
-          training_id: r.KodeTraining,
-          id_sertifikat: idSertifikat,
-          role: 'peserta'
-        };
-      });
-
-      const { error } = await supabaseClient.from('users').upsert(usersToInsert);
-      if (error) alert("Gagal import: " + error.message);
-      else alert(`Berhasil mengimpor ${usersToInsert.length} akun peserta!`);
-
-    } catch (err) {
-      alert("Gagal membaca file Excel: " + err.message);
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-// ----------------------------------------------------
 // UPLOAD & SYNC SERTIFIKAT MASAL (SUPPORT MULTI-TRAINING)
 // ----------------------------------------------------
 async function uploadSertifikatMasal() {
@@ -596,7 +552,6 @@ async function uploadSertifikatMasal() {
 
   let pdfFileList = [];
 
-  // Ambil data peserta dari database untuk pencocokan nama/username
   const { data: allUsers, error: uErr } = await supabaseClient
     .from('users')
     .select('username, id_sertifikat, nama');
@@ -605,7 +560,6 @@ async function uploadSertifikatMasal() {
     return alert("Gagal mengambil data peserta dari database: " + (uErr ? uErr.message : 'Data kosong'));
   }
 
-  // Ekstraksi jika memilih file ZIP
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     if (file.name.toLowerCase().endsWith('.zip')) {
@@ -638,7 +592,6 @@ async function uploadSertifikatMasal() {
     const rawFileName = pdfFile.name.replace(/\.[^/.]+$/, ""); // contoh: fikrihaikal_tkbt1_13121998
     const cleanFileName = cleanStringForMatch(rawFileName);
 
-    // Matching fleksibel berdasarkan nama/username
     const matchedUser = allUsers.find(u => {
       const cleanId = cleanStringForMatch(u.id_sertifikat);
       const cleanUsername = cleanStringForMatch(u.username);
@@ -647,15 +600,12 @@ async function uploadSertifikatMasal() {
     });
 
     if (matchedUser) {
-      // Bikin nama judul sertifikat yang rapi dari nama file
-      // Contoh: fikrihaikal_tkbt1_13121998 -> "Sertifikat Pelatihan TKBT2"
       const nameParts = rawFileName.split('_');
       let kodeTrainingDisplay = nameParts.length >= 2 ? nameParts[1].toUpperCase() : rawFileName.toUpperCase();
       let judulSertifikat = `Sertifikat Pelatihan K3 - ${kodeTrainingDisplay}`;
 
       const storagePath = `${matchedUser.username}_${Date.now()}_${pdfFile.name.replace(/\s+/g, '_')}`;
       
-      // 1. Upload file ke Storage Bucket 'sertifikat'
       const { error: uploadErr } = await supabaseClient.storage
         .from('sertifikat')
         .upload(storagePath, pdfFile, { upsert: true });
@@ -665,7 +615,6 @@ async function uploadSertifikatMasal() {
           .from('sertifikat')
           .getPublicUrl(storagePath);
 
-        // 2. Simpan baris baru ke tabel 'certificates'
         const { error: insertErr } = await supabaseClient
           .from('certificates')
           .insert([{
@@ -696,6 +645,7 @@ async function uploadSertifikatMasal() {
   alert(pesanHasil);
   fileInput.value = '';
 }
+
 // ----------------------------------------------------
 // 9. EXPORT REKAP ABSENSI PDF A4
 // ----------------------------------------------------
