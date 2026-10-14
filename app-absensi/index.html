@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Pelatihan K3 - PT Mandiri Maha Daya</title>
+  
+  <!-- CSS Frameworks & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Supabase & XLSX Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root {
+      --mmd-green: #0F753D;
+      --mmd-green-dark: #094725;
+      --mmd-red: #E31E24;
+      --mmd-yellow: #F59E0B;
+      --mmd-dark: #0F172A;
+      --mmd-bg: #F1F5F9;
+    }
+
+    body {
+      background-color: var(--mmd-bg);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: var(--mmd-dark);
+    }
+
+    .app-card {
+      background: #ffffff;
+      border-radius: 20px;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 10px 30px rgba(15, 117, 61, 0.08);
+      overflow: hidden;
+    }
+
+    .brand-header {
+      background: linear-gradient(135deg, var(--mmd-green) 0%, var(--mmd-green-dark) 100%);
+      color: white;
+      padding: 28px 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    .logo-container {
+      background: white;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+      padding: 6px;
+    }
+
+    .logo-img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .k3-banner {
+      background: linear-gradient(rgba(15, 117, 61, 0.85), rgba(9, 71, 37, 0.9)), url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80');
+      background-size: cover;
+      background-position: center;
+      color: white;
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    .btn-mmd {
+      background-color: var(--mmd-green);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      padding: 12px 20px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-mmd:hover {
+      background-color: var(--mmd-green-dark);
+      color: white;
+      transform: translateY(-1px);
+    }
+
+    .btn-menu {
+      height: 100px;
+      border-radius: 16px;
+      border: 1px solid #E2E8F0;
+      background: white;
+      font-weight: 600;
+      color: var(--mmd-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s;
+    }
+
+    .btn-menu:hover {
+      border-color: var(--mmd-green);
+      background: #F0FDF4;
+      color: var(--mmd-green);
+      transform: translateY(-2px);
+    }
+
+    .btn-menu i {
+      font-size: 1.8rem;
+      color: var(--mmd-green);
+    }
+
+    .camera-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #000;
+      border: 3px solid var(--mmd-green);
+      min-height: 260px;
+    }
+
+    #videoElement, #canvasElement {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .badge-today {
+      background-color: #FEF2F2;
+      color: var(--mmd-red);
+      border: 1px solid #FCA5A5;
+      font-weight: 600;
+    }
+
+    .k3-badge {
+      background-color: #FEF3C7;
+      color: #92400E;
+      font-weight: 600;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container py-4" style="max-width: 520px;">
+
+  <!-- LOGIN SECTION -->
+  <div id="sectionLogin" class="app-card">
+    <div class="brand-header">
+      <div class="logo-container">
+        <img src="https://images.weserv.nl/?url=mandirimahadaya.co.id/wp-content/uploads/2021/04/logo-mmd.png" alt="Mandiri Maha Daya" class="logo-img">
+      </div>
+      <h5 class="fw-bold mb-1">PT MANDIRI MAHA DAYA</h5>
+      <p class="small text-white-50 mb-0"><i class="bi bi-shield-check text-warning"></i> Portal Pelatihan & Sertifikasi K3</p>
+    </div>
+    
+    <div class="p-4">
+      <div id="loginAlert"></div>
+      <div class="mb-3">
+        <label class="form-label fw-bold text-secondary small">USERNAME</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+          <input type="text" id="loginUser" class="form-control" placeholder="Masukkan username">
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="form-label fw-bold text-secondary small">PASSWORD</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
+          <input type="password" id="loginPass" class="form-control" placeholder="Masukkan password">
+        </div>
+      </div>
+      <button class="btn btn-mmd w-100 py-2" onclick="doLogin()">Masuk Portal</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD PESERTA -->
+  <div id="sectionDashboard" class="d-none">
+    
+    <!-- Profile Banner K3 -->
+    <div class="k3-banner shadow-sm mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+          <span class="k3-badge mb-1 d-inline-block"><i class="bi bi-shield-fill-check"></i> Peserta Terdaftar</span>
+          <h5 class="mb-0 fw-bold" id="profNama">-</h5>
+        </div>
+        <button class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="logout()"><i class="bi bi-box-arrow-right"></i> Keluar</button>
+      </div>
+      <hr class="my-2" style="border-color: rgba(255,255,255,0.2);">
+      <div class="small opacity-90">
+        <div><i class="bi bi-building me-1"></i> <span id="profPerusahaan">-</span></div>
+        <div><i class="bi bi-journal-bookmark me-1"></i> <span id="profTraining">-</span></div>
+        <div><i class="bi bi-calendar-event me-1"></i> <span id="profJadwal">-</span></div>
+      </div>
+    </div>
+
+    <!-- Main Menu -->
+    <div id="menuGrid" class="row g-3 mb-4">
+      <div class="col-6">
+        <button class="btn btn-menu w-100 shadow-sm" onclick="showAbsenList()">
+          <i class="bi bi-camera-fill"></i>
+          <span>Absensi Pelatihan</span>
+        </button>
+      </div>
+      <div class="col-6">
+        <button class="btn btn-menu w-100 shadow-sm" onclick="alert('Menu Modul Pelatihan belum dibuka.')">
+          <i class="bi bi-journal-richtext"></i>
+          <span>Modul Materi K3</span>
+        </button>
+      </div>
+      <div class="col-6">
+        <button class="btn btn-menu w-100 shadow-sm" onclick="alert('Sertifikat belum terbit.')">
+          <i class="bi bi-award-fill"></i>
+          <span>Cek Sertifikat</span>
+        </button>
+      </div>
+      <div class="col-6 d-none" id="adminMenuCol">
+        <button class="btn btn-menu w-100 shadow-sm text-danger" onclick="showAdminImport()">
+          <i class="bi bi-file-earmark-excel-fill text-danger"></i>
+          <span>Import Excel</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- SUB-SECTION: LIST ABSENSI HARI -->
+    <div id="sectionAbsenList" class="app-card p-3 d-none">
+      <div class="d-flex align-items-center mb-3">
+        <button class="btn btn-sm btn-light me-2 rounded-circle" onclick="backToMenu()"><i class="bi bi-arrow-left"></i></button>
+        <h6 class="mb-0 fw-bold">Jadwal Kehadiran Training</h6>
+      </div>
+      <div id="daysContainer"></div>
+    </div>
+
+    <!-- SUB-SECTION: KAMERA ABSEN -->
+    <div id="sectionKamera" class="app-card p-3 d-none text-center">
+      <h6 class="fw-bold mb-1" id="kameraTitle">Absensi Foto Selfie</h6>
+      <p class="text-muted small mb-2" id="kameraSubtitle"></p>
+      
+      <div id="gpsStatus" class="alert alert-light border p-2 small mb-2 text-muted">
+        <i class="bi bi-geo-alt"></i> Mendeteksi Lokasi...
+      </div>
+
+      <div class="camera-wrapper my-2">
+        <video id="videoElement" autoplay playsinline muted></video>
+        <canvas id="canvasElement" class="d-none"></canvas>
+      </div>
+
+      <div id="kameraAlert" class="mt-2"></div>
+
+      <div class="d-flex justify-content-center gap-2 mt-3">
+        <button class="btn btn-light" onclick="cancelKamera()">Batal</button>
+        <button class="btn btn-mmd" id="btnSnap" onclick="takeSnapshot()">Ambil Foto</button>
+        <button class="btn btn-warning d-none" id="btnRetake" onclick="retakePhoto()">Foto Ulang</button>
+        <button class="btn btn-success d-none" id="btnSubmitPhoto" onclick="sendAbsenceData()">Kirim Absensi</button>
+      </div>
+    </div>
+
+    <!-- SUB-SECTION: ADMIN IMPORT EXCEL -->
+    <div id="sectionAdmin" class="app-card p-3 d-none">
+      <div class="d-flex align-items-center mb-3">
+        <button class="btn btn-sm btn-light me-2 rounded-circle" onclick="backToMenu()"><i class="bi bi-arrow-left"></i></button>
+        <h6 class="mb-0 fw-bold">Import Data Peserta Masal (Excel)</h6>
+      </div>
+
+      <p class="small text-muted mb-2">Unggah file Excel (.xlsx) dengan susunan kolom: <code>username</code>, <code>password</code>, <code>nama</code>, <code>tgl_lahir</code> (YYYY-MM-DD), <code>perusahaan</code>, <code>training_id</code>.</p>
+      
+      <div class="mb-3">
+        <input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls, .csv">
+      </div>
+      <button class="btn btn-success w-100" onclick="processExcelImport()"><i class="bi bi-upload"></i> Proses Import Peserta</button>
+
+      <div id="importAlert" class="mt-3"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  // CONFIG SUPABASE (GANTI SESUAI PROJECT KAMU)
+  const SUPABASE_URL = "https://bxgzkfvqwkzbnikvvjhp.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4Z3prZnZxd2t6Ym5pa3Z2amhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5MjQ1NjMsImV4cCI6MjEwNzUwMDU2M30.mSC45wlyGiP2V6UpCTeIJWZs9HVu7Z4ZaqucUFqDqDg";
+  
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let AppState = {
+    user: null,
+    training: null,
+    daysList: [],
+    logAbsen: [],
+    selectedHari: null,
+    selectedSesi: null,
+    stream: null,
+    currentLocationStr: "Mencari lokasi...",
+    capturedBlob: null
+  };
+
+  async function doLogin() {
+    let u = document.getElementById('loginUser').value.trim();
+    let p = document.getElementById('loginPass').value.trim();
+    if(!u || !p) return alert('Isi username dan password!');
+
+    document.getElementById('loginAlert').innerHTML = '<div class="alert alert-info py-2 small">Memeriksa kredensial...</div>';
+
+    let { data: user, error } = await db.from('users').select('*').eq('username', u).eq('password', p).single();
+
+    if (error || !user) {
+      document.getElementById('loginAlert').innerHTML = `<div class="alert alert-danger py-2 small">Username atau password salah!</div>`;
+      return;
+    }
+
+    AppState.user = user;
+
+    // Load Data Training Peserta
+    if(user.training_id) {
+      let { data: tr } = await db.from('trainings').select('*').eq('id', user.training_id).single();
+      AppState.training = tr;
+    }
+
+    // Tampilkan Menu Admin Jika Role Admin
+    if(user.role === 'admin') {
+      document.getElementById('adminMenuCol').classList.remove('d-none');
+    }
+
+    // Load Log Absen
+    await loadUserLogs();
+
+    document.getElementById('sectionLogin').classList.add('d-none');
+    document.getElementById('sectionDashboard').classList.remove('d-none');
+    renderProfile();
+  }
+
+  async function loadUserLogs() {
+    let { data: logs } = await db.from('log_absensi').select('*').eq('username', AppState.user.username);
+    AppState.logAbsen = logs || [];
+  }
+
+  function renderProfile() {
+    document.getElementById('profNama').innerText = AppState.user.nama;
+    document.getElementById('profPerusahaan').innerText = AppState.user.perusahaan || '-';
+    document.getElementById('profTraining').innerText = AppState.training ? AppState.training.judul : 'Tidak Ada Training';
+    document.getElementById('profJadwal').innerText = AppState.training ? `${AppState.training.tgl_mulai} s/d ${AppState.training.tgl_selesai}` : '-';
+  }
+
+  function showAbsenList() {
+    if(!AppState.training) return alert('Data training tidak ditemukan!');
+    document.getElementById('menuGrid').classList.add('d-none');
+    document.getElementById('sectionAbsenList').classList.remove('d-none');
+    generateDaysList();
+    renderDays();
+  }
+
+  function backToMenu() {
+    document.getElementById('sectionAbsenList').classList.add('d-none');
+    document.getElementById('sectionAdmin').classList.add('d-none');
+    document.getElementById('menuGrid').classList.remove('d-none');
+  }
+
+  function generateDaysList() {
+    let start = new Date(AppState.training.tgl_mulai);
+    let end = new Date(AppState.training.tgl_selesai);
+    let todayStr = new Date().toISOString().split('T')[0];
+
+    AppState.daysList = [];
+    let current = new Date(start);
+    let dayNum = 1;
+
+    while (current <= end) {
+      let currStr = current.toISOString().split('T')[0];
+      AppState.daysList.push({
+        hariKe: dayNum,
+        tanggal: currStr,
+        isToday: (currStr === todayStr)
+      });
+      current.setDate(current.getDate() + 1);
+      dayNum++;
+    }
+  }
+
+  function renderDays() {
+    let container = document.getElementById('daysContainer');
+    container.innerHTML = '';
+
+    let currentHour = new Date().getHours();
+
+    AppState.daysList.forEach(day => {
+      let isToday = day.isToday;
+      let activePagi = isToday && (currentHour >= 8 && currentHour < 12);
+      let activeSore = isToday && (currentHour >= 12 && currentHour < 17);
+
+      let isDonePagi = AppState.logAbsen.some(l => l.hari_ke == day.hariKe && l.sesi == 'Pagi');
+      let isDoneSore = AppState.logAbsen.some(l => l.hari_ke == day.hariKe && l.sesi == 'Sore');
+
+      let html = `
+        <div class="border rounded-3 p-3 mb-3 bg-white">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-bold small">Hari ke-${day.hariKe} (${day.tanggal})</span>
+            ${isToday ? '<span class="badge badge-today px-2 py-1">HARI INI</span>' : ''}
+          </div>
+          <div class="row g-2">
+            <div class="col-6">
+              <button class="btn btn-sm w-100 ${isDonePagi ? 'btn-success' : (activePagi ? 'btn-outline-success' : 'btn-light text-muted')}" 
+                      ${(!activePagi || isDonePagi) ? 'disabled' : ''} 
+                      onclick="startAbsen(${day.hariKe}, 'Pagi')">
+                ${isDonePagi ? '<i class="bi bi-check-circle-fill"></i> Pagi' : 'Absen Pagi (08-12)'}
+              </button>
+            </div>
+            <div class="col-6">
+              <button class="btn btn-sm w-100 ${isDoneSore ? 'btn-success' : (activeSore ? 'btn-outline-success' : 'btn-light text-muted')}" 
+                      ${(!activeSore || isDoneSore) ? 'disabled' : ''} 
+                      onclick="startAbsen(${day.hariKe}, 'Sore')">
+                ${isDoneSore ? '<i class="bi bi-check-circle-fill"></i> Sore' : 'Absen Sore (12-17)'}
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.innerHTML += html;
+    });
+  }
+
+  function startAbsen(hariKe, sesi) {
+    AppState.selectedHari = hariKe;
+    AppState.selectedSesi = sesi;
+
+    document.getElementById('sectionAbsenList').classList.add('d-none');
+    document.getElementById('sectionKamera').classList.remove('d-none');
+    document.getElementById('kameraSubtitle').innerText = `Hari Ke-${hariKe} | Sesi ${sesi}`;
+
+    document.getElementById('videoElement').classList.remove('d-none');
+    document.getElementById('canvasElement').classList.add('d-none');
+    document.getElementById('btnSnap').classList.remove('d-none');
+    document.getElementById('btnRetake').classList.add('d-none');
+    document.getElementById('btnSubmitPhoto').classList.add('d-none');
+
+    getLocationGPS();
+    openLiveCamera();
+  }
+
+  function openLiveCamera() {
+    let video = document.getElementById('videoElement');
+
+    if (AppState.stream) {
+      AppState.stream.getTracks().forEach(track => track.stop());
+    }
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
+      .then(stream => {
+        AppState.stream = stream;
+        video.srcObject = stream;
+        video.play();
+      })
+      .catch(err => {
+        navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+          .then(stream => {
+            AppState.stream = stream;
+            video.srcObject = stream;
+            video.play();
+          })
+          .catch(e => alert("Gagal membuka kamera: Pastikan izin kamera telah disetujui."));
+      });
+  }
+
+  function getLocationGPS() {
+    let gpsBox = document.getElementById('gpsStatus');
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          let lat = pos.coords.latitude.toFixed(5);
+          let lng = pos.coords.longitude.toFixed(5);
+          AppState.currentLocationStr = `Lat: ${lat}, Lng: ${lng}`;
+          gpsBox.className = "alert alert-success py-1 small mb-2";
+          gpsBox.innerHTML = `<i class="bi bi-geo-alt-fill"></i> Lokasi: ${AppState.currentLocationStr}`;
+        },
+        () => {
+          AppState.currentLocationStr = "GPS Tidak Aktif";
+          gpsBox.className = "alert alert-light border py-1 small mb-2 text-muted";
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    }
+  }
+
+  function takeSnapshot() {
+    let video = document.getElementById('videoElement');
+    let canvas = document.getElementById('canvasElement');
+    let context = canvas.getContext('2d');
+
+    let w = video.videoWidth || 640;
+    let h = video.videoHeight || 480;
+
+    canvas.width = w;
+    canvas.height = h;
+
+    context.drawImage(video, 0, 0, w, h);
+
+    // Watermark
+    let now = new Date();
+    let timeStr = now.toLocaleDateString('id-ID') + ' ' + now.toLocaleTimeString('id-ID');
+    
+    context.fillStyle = "rgba(0, 0, 0, 0.7)";
+    context.fillRect(0, h - 65, w, 65);
+
+    context.fillStyle = "#ffffff";
+    context.font = "bold 13px sans-serif";
+    context.fillText(`${AppState.user.nama} (${AppState.user.username})`, 12, h - 42);
+    context.font = "12px sans-serif";
+    context.fillText(`Hari-${AppState.selectedHari} ${AppState.selectedSesi} | ${timeStr}`, 12, h - 25);
+    context.fillText(`Loc: ${AppState.currentLocationStr}`, 12, h - 8);
+
+    canvas.toBlob((blob) => { AppState.capturedBlob = blob; }, 'image/jpeg', 0.85);
+
+    video.classList.add('d-none');
+    canvas.classList.remove('d-none');
+    document.getElementById('btnSnap').classList.add('d-none');
+    document.getElementById('btnRetake').classList.remove('d-none');
+    document.getElementById('btnSubmitPhoto').classList.remove('d-none');
+  }
+
+  function retakePhoto() {
+    document.getElementById('canvasElement').classList.add('d-none');
+    document.getElementById('videoElement').classList.remove('d-none');
+    document.getElementById('btnSnap').classList.remove('d-none');
+    document.getElementById('btnRetake').classList.add('d-none');
+    document.getElementById('btnSubmitPhoto').classList.add('d-none');
+  }
+
+  async function sendAbsenceData() {
+    document.getElementById('kameraAlert').innerHTML = '<div class="alert alert-info py-2 small">Menyimpan data & upload foto...</div>';
+    document.getElementById('btnSubmitPhoto').disabled = true;
+
+    try {
+      // 1. Upload Foto ke Supabase Storage
+      let fileName = `${AppState.user.username}_H${AppState.selectedHari}_${AppState.selectedSesi}_${Date.now()}.jpg`;
+      let { data: uploadData, error: uploadErr } = await db.storage.from('foto-absensi').upload(fileName, AppState.capturedBlob);
+
+      if (uploadErr) throw uploadErr;
+
+      let photoUrl = `${SUPABASE_URL}/storage/v1/object/public/foto-absensi/${fileName}`;
+
+      // 2. Insert Ke Tabel log_absensi
+      let { error: insertErr } = await db.from('log_absensi').insert([{
+        username: AppState.user.username,
+        training_id: AppState.user.training_id,
+        hari_ke: AppState.selectedHari,
+        sesi: AppState.selectedSesi,
+        foto_url: photoUrl,
+        lokasi_gps: AppState.currentLocationStr
+      }]);
+
+      if (insertErr) throw insertErr;
+
+      alert("Absensi Berhasil Disimpan!");
+      await loadUserLogs();
+      cancelKamera();
+      showAbsenList();
+
+    } catch(err) {
+      document.getElementById('kameraAlert').innerHTML = `<div class="alert alert-danger py-2 small">Gagal menyimpan: ${err.message}</div>`;
+    } finally {
+      document.getElementById('btnSubmitPhoto').disabled = false;
+    }
+  }
+
+  function cancelKamera() {
+    if(AppState.stream) AppState.stream.getTracks().forEach(track => track.stop());
+    document.getElementById('sectionKamera').classList.add('d-none');
+    document.getElementById('sectionAbsenList').classList.remove('d-none');
+  }
+
+  // --- FEATURE: IMPORT EXCEL ---
+  function showAdminImport() {
+    document.getElementById('menuGrid').classList.add('d-none');
+    document.getElementById('sectionAdmin').classList.remove('d-none');
+  }
+
+  function processExcelImport() {
+    let fileInput = document.getElementById('excelFile');
+    if(!fileInput.files.length) return alert('Pilih file Excel terlebih dahulu!');
+
+    let reader = new FileReader();
+    reader.onload = async function(e) {
+      let data = new Uint8Array(e.target.result);
+      let workbook = XLSX.read(data, { type: 'array' });
+      let firstSheet = workbook.SheetNames[0];
+      let rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
+
+      document.getElementById('importAlert').innerHTML = '<div class="alert alert-info py-2 small">Memproses import...</div>';
+
+      try {
+        let { error } = await db.from('users').upsert(rows);
+        if(error) throw error;
+
+        document.getElementById('importAlert').innerHTML = `<div class="alert alert-success py-2 small">Berhasil mengimpor ${rows.length} data peserta!</div>`;
+        fileInput.value = '';
+      } catch(err) {
+        document.getElementById('importAlert').innerHTML = `<div class="alert alert-danger py-2 small">Gagal import: ${err.message}</div>`;
+      }
+    };
+    reader.readAsArrayBuffer(fileInput.files[0]);
+  }
+
+  function logout() {
+    location.reload();
+  }
+</script>
+</body>
+</html>
