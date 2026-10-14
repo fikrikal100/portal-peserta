@@ -382,11 +382,19 @@ async function loadBatchOptions() {
 }
 
 // ----------------------------------------------------
-// 7. INPUT PESERTA MANUAL
+// HELPER: CLEAN STRING
+// ----------------------------------------------------
+function cleanStringForMatch(str) {
+  if (!str) return '';
+  return str.toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+// ----------------------------------------------------
+// 7. INPUT PESERTA MANUAL (KUNCI FORMAT DDMMYYYY)
 // ----------------------------------------------------
 async function simpanPesertaManual() {
   const nama = document.getElementById('manualNama').value.trim();
-  const tglLahirRaw = document.getElementById('manualTglLahir').value;
+  const tglLahirRaw = document.getElementById('manualTglLahir').value; // Format input HTML: YYYY-MM-DD
   const nik = document.getElementById('manualNIK').value.trim();
   const perusahaan = document.getElementById('manualPerusahaan').value.trim();
   const trainingId = document.getElementById('manualSelectBatch').value;
@@ -395,14 +403,19 @@ async function simpanPesertaManual() {
     return alert("Harap lengkapi Nama, Tanggal Lahir, dan Pilih Batch Pelatihan!");
   }
 
-  const parts = tglLahirRaw.split('-');
-  const formattedPassword = `${parts[2]}${parts[1]}${parts[0]}`;
+  // Format Tanggal ke DDMMYYYY (contoh: 1998-09-27 -> 27091998)
+  const parts = tglLahirRaw.split('-'); // [YYYY, MM, DD]
+  const formattedDDMMYYYY = `${parts[2]}${parts[1]}${parts[0]}`;
+  
+  // Format Username (tanpa spasi, huruf kecil)
   const formattedUsername = nama.replace(/\s+/g, '').toLowerCase();
-  const idSertifikat = `${formattedUsername}_${formattedPassword}`;
+
+  // Kunci ID Sertifikat: namalengkap_DDMMYYYY (contoh: fajarshidiqpermana_27091998)
+  const idSertifikat = `${formattedUsername}_${formattedDDMMYYYY}`;
 
   const userObject = {
     username: formattedUsername,
-    password: formattedPassword,
+    password: formattedDDMMYYYY,
     nama: nama,
     nik: nik || '-',
     tgl_lahir: tglLahirRaw,
@@ -417,7 +430,7 @@ async function simpanPesertaManual() {
   if (error) {
     alert("Gagal menambahkan peserta: " + error.message);
   } else {
-    alert(`✅ Peserta Berhasil Ditambahkan!\n\nUsername: ${formattedUsername}\nPassword: ${formattedPassword}\nID Sertifikat: ${idSertifikat}`);
+    alert(`✅ Peserta Berhasil Ditambahkan!\n\nUsername: ${formattedUsername}\nPassword: ${formattedDDMMYYYY}\nID Sertifikat: ${idSertifikat}`);
     
     document.getElementById('manualNama').value = '';
     document.getElementById('manualTglLahir').value = '';
@@ -427,6 +440,103 @@ async function simpanPesertaManual() {
   }
 }
 
+// ----------------------------------------------------
+// UPLOAD & SYNC SERTIFIKAT (PRESISI MATCHING DDMMYYYY)
+// ----------------------------------------------------
+async function uploadSertifikatMasal() {
+  const fileInput = document.getElementById('fileSertifikatMasal');
+  const files = fileInput.files;
+  if (!files.length) return alert("Pilih file PDF atau file .ZIP sertifikat lebih dulu!");
+
+  let pdfFileList = [];
+
+  // Ambil semua peserta untuk dicocokkan berdasarkan id_sertifikat (namalengkap_DDMMYYYY)
+  const { data: allUsers, error: uErr } = await supabaseClient
+    .from('users')
+    .select('username, id_sertifikat, nama');
+
+  if (uErr || !allUsers) {
+    return alert("Gagal mengambil data peserta dari database: " + (uErr ? uErr.message : 'Data kosong'));
+  }
+
+  // Ekstraksi jika memilih file ZIP / RAR
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (file.name.toLowerCase().endsWith('.zip')) {
+      try {
+        const zip = await JSZip.loadAsync(file);
+        for (const relativePath in zip.files) {
+          const zipEntry = zip.files[relativePath];
+          if (!zipEntry.dir && relativePath.toLowerCase().endsWith('.pdf')) {
+            const blob = await zipEntry.async('blob');
+            const cleanName = relativePath.split('/').pop();
+            pdfFileList.push(new File([blob], cleanName, { type: 'application/pdf' }));
+          }
+        }
+      } catch (e) {
+        alert("Gagal mengurai file ZIP: " + e.message);
+      }
+    } else if (file.name.toLowerCase().endsWith('.pdf')) {
+      pdfFileList.push(file);
+    }
+  }
+
+  if (pdfFileList.length === 0) {
+    return alert("Tidak ditemukan file PDF sertifikat yang valid!");
+  }
+
+  let sukses = 0;
+  let gagalLog = [];
+
+  for (const pdfFile of pdfFileList) {
+    // Normalisasi nama file PDF yang diunggah
+    const rawFileName = pdfFile.name.replace(/\.[^/.]+$/, ""); // hapus .pdf
+    const cleanFileName = cleanStringForMatch(rawFileName);
+
+    // Pencocokan ketat terhadap id_sertifikat (namalengkap_DDMMYYYY)
+    const matchedUser = allUsers.find(u => {
+      const cleanId = cleanStringForMatch(u.id_sertifikat);
+      return cleanId && cleanFileName === cleanId;
+    });
+
+    if (matchedUser) {
+      // Simpan ke bucket 'sertifikat'
+      const storagePath = `${matchedUser.id_sertifikat}.pdf`;
+      const { error: uploadErr } = await supabaseClient.storage
+        .from('sertifikat')
+        .upload(storagePath, pdfFile, { upsert: true });
+
+      if (!uploadErr) {
+        const { data: urlData } = supabaseClient.storage
+          .from('sertifikat')
+          .getPublicUrl(storagePath);
+
+        const { error: updateErr } = await supabaseClient
+          .from('users')
+          .update({ url_sertifikat: urlData.publicUrl })
+          .eq('username', matchedUser.username);
+
+        if (!updateErr) {
+          sukses++;
+        } else {
+          gagalLog.push(`${pdfFile.name} (Gagal update URL ke database)`);
+        }
+      } else {
+        gagalLog.push(`${pdfFile.name} (Gagal upload storage: ${uploadErr.message})`);
+      }
+    } else {
+      gagalLog.push(`${pdfFile.name} (Gagal Match: nama_DDMMYYYY tidak cocok dengan data peserta)`);
+    }
+  }
+
+  let pesanHasil = `✅ Selesai memproses ${sukses} dari ${pdfFileList.length} sertifikat!`;
+  if (gagalLog.length > 0) {
+    pesanHasil += `\n\nDetail kendala (${gagalLog.length} file):\n- ` + gagalLog.join('\n- ');
+  }
+
+  alert(pesanHasil);
+  fileInput.value = '';
+}
 // ----------------------------------------------------
 // 8. IMPORT EXCEL & UPLOAD SERTIFIKAT
 // ----------------------------------------------------
