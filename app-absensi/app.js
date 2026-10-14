@@ -306,6 +306,68 @@ async function ambilAbsen() {
 }
 
 // ----------------------------------------------------
+// DAFTAR HARI LIBUR NASIONAL (Format: YYYY-MM-DD)
+// ----------------------------------------------------
+const nationalHolidays = {
+  // 2024
+  "2024-01-01": "Tahun Baru 2024 Masehi",
+  "2024-02-08": "Isra Mikraj Nabi Muhammad SAW",
+  "2024-02-09": "Cuti Bersama Imlek",
+  "2024-02-10": "Tahun Baru Imlek 2575 Kongzili",
+  "2024-03-11": "Hari Suci Nyepi Tahun Baru Saka 1946",
+  "2024-03-29": "Wafat Isa Al Masih",
+  "2024-03-31": "Hari Paskah",
+  "2024-04-10": "Hari Raya Idul Fitri 1445 Hijriah",
+  "2024-04-11": "Hari Raya Idul Fitri 1445 Hijriah",
+  "2024-05-01": "Hari Buruh Internasional",
+  "2024-05-09": "Kenaikan Isa Al Masih",
+  "2024-05-23": "Hari Raya Waisak 2568 BE",
+  "2024-06-01": "Hari Lahir Pancasila",
+  "2024-06-17": "Hari Raya Idul Adha 1445 Hijriah",
+  "2024-07-07": "Tahun Baru Islam 1446 Hijriah",
+  "2024-08-17": "Hari Kemerdekaan Republik Indonesia",
+  "2024-09-16": "Maulid Nabi Muhammad SAW",
+  "2024-12-25": "Hari Raya Natal",
+
+  // 2025
+  "2025-01-01": "Tahun Baru 2025 Masehi",
+  "2025-01-29": "Tahun Baru Imlek 2576 Kongzili",
+  "2025-01-27": "Isra Mikraj Nabi Muhammad SAW",
+  "2025-03-29": "Hari Suci Nyepi Tahun Baru Saka 1947",
+  "2025-03-31": "Hari Raya Idul Fitri 1446 Hijriah",
+  "2025-04-01": "Hari Raya Idul Fitri 1446 Hijriah",
+  "2025-04-18": "Wafat Yesus Kristus",
+  "2025-04-20": "Kebangkitan Yesus Kristus (Paskah)",
+  "2025-05-01": "Hari Buruh Internasional",
+  "2025-05-12": "Hari Raya Waisak 2569 BE",
+  "2025-05-29": "Kenaikan Yesus Kristus",
+  "2025-06-01": "Hari Lahir Pancasila",
+  "2025-06-06": "Hari Raya Idul Adha 1446 Hijriah",
+  "2025-06-27": "1 Muharam Tahun Baru Islam 1447 Hijriah",
+  "2025-08-17": "Proklamasi Kemerdekaan RI",
+  "2025-09-05": "Maulid Nabi Muhammad SAW",
+  "2025-12-25": "Hari Raya Natal",
+
+  // 2026
+  "2026-01-01": "Tahun Baru 2026 Masehi",
+  "2026-01-16": "Isra Mikraj Nabi Muhammad SAW",
+  "2026-02-17": "Tahun Baru Imlek 2577 Kongzili",
+  "2026-03-19": "Hari Suci Nyepi Tahun Baru Saka 1948",
+  "2026-03-20": "Hari Raya Idul Fitri 1447 Hijriah",
+  "2026-03-21": "Hari Raya Idul Fitri 1447 Hijriah",
+  "2026-04-03": "Wafat Yesus Kristus",
+  "2026-05-01": "Hari Buruh Internasional",
+  "2026-05-14": "Kenaikan Yesus Kristus",
+  "2026-05-31": "Hari Raya Waisak 2570 BE",
+  "2026-06-01": "Hari Lahir Pancasila",
+  "2026-05-27": "Hari Raya Idul Adha 1447 Hijriah",
+  "2026-06-16": "Tahun Baru Islam 1448 Hijriah",
+  "2026-08-17": "Proklamasi Kemerdekaan RI",
+  "2026-08-25": "Maulid Nabi Muhammad SAW",
+  "2026-12-25": "Hari Raya Natal"
+};
+
+// ----------------------------------------------------
 // 5. KALENDER MULTI-SELECT PILIHAN ADMIN
 // ----------------------------------------------------
 function renderCalendar() {
@@ -316,13 +378,11 @@ function renderCalendar() {
   const y = currCalDate.getFullYear();
   const m = currCalDate.getMonth();
 
-  // Set nilai dropdown bulan & tahun agar sinkron
   const selectMonth = document.getElementById('calSelectMonth');
   const selectYear = document.getElementById('calSelectYear');
 
   if (selectMonth) selectMonth.value = m;
 
-  // Generate pilihan tahun (2 tahun ke belakang s/d 5 tahun ke depan)
   if (selectYear && selectYear.options.length === 0) {
     const currentYear = new Date().getFullYear();
     for (let yr = currentYear - 2; yr <= currentYear + 5; yr++) {
@@ -331,10 +391,9 @@ function renderCalendar() {
   }
   if (selectYear) selectYear.value = y;
 
-  const firstDay = new Date(y, m, 1).getDay(); // 0 = Minggu
+  const firstDay = new Date(y, m, 1).getDay();
   const totalDays = new Date(y, m + 1, 0).getDate();
 
-  // Kotak kosong untuk offset hari pertama
   for (let i = 0; i < firstDay; i++) {
     grid.innerHTML += `<div></div>`;
   }
@@ -342,22 +401,24 @@ function renderCalendar() {
   for (let day = 1; day <= totalDays; day++) {
     const dateString = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const dateObj = new Date(y, m, day);
-    const isSunday = dateObj.getDay() === 0; // Cek jika hari Minggu
+    const isSunday = dateObj.getDay() === 0;
+    const isHoliday = nationalHolidays[dateString]; // Cek apakah tanggal libur nasional
     const isSelected = selectedBatchDates.includes(dateString);
 
     let btnClass = "";
+    let titleAttr = isHoliday ? `title="${isHoliday}"` : '';
 
     if (isSelected) {
       btnClass = "bg-emerald-700 text-white font-bold rounded-xl p-2 text-center shadow ring-2 ring-emerald-500 transition";
-    } else if (isSunday) {
-      // Warna merah khusus untuk hari Minggu
-      btnClass = "bg-red-50 border border-red-200 text-red-600 font-bold rounded-xl p-2 text-center hover:bg-red-100 transition";
+    } else if (isSunday || isHoliday) {
+      // Warna merah untuk Hari Minggu & Hari Libur Nasional
+      btnClass = "bg-red-50 border border-red-200 text-red-600 font-bold rounded-xl p-2 text-center hover:bg-red-100 transition relative";
     } else {
       btnClass = "bg-white border text-slate-700 font-semibold rounded-xl p-2 text-center hover:bg-emerald-50 transition";
     }
 
     grid.innerHTML += `
-      <button onclick="toggleDateSelection('${dateString}')" class="${btnClass}">
+      <button onclick="toggleDateSelection('${dateString}')" class="${btnClass}" ${titleAttr}>
         ${day}
       </button>
     `;
@@ -366,7 +427,6 @@ function renderCalendar() {
   renderSelectedBadges();
 }
 
-// Fungsi jump saat dropdown bulan/tahun diubah
 function jumpCalendarMonthYear() {
   const m = parseInt(document.getElementById('calSelectMonth').value);
   const y = parseInt(document.getElementById('calSelectYear').value);
@@ -379,9 +439,7 @@ function changeMonth(dir) {
   currCalDate.setMonth(currCalDate.getMonth() + dir);
   renderCalendar();
 }
-// ----------------------------------------------------
-// HELPER KALENDER: TOGGLE, RESET, & RENDER BADGES
-// ----------------------------------------------------
+
 function toggleDateSelection(dateStr) {
   const idx = selectedBatchDates.indexOf(dateStr);
   if (idx > -1) {
@@ -407,14 +465,16 @@ function renderSelectedBadges() {
 
   container.innerHTML = '';
   selectedBatchDates.forEach(d => {
+    const isHoliday = nationalHolidays[d];
+    const holidayTag = isHoliday ? ` (${isHoliday})` : '';
+
     container.innerHTML += `
       <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-        ${d} <i onclick="toggleDateSelection('${d}')" class="fa-solid fa-xmark cursor-pointer hover:text-red-600"></i>
+        ${d}${holidayTag} <i onclick="toggleDateSelection('${d}')" class="fa-solid fa-xmark cursor-pointer hover:text-red-600"></i>
       </span>
     `;
   });
-}
-// ----------------------------------------------------
+}// ----------------------------------------------------
 // 6. FITUR ADMIN: BUAT BATCH PELATIHAN
 // ----------------------------------------------------
 async function simpanBatchTraining() {
