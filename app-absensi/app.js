@@ -78,6 +78,23 @@ function cleanStringForMatch(str) {
   return str.toString().toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
+// HELPER: SORT DESCENDING UNTUK BATCH
+function sortBatchesDescending(batchArray) {
+  return batchArray.sort((a, b) => {
+    if (a.created_at && b.created_at) {
+      const diffTime = new Date(b.created_at) - new Date(a.created_at);
+      if (diffTime !== 0) return diffTime;
+    }
+    if (a.tgl_mulai && b.tgl_mulai) {
+      const diffDate = new Date(b.tgl_mulai) - new Date(a.tgl_mulai);
+      if (diffDate !== 0) return diffDate;
+    }
+    const titleA = a.judul || a.id || '';
+    const titleB = b.judul || b.id || '';
+    return titleB.localeCompare(titleA, undefined, { numeric: true, sensitivity: 'base' });
+  });
+}
+
 // ----------------------------------------------------
 // 2. LOGIKA LOGIN & SESSION
 // ----------------------------------------------------
@@ -121,7 +138,7 @@ async function prosesLogin() {
       document.getElementById('sectionAdmin').classList.remove('hidden');
       loadBatchOptions();
       renderCalendar();
-      onSKPFilterChange(); // Panggil filter database peserta saat admin login
+      onSKPFilterChange();
     } else {
       document.getElementById('sectionPeserta').classList.remove('hidden');
       renderPesertaData(data);
@@ -366,7 +383,7 @@ async function ambilAbsen() {
 }
 
 // ----------------------------------------------------
-// FETCH API LIBUR NASIONAL OTOMATIS (SUPLEMENTAL UNTUK TAHUN MENDATANG)
+// FETCH API LIBUR NASIONAL OTOMATIS
 // ----------------------------------------------------
 async function fetchHolidays(year) {
   try {
@@ -548,16 +565,7 @@ async function loadBatchOptions() {
 
   if (error || !data) return;
 
-  // Pengurutan Descending (Batch terbaru / tanggal terbaru / ID terbesar di atas)
-  const sortedData = data.sort((a, b) => {
-    if (a.created_at && b.created_at) {
-      return new Date(b.created_at) - new Date(a.created_at);
-    }
-    if (a.tgl_mulai && b.tgl_mulai) {
-      return new Date(b.tgl_mulai) - new Date(a.tgl_mulai);
-    }
-    return b.id.localeCompare(a.id, undefined, { numeric: true, sensitivity: 'base' });
-  });
+  const sortedData = sortBatchesDescending([...data]);
 
   sortedData.forEach(b => {
     const totalHari = b.jadwal_tanggal ? b.jadwal_tanggal.length : '-';
@@ -569,42 +577,7 @@ async function loadBatchOptions() {
 }
 
 // ----------------------------------------------------
-// FILTER DROPDOWN SKP / MASTER TRAINING (URUT DESCENDING BATCH)
-// ----------------------------------------------------
-async function onSKPFilterChange() {
-  const selectedSKP = document.getElementById('dbFilterSKP').value;
-  const selectBatch = document.getElementById('dbFilterBatch');
-  
-  if (!selectBatch) return;
-  selectBatch.innerHTML = '<option value="">-- Semua Batch --</option>';
-
-  const { data } = await supabaseClient.from('trainings').select('*');
-  if (!data) return;
-
-  // Filter berdasarkan SKP/Master Training terpilih
-  let filteredBatches = selectedSKP 
-    ? data.filter(b => b.master_training_id === selectedSKP || b.id.startsWith(selectedSKP))
-    : data;
-
-  // Urutkan Descending (terbaru di atas)
-  filteredBatches.sort((a, b) => {
-    if (a.created_at && b.created_at) {
-      return new Date(b.created_at) - new Date(a.created_at);
-    }
-    if (a.tgl_mulai && b.tgl_mulai) {
-      return new Date(b.tgl_mulai) - new Date(a.tgl_mulai);
-    }
-    return b.id.localeCompare(a.id, undefined, { numeric: true, sensitivity: 'base' });
-  });
-
-  filteredBatches.forEach(b => {
-    selectBatch.innerHTML += `<option value="${b.id}">${b.judul}</option>`;
-  });
-
-  loadDatabasePeserta();
-}
-// ----------------------------------------------------
-// IMPORT EXCEL PESERTA MASAL (AUTO CONVERT TO YYYY-MM-DD)
+// IMPORT EXCEL PESERTA MASAL
 // ----------------------------------------------------
 function importExcelPeserta() {
   const selectedBatchId = document.getElementById('importSelectBatch').value;
@@ -699,7 +672,7 @@ function importExcelPeserta() {
         alert(`✅ Berhasil mengimpor ${usersToInsert.length} akun peserta ke dalam Batch: ${selectedBatchId}!`);
         fileInput.value = '';
         document.getElementById('importSelectBatch').value = '';
-        loadDatabasePeserta(); // Re-load database peserta setelah import
+        loadDatabasePeserta();
       }
 
     } catch (err) {
@@ -752,12 +725,12 @@ async function simpanPesertaManual() {
     document.getElementById('manualNIK').value = '';
     document.getElementById('manualPerusahaan').value = '';
     document.getElementById('manualSelectBatch').value = '';
-    loadDatabasePeserta(); // Re-load database peserta setelah input manual
+    loadDatabasePeserta();
   }
 }
 
 // ----------------------------------------------------
-// UPLOAD & SYNC SERTIFIKAT MASAL (SUPPORT MULTI-TRAINING)
+// UPLOAD & SYNC SERTIFIKAT MASAL
 // ----------------------------------------------------
 async function uploadSertifikatMasal() {
   const fileInput = document.getElementById('fileSertifikatMasal');
@@ -1015,8 +988,24 @@ async function downloadRekapBatchPDF() {
 }
 
 // ----------------------------------------------------
-// 10. LOGIKA DATABASE PESERTA (FILTER SKP & BATCH)
+// 10. LOGIKA DATABASE PESERTA & FILTER (URUT DESCENDING BATCH)
 // ----------------------------------------------------
+function switchTabAdmin(tabName) {
+  document.querySelectorAll('.tab-admin-content').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.tab-admin-btn').forEach(el => {
+    el.classList.remove('bg-emerald-800', 'text-white');
+    el.classList.add('hover:bg-slate-100');
+  });
+
+  if (tabName === 'kelola') {
+    document.getElementById('tabAdminKelola').classList.remove('hidden');
+    document.getElementById('tabBtnAdminKelola').classList.add('bg-emerald-800', 'text-white');
+  } else if (tabName === 'database') {
+    document.getElementById('tabAdminDatabase').classList.remove('hidden');
+    document.getElementById('tabBtnAdminDatabase').classList.add('bg-emerald-800', 'text-white');
+    onSKPFilterChange();
+  }
+}
 
 async function onSKPFilterChange() {
   const selectedSKP = document.getElementById('dbFilterSKP').value;
@@ -1028,10 +1017,12 @@ async function onSKPFilterChange() {
   const { data } = await supabaseClient.from('trainings').select('*');
   if (!data) return;
 
-  // Filter batch yang mengandung Master Training ID terpilih
-  const filteredBatches = selectedSKP 
+  let filteredBatches = selectedSKP 
     ? data.filter(b => b.master_training_id === selectedSKP || b.id.startsWith(selectedSKP))
     : data;
+
+  // Urutkan Descending (terbaru / nomor terbesar di atas)
+  filteredBatches = sortBatchesDescending(filteredBatches);
 
   filteredBatches.forEach(b => {
     selectBatch.innerHTML += `<option value="${b.id}">${b.judul}</option>`;
@@ -1039,6 +1030,7 @@ async function onSKPFilterChange() {
 
   loadDatabasePeserta();
 }
+
 async function loadDatabasePeserta() {
   const selectedSKP = document.getElementById('dbFilterSKP').value;
   const selectedBatch = document.getElementById('dbFilterBatch').value;
@@ -1070,7 +1062,7 @@ async function loadDatabasePeserta() {
   }
 
   if (resultList.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400 italic">Tidak ada peserta untuk SKP ini.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400 italic">Tidak ada peserta untuk program ini.</td></tr>';
     return;
   }
 
@@ -1120,23 +1112,4 @@ async function loadDatabasePeserta() {
       </tr>
     `;
   });
-}
-// ----------------------------------------------------
-// 11. LOGIKA NAVIGASI TAB ADMIN
-// ----------------------------------------------------
-function switchTabAdmin(tabName) {
-  document.querySelectorAll('.tab-admin-content').forEach(el => el.classList.add('hidden'));
-  document.querySelectorAll('.tab-admin-btn').forEach(el => {
-    el.classList.remove('bg-emerald-800', 'text-white');
-    el.classList.add('hover:bg-slate-100');
-  });
-
-  if (tabName === 'kelola') {
-    document.getElementById('tabAdminKelola').classList.remove('hidden');
-    document.getElementById('tabBtnAdminKelola').classList.add('bg-emerald-800', 'text-white');
-  } else if (tabName === 'database') {
-    document.getElementById('tabAdminDatabase').classList.remove('hidden');
-    document.getElementById('tabBtnAdminDatabase').classList.add('bg-emerald-800', 'text-white');
-    onSKPFilterChange(); // Re-load data peserta saat tab database dibuka
-  }
 }
