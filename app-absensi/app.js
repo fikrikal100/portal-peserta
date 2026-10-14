@@ -412,20 +412,11 @@ async function simpanBatchTraining() {
 // LOAD PILIHAN BATCH UNTUK DROPDOWN (URUT TERBARU DI ATAS)
 // ----------------------------------------------------
 async function loadBatchOptions() {
-  // Coba ambil data batch dari Supabase
-  let { data, error } = await supabaseClient
+  // Ambil seluruh data batch dari Supabase
+  const { data, error } = await supabaseClient
     .from('trainings')
-    .select('*')
-    .order('id', { ascending: false }); // Mengurutkan berdasarkan ID batch terbaru
-
-  // Jika error atau data kosong, panggil ulang query sederhana tanpa order kustom
-  if (error || !data) {
-    const res = await supabaseClient.from('trainings').select('*');
-    data = res.data || [];
-    // Urutkan secara manual dari array lokal (terbaru ke terlama)
-    data.reverse();
-  }
-
+    .select('*');
+  
   const selectRekap = document.getElementById('adminSelectBatchRekap');
   const selectManual = document.getElementById('manualSelectBatch');
   const selectImport = document.getElementById('importSelectBatch');
@@ -434,7 +425,28 @@ async function loadBatchOptions() {
   if (selectManual) selectManual.innerHTML = '<option value="">-- Pilih Batch Pelatihan --</option>';
   if (selectImport) selectImport.innerHTML = '<option value="">-- Pilih Batch Pelatihan --</option>';
 
-  (data || []).forEach(b => {
+  if (error || !data) return;
+
+  // Urutkan array secara presisi: yang baru dibuat / tanggal terbaru berada di atas
+  const sortedData = data.sort((a, b) => {
+    // 1. Jika ada kolom created_at
+    if (a.created_at && b.created_at) {
+      return new Date(b.created_at) - new Date(a.created_at);
+    }
+    // 2. Jika ada tgl_mulai
+    if (a.tgl_mulai && b.tgl_mulai) {
+      return new Date(b.tgl_mulai) - new Date(a.tgl_mulai);
+    }
+    // 3. Fallback: balikkan urutan bawaan tabel (paling terakhir diinsert muncul di atas)
+    return 0;
+  });
+
+  // Jika tidak ada created_at / tgl_mulai, balikkan array agar baris paling bawah berada di atas
+  if (!data[0]?.created_at && !data[0]?.tgl_mulai) {
+    sortedData.reverse();
+  }
+
+  sortedData.forEach(b => {
     const totalHari = b.jadwal_tanggal ? b.jadwal_tanggal.length : '-';
     const optHtml = `<option value="${b.id}">${b.judul} (${totalHari} Hari Sesi)</option>`;
     if (selectRekap) selectRekap.innerHTML += optHtml;
