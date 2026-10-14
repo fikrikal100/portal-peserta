@@ -409,10 +409,14 @@ async function simpanBatchTraining() {
 }
 
 // ----------------------------------------------------
-// LOAD PILIHAN BATCH UNTUK DROPDOWN REKAP, MANUAL, & IMPORT EXCEL
+// LOAD PILIHAN BATCH UNTUK DROPDOWN (URUT TERBARU DI ATAS)
 // ----------------------------------------------------
 async function loadBatchOptions() {
-  const { data } = await supabaseClient.from('trainings').select('*');
+  // Menambahkan pengurutan berdasarkan created_at descending (terbaru di paling atas)
+  const { data } = await supabaseClient
+    .from('trainings')
+    .select('*')
+    .order('created_at', { ascending: false });
   
   const selectRekap = document.getElementById('adminSelectBatchRekap');
   const selectManual = document.getElementById('manualSelectBatch');
