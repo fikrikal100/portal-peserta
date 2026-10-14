@@ -9,6 +9,7 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentSessionUser = null;
 let currCalDate = new Date();
 let selectedBatchDates = [];
+let loadedNationalHolidays = {};
 
 // ----------------------------------------------------
 // HELPER: CLEAN STRING UNTUK MATCHING FLEXIBLE
@@ -122,7 +123,6 @@ function renderPesertaData(user) {
     document.getElementById('pesertaJadwal').innerText = 'Sesuai Jadwal Sesi';
   }
 
-  // Panggil muat seluruh daftar sertifikat peserta
   loadSertifikatPeserta(user.username);
   loadMatriksAbsensiUser();
 }
@@ -306,77 +306,40 @@ async function ambilAbsen() {
 }
 
 // ----------------------------------------------------
-// DAFTAR HARI LIBUR NASIONAL (Format: YYYY-MM-DD)
+// FETCH API LIBUR NASIONAL OTOMATIS
 // ----------------------------------------------------
-const nationalHolidays = {
-  // 2024
-  "2024-01-01": "Tahun Baru 2024 Masehi",
-  "2024-02-08": "Isra Mikraj Nabi Muhammad SAW",
-  "2024-02-09": "Cuti Bersama Imlek",
-  "2024-02-10": "Tahun Baru Imlek 2575 Kongzili",
-  "2024-03-11": "Hari Suci Nyepi Tahun Baru Saka 1946",
-  "2024-03-29": "Wafat Isa Al Masih",
-  "2024-03-31": "Hari Paskah",
-  "2024-04-10": "Hari Raya Idul Fitri 1445 Hijriah",
-  "2024-04-11": "Hari Raya Idul Fitri 1445 Hijriah",
-  "2024-05-01": "Hari Buruh Internasional",
-  "2024-05-09": "Kenaikan Isa Al Masih",
-  "2024-05-23": "Hari Raya Waisak 2568 BE",
-  "2024-06-01": "Hari Lahir Pancasila",
-  "2024-06-17": "Hari Raya Idul Adha 1445 Hijriah",
-  "2024-07-07": "Tahun Baru Islam 1446 Hijriah",
-  "2024-08-17": "Hari Kemerdekaan Republik Indonesia",
-  "2024-09-16": "Maulid Nabi Muhammad SAW",
-  "2024-12-25": "Hari Raya Natal",
-
-  // 2025
-  "2025-01-01": "Tahun Baru 2025 Masehi",
-  "2025-01-29": "Tahun Baru Imlek 2576 Kongzili",
-  "2025-01-27": "Isra Mikraj Nabi Muhammad SAW",
-  "2025-03-29": "Hari Suci Nyepi Tahun Baru Saka 1947",
-  "2025-03-31": "Hari Raya Idul Fitri 1446 Hijriah",
-  "2025-04-01": "Hari Raya Idul Fitri 1446 Hijriah",
-  "2025-04-18": "Wafat Yesus Kristus",
-  "2025-04-20": "Kebangkitan Yesus Kristus (Paskah)",
-  "2025-05-01": "Hari Buruh Internasional",
-  "2025-05-12": "Hari Raya Waisak 2569 BE",
-  "2025-05-29": "Kenaikan Yesus Kristus",
-  "2025-06-01": "Hari Lahir Pancasila",
-  "2025-06-06": "Hari Raya Idul Adha 1446 Hijriah",
-  "2025-06-27": "1 Muharam Tahun Baru Islam 1447 Hijriah",
-  "2025-08-17": "Proklamasi Kemerdekaan RI",
-  "2025-09-05": "Maulid Nabi Muhammad SAW",
-  "2025-12-25": "Hari Raya Natal",
-
-  // 2026
-  "2026-01-01": "Tahun Baru 2026 Masehi",
-  "2026-01-16": "Isra Mikraj Nabi Muhammad SAW",
-  "2026-02-17": "Tahun Baru Imlek 2577 Kongzili",
-  "2026-03-19": "Hari Suci Nyepi Tahun Baru Saka 1948",
-  "2026-03-20": "Hari Raya Idul Fitri 1447 Hijriah",
-  "2026-03-21": "Hari Raya Idul Fitri 1447 Hijriah",
-  "2026-04-03": "Wafat Yesus Kristus",
-  "2026-05-01": "Hari Buruh Internasional",
-  "2026-05-14": "Kenaikan Yesus Kristus",
-  "2026-05-31": "Hari Raya Waisak 2570 BE",
-  "2026-06-01": "Hari Lahir Pancasila",
-  "2026-05-27": "Hari Raya Idul Adha 1447 Hijriah",
-  "2026-06-16": "Tahun Baru Islam 1448 Hijriah",
-  "2026-08-17": "Proklamasi Kemerdekaan RI",
-  "2026-08-25": "Maulid Nabi Muhammad SAW",
-  "2026-12-25": "Hari Raya Natal"
-};
+async function fetchHolidays(year) {
+  try {
+    const response = await fetch(`https://dayoffapi.vercel.app/api?year=${year}`);
+    if (!response.ok) return;
+    const data = await response.json();
+    
+    if (Array.isArray(data)) {
+      data.forEach(h => {
+        if (h.is_cuti === false || h.is_cuti === undefined) {
+          loadedNationalHolidays[h.tanggal] = h.keterangan;
+        } else {
+          loadedNationalHolidays[h.tanggal] = `Cuti Bersama: ${h.keterangan}`;
+        }
+      });
+    }
+  } catch (err) {
+    console.warn(`Gagal memuat API libur nasional tahun ${year}:`, err);
+  }
+}
 
 // ----------------------------------------------------
 // 5. KALENDER MULTI-SELECT PILIHAN ADMIN
 // ----------------------------------------------------
-function renderCalendar() {
+async function renderCalendar() {
   const grid = document.getElementById('calendarGrid');
   if (!grid) return;
   grid.innerHTML = '';
 
   const y = currCalDate.getFullYear();
   const m = currCalDate.getMonth();
+
+  await fetchHolidays(y);
 
   const selectMonth = document.getElementById('calSelectMonth');
   const selectYear = document.getElementById('calSelectYear');
@@ -402,16 +365,15 @@ function renderCalendar() {
     const dateString = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const dateObj = new Date(y, m, day);
     const isSunday = dateObj.getDay() === 0;
-    const isHoliday = nationalHolidays[dateString]; // Cek apakah tanggal libur nasional
+    const holidayName = loadedNationalHolidays[dateString];
     const isSelected = selectedBatchDates.includes(dateString);
 
     let btnClass = "";
-    let titleAttr = isHoliday ? `title="${isHoliday}"` : '';
+    let titleAttr = holidayName ? `title="${holidayName}"` : '';
 
     if (isSelected) {
       btnClass = "bg-emerald-700 text-white font-bold rounded-xl p-2 text-center shadow ring-2 ring-emerald-500 transition";
-    } else if (isSunday || isHoliday) {
-      // Warna merah untuk Hari Minggu & Hari Libur Nasional
+    } else if (isSunday || holidayName) {
       btnClass = "bg-red-50 border border-red-200 text-red-600 font-bold rounded-xl p-2 text-center hover:bg-red-100 transition relative";
     } else {
       btnClass = "bg-white border text-slate-700 font-semibold rounded-xl p-2 text-center hover:bg-emerald-50 transition";
@@ -427,17 +389,17 @@ function renderCalendar() {
   renderSelectedBadges();
 }
 
-function jumpCalendarMonthYear() {
+async function jumpCalendarMonthYear() {
   const m = parseInt(document.getElementById('calSelectMonth').value);
   const y = parseInt(document.getElementById('calSelectYear').value);
   currCalDate.setFullYear(y);
   currCalDate.setMonth(m);
-  renderCalendar();
+  await renderCalendar();
 }
 
-function changeMonth(dir) {
+async function changeMonth(dir) {
   currCalDate.setMonth(currCalDate.getMonth() + dir);
-  renderCalendar();
+  await renderCalendar();
 }
 
 function toggleDateSelection(dateStr) {
@@ -465,8 +427,8 @@ function renderSelectedBadges() {
 
   container.innerHTML = '';
   selectedBatchDates.forEach(d => {
-    const isHoliday = nationalHolidays[d];
-    const holidayTag = isHoliday ? ` (${isHoliday})` : '';
+    const holidayName = loadedNationalHolidays[d];
+    const holidayTag = holidayName ? ` (${holidayName})` : '';
 
     container.innerHTML += `
       <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
@@ -474,7 +436,9 @@ function renderSelectedBadges() {
       </span>
     `;
   });
-}// ----------------------------------------------------
+}
+
+// ----------------------------------------------------
 // 6. FITUR ADMIN: BUAT BATCH PELATIHAN
 // ----------------------------------------------------
 async function simpanBatchTraining() {
@@ -509,7 +473,6 @@ async function simpanBatchTraining() {
 // LOAD PILIHAN BATCH UNTUK DROPDOWN (URUT TERBARU DI ATAS)
 // ----------------------------------------------------
 async function loadBatchOptions() {
-  // Ambil seluruh data batch dari Supabase
   const { data, error } = await supabaseClient
     .from('trainings')
     .select('*');
@@ -524,21 +487,16 @@ async function loadBatchOptions() {
 
   if (error || !data) return;
 
-  // Urutkan array secara presisi: yang baru dibuat / tanggal terbaru berada di atas
   const sortedData = data.sort((a, b) => {
-    // 1. Jika ada kolom created_at
     if (a.created_at && b.created_at) {
       return new Date(b.created_at) - new Date(a.created_at);
     }
-    // 2. Jika ada tgl_mulai
     if (a.tgl_mulai && b.tgl_mulai) {
       return new Date(b.tgl_mulai) - new Date(a.tgl_mulai);
     }
-    // 3. Fallback: balikkan urutan bawaan tabel (paling terakhir diinsert muncul di atas)
     return 0;
   });
 
-  // Jika tidak ada created_at / tgl_mulai, balikkan array agar baris paling bawah berada di atas
   if (!data[0]?.created_at && !data[0]?.tgl_mulai) {
     sortedData.reverse();
   }
@@ -551,6 +509,7 @@ async function loadBatchOptions() {
     if (selectImport) selectImport.innerHTML += optHtml;
   });
 }
+
 // ----------------------------------------------------
 // IMPORT EXCEL PESERTA MASAL (AUTO CONVERT TO YYYY-MM-DD)
 // ----------------------------------------------------
@@ -580,8 +539,8 @@ function importExcelPeserta() {
         const rawNIK = String(r.NIK || r.nik || "-").trim();
         const rawPerusahaan = String(r.Perusahaan || r.perusahaan || r["Nama Perusahaan"] || "PT Mandiri Maha Daya").trim();
 
-        let formattedDateForDb = ""; // Akan diisi YYYY-MM-DD
-        let cleanDDMMYYYY = "";       // Akan diisi DDMMYYYY untuk ID Sertifikat & Password
+        let formattedDateForDb = "";
+        let cleanDDMMYYYY = "";
 
         if (rawTglLahir instanceof Date) {
           const d = rawTglLahir.getDate().toString().padStart(2, '0');
@@ -591,27 +550,40 @@ function importExcelPeserta() {
           cleanDDMMYYYY = `${d}${m}${y}`;
         } else {
           const strTgl = String(rawTglLahir).trim();
-          // Ambil digit angka saja
-          const digits = strTgl.replace(/[^0-9]/g, '');
           
-          if (digits.length === 8) {
-            // Asumsi input Excel: DD-MM-YYYY (contoh: 15101997 -> d=15, m=10, y=1997)
-            const day = digits.substring(0, 2);
-            const month = digits.substring(2, 4);
-            const year = digits.substring(4, 8);
-            
-            formattedDateForDb = `${year}-${month}-${day}`;
-            cleanDDMMYYYY = digits;
+          if (strTgl.includes('-') || strTgl.includes('/')) {
+            const parts = strTgl.split(/[-/]/);
+            if (parts.length === 3) {
+              if (parts[0].length === 4) {
+                const y = parts[0];
+                const m = parts[1].padStart(2, '0');
+                const d = parts[2].padStart(2, '0');
+                formattedDateForDb = `${y}-${m}-${d}`;
+                cleanDDMMYYYY = `${d}${m}${y}`;
+              } else {
+                const d = parts[0].padStart(2, '0');
+                const m = parts[1].padStart(2, '0');
+                const y = parts[2];
+                formattedDateForDb = `${y}-${m}-${d}`;
+                cleanDDMMYYYY = `${d}${m}${y}`;
+              }
+            }
           } else {
-            formattedDateForDb = strTgl; // Fallback jika format tidak dikenali
-            cleanDDMMYYYY = digits;
+            const digits = strTgl.replace(/[^0-9]/g, '');
+            if (digits.length === 8) {
+              const day = digits.substring(0, 2);
+              const month = digits.substring(2, 4);
+              const year = digits.substring(4, 8);
+              formattedDateForDb = `${year}-${month}-${day}`;
+              cleanDDMMYYYY = digits;
+            } else {
+              formattedDateForDb = strTgl;
+              cleanDDMMYYYY = digits;
+            }
           }
         }
 
-        // Format Username tanpa spasi & huruf kecil
         const formattedUsername = rawNama.replace(/\s+/g, '').toLowerCase();
-        
-        // Format ID Sertifikat: namalengkap_DDMMYYYY (contoh: fikrihaikal_15101997)
         const idSertifikat = `${formattedUsername}_${cleanDDMMYYYY}`;
 
         return {
@@ -619,7 +591,7 @@ function importExcelPeserta() {
           password: cleanDDMMYYYY,
           nama: rawNama,
           nik: rawNIK,
-          tgl_lahir: formattedDateForDb, // Disimpan sebagai YYYY-MM-DD agar diterima Supabase
+          tgl_lahir: formattedDateForDb,
           perusahaan: rawPerusahaan,
           training_id: selectedBatchId,
           id_sertifikat: idSertifikat,
@@ -736,7 +708,7 @@ async function uploadSertifikatMasal() {
   let gagalLog = [];
 
   for (const pdfFile of pdfFileList) {
-    const rawFileName = pdfFile.name.replace(/\.[^/.]+$/, ""); // contoh: fikrihaikal_tkbt1_13121998
+    const rawFileName = pdfFile.name.replace(/\.[^/.]+$/, "");
     const cleanFileName = cleanStringForMatch(rawFileName);
 
     const matchedUser = allUsers.find(u => {
@@ -748,9 +720,15 @@ async function uploadSertifikatMasal() {
 
     if (matchedUser) {
       const nameParts = rawFileName.split('_');
-      let kodeTrainingDisplay = nameParts.length >= 2 ? nameParts[1].toUpperCase() : rawFileName.toUpperCase();
-      let judulSertifikat = `Sertifikat Pelatihan K3 - ${kodeTrainingDisplay}`;
+      let kodeTrainingDisplay = "K3";
+      
+      if (nameParts.length >= 3) {
+        kodeTrainingDisplay = nameParts[1].toUpperCase();
+      } else if (nameParts.length === 2 && isNaN(nameParts[1])) {
+        kodeTrainingDisplay = nameParts[1].toUpperCase();
+      }
 
+      let judulSertifikat = `Sertifikat Pelatihan K3 - ${kodeTrainingDisplay}`;
       const storagePath = `${matchedUser.username}_${Date.now()}_${pdfFile.name.replace(/\s+/g, '_')}`;
       
       const { error: uploadErr } = await supabaseClient.storage
