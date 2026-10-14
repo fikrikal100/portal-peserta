@@ -6,11 +6,13 @@
   <title>Portal Absensi & Sertifikasi - PT Mandiri Maha Daya</title>
 
   <!-- Pustaka External (CDN) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!-- JSZip untuk ekstraksi file ZIP sertifikat masal -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- File CSS Lokal -->
   <link rel="stylesheet" href="style.css">
@@ -367,21 +369,23 @@
           </div>
         </div>
 
-        <!-- C. UPLOAD SERTIFIKAT MASAL -->
-        <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-3 mt-4">
-          <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-            <i class="fa-solid fa-file-pdf text-red-600"></i>
-            <span>Upload & Sync Sertifikat Masal (PDF)</span>
-          </h4>
-          <p class="text-[11px] text-slate-500">Format nama file PDF: <b>namalengkap_tanggallahir.pdf</b> (Contoh: fikrihaikal_12051998.pdf)</p>
-          <div class="flex flex-col sm:flex-row gap-2">
-            <input type="file" id="fileSertifikatMasal" multiple accept=".pdf" class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200">
-            <button onclick="uploadSertifikatMasal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-5 py-2.5 rounded-lg font-bold shadow transition whitespace-nowrap flex items-center gap-1.5 justify-center">
-              <i class="fa-solid fa-cloud-arrow-up"></i> Upload & Sync
-            </button>
-          </div>
-        </div>
-      </div>
+       <!-- C. UPLOAD SERTIFIKAT MASAL (ZIP / PDF) -->
+<div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-3 mt-4">
+  <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+    <i class="fa-solid fa-file-zipper text-amber-600"></i>
+    <span>Upload & Sync Sertifikat Masal (File PDF / Arsip ZIP)</span>
+  </h4>
+  <p class="text-[11px] text-slate-500">
+    Upload beberapa file PDF sekaligus atau <b>1 file .ZIP</b> berisi seluruh PDF sertifikat.<br>
+    Format nama file: <b>namalengkap_tanggallahir.pdf</b> (Contoh: <code>fajarshidiqpermana_27091998.pdf</code>)
+  </p>
+  <div class="flex flex-col sm:flex-row gap-2">
+    <input type="file" id="fileSertifikatMasal" multiple accept=".pdf, .zip, .rar" class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200">
+    <button onclick="uploadSertifikatMasal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-5 py-2.5 rounded-lg font-bold shadow transition whitespace-nowrap flex items-center gap-1.5 justify-center">
+      <i class="fa-solid fa-cloud-arrow-up"></i> Upload & Sync
+    </button>
+  </div>
+</div>
 
       <!-- DOWNLOAD REKAP ABSENSI PDF A4 -->
       <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-4">
