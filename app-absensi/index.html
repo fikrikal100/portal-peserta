@@ -6,7 +6,7 @@
   <title>Portal Absensi & Sertifikasi - PT Mandiri Maha Daya</title>
   <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- SheetJS untuk Parsing Excel -->
+  <!-- SheetJS untuk Parsing & Export Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -397,8 +397,9 @@
           <select id="adminSelectBatchRekap" class="w-full p-2.5 border rounded-xl text-xs bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
             <option value="">-- Pilih Batch Training --</option>
           </select>
-          <button onclick="downloadRekapBatch()" class="bg-emerald-800 hover:bg-emerald-900 text-white text-xs px-5 py-2.5 rounded-xl font-bold shadow transition whitespace-nowrap">
-            Export Rekapan
+          <button id="btnExportRekap" onclick="downloadRekapBatch()" class="bg-emerald-800 hover:bg-emerald-900 text-white text-xs px-5 py-2.5 rounded-xl font-bold shadow transition whitespace-nowrap flex items-center justify-center gap-2">
+            <i class="fa-solid fa-file-excel"></i>
+            <span>Export Rekapan</span>
           </button>
         </div>
       </div>
@@ -744,7 +745,7 @@
     }
 
     // ----------------------------------------------------
-    // 6. FITUR ADMIN: BUAT BATCH PELATIHANS
+    // 6. FITUR ADMIN: BUAT BATCH PELATIHAN
     // ----------------------------------------------------
     async function simpanBatchTraining() {
       const masterId = document.getElementById('adminSelectMasterTraining').value;
@@ -777,7 +778,6 @@
     async function loadBatchOptions() {
       const { data } = await supabaseClient.from('trainings').select('*');
       
-      // Update dropdown rekap & dropdown manual batch
       const selectRekap = document.getElementById('adminSelectBatchRekap');
       const selectManual = document.getElementById('manualSelectBatch');
       
@@ -793,11 +793,11 @@
     }
 
     // ----------------------------------------------------
-    // 7. INPUT PESERTA MANUAL (BARU)
+    // 7. INPUT PESERTA MANUAL
     // ----------------------------------------------------
     async function simpanPesertaManual() {
       const nama = document.getElementById('manualNama').value.trim();
-      const tglLahirRaw = document.getElementById('manualTglLahir').value; // Format: YYYY-MM-DD
+      const tglLahirRaw = document.getElementById('manualTglLahir').value;
       const nik = document.getElementById('manualNIK').value.trim();
       const perusahaan = document.getElementById('manualPerusahaan').value.trim();
       const trainingId = document.getElementById('manualSelectBatch').value;
@@ -806,14 +806,9 @@
         return alert("Harap lengkapi Nama, Tanggal Lahir, dan Pilih Batch Pelatihan!");
       }
 
-      // Format Password: DDMMYYYY (contoh: 1998-05-12 -> 12051998)
-      const parts = tglLahirRaw.split('-'); // [YYYY, MM, DD]
+      const parts = tglLahirRaw.split('-');
       const formattedPassword = `${parts[2]}${parts[1]}${parts[0]}`;
-      
-      // Format Username: Nama tanpa spasi & huruf kecil (contoh: Fikri Haikal -> fikrihaikal)
       const formattedUsername = nama.replace(/\s+/g, '').toLowerCase();
-
-      // ID Sertifikat: username_password (contoh: fikrihaikal_12051998)
       const idSertifikat = `${formattedUsername}_${formattedPassword}`;
 
       const userObject = {
@@ -835,7 +830,6 @@
       } else {
         alert(`✅ Peserta Berhasil Ditambahkan!\n\nUsername: ${formattedUsername}\nPassword: ${formattedPassword}\nID Sertifikat: ${idSertifikat}`);
         
-        // Reset Form
         document.getElementById('manualNama').value = '';
         document.getElementById('manualTglLahir').value = '';
         document.getElementById('manualNIK').value = '';
@@ -914,10 +908,128 @@
       alert(`Selesai memproses ${sukses} dari ${files.length} sertifikat!`);
     }
 
-    function downloadRekapBatch() {
-      const selectedBatch = document.getElementById('adminSelectBatchRekap').value;
-      if (!selectedBatch) return alert("Pilih batch training terlebih dahulu!");
-      alert(`Fitur export rekapitulasi batch ${selectedBatch} sedang disiapkan!`);
+    // ----------------------------------------------------
+    // 9. EXPORT REKAP ABSENSI EXCEL (SUDAH AKTIF 100%)
+    // ----------------------------------------------------
+    async function downloadRekapBatch() {
+      const selectedBatchId = document.getElementById('adminSelectBatchRekap').value;
+      if (!selectedBatchId) return alert("Harap pilih Batch Training terlebih dahulu!");
+
+      const btn = document.getElementById('btnExportRekap');
+      const originalText = btn.innerHTML;
+      btn.innerText = "Mengunduh Data...";
+      btn.disabled = true;
+
+      try {
+        // A. Ambil Info Batch Training
+        const { data: trainingData, error: tErr } = await supabaseClient
+          .from('trainings')
+          .select('*')
+          .eq('id', selectedBatchId)
+          .single();
+
+        if (tErr || !trainingData) {
+          alert("Data batch tidak ditemukan!");
+          return;
+        }
+
+        // B. Ambil Seluruh Peserta di Batch Ini
+        const { data: pesertaList, error: pErr } = await supabaseClient
+          .from('users')
+          .select('*')
+          .eq('training_id', selectedBatchId)
+          .eq('role', 'peserta');
+
+        if (pErr) {
+          alert("Gagal mengambil data peserta: " + pErr.message);
+          return;
+        }
+
+        if (!pesertaList || pesertaList.length === 0) {
+          alert("Belum ada peserta terdaftar di batch ini!");
+          return;
+        }
+
+        // C. Ambil Semua Log Absensi Batch Ini
+        const { data: logList, error: lErr } = await supabaseClient
+          .from('log_absensi')
+          .select('*')
+          .eq('training_id', selectedBatchId);
+
+        if (lErr) {
+          alert("Gagal mengambil log absensi: " + lErr.message);
+          return;
+        }
+
+        // Tentukan Daftar Tanggal Sesi
+        let listTanggal = [];
+        if (trainingData.jadwal_tanggal && trainingData.jadwal_tanggal.length > 0) {
+          listTanggal = [...trainingData.jadwal_tanggal].sort();
+        } else if (trainingData.tgl_mulai && trainingData.tgl_selesai) {
+          let start = new Date(trainingData.tgl_mulai);
+          let end = new Date(trainingData.tgl_selesai);
+          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            listTanggal.push(d.toISOString().split('T')[0]);
+          }
+        }
+
+        // D. Susun Data Spreadsheet Excel
+        const exportData = [];
+
+        pesertaList.forEach((peserta, idx) => {
+          listTanggal.forEach(dateStr => {
+            const absS1 = (logList || []).find(l => l.username === peserta.username && l.tanggal === dateStr && Number(l.sesi) === 1);
+            const absS2 = (logList || []).find(l => l.username === peserta.username && l.tanggal === dateStr && Number(l.sesi) === 2);
+
+            exportData.push({
+              "No": idx + 1,
+              "Nama Peserta": peserta.nama || '-',
+              "NIK": peserta.nik || '-',
+              "Perusahaan": peserta.perusahaan || '-',
+              "Username": peserta.username,
+              "Batch Training": trainingData.judul,
+              "Tanggal Sesi": dateStr,
+              "Absen Sesi 1 (Pagi)": absS1 ? `HADIR (${absS1.waktu_absen ? absS1.waktu_absen.substring(11, 19) : ''})` : "BELUM ABSEN",
+              "GPS Sesi 1": absS1 && absS1.latitude ? `${absS1.latitude}, ${absS1.longitude}` : "-",
+              "Absen Sesi 2 (Siang)": absS2 ? `HADIR (${absS2.waktu_absen ? absS2.waktu_absen.substring(11, 19) : ''})` : "BELUM ABSEN",
+              "GPS Sesi 2": absS2 && absS2.latitude ? `${absS2.latitude}, ${absS2.longitude}` : "-",
+              "Status Kehadiran Hari Ini": (absS1 && absS2) ? "LENGKAP 100%" : ((absS1 || absS2) ? "PARSIAL 50%" : "TIDAK HADIR")
+            });
+          });
+        });
+
+        // E. Generate File XLSX Menggunakan SheetJS
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Absensi");
+
+        // Set Lebar Kolom Otomatis
+        worksheet['!cols'] = [
+          { wch: 5 },  // No
+          { wch: 25 }, // Nama Peserta
+          { wch: 20 }, // NIK
+          { wch: 25 }, // Perusahaan
+          { wch: 18 }, // Username
+          { wch: 30 }, // Batch Training
+          { wch: 15 }, // Tanggal
+          { wch: 25 }, // Sesi 1
+          { wch: 25 }, // GPS 1
+          { wch: 25 }, // Sesi 2
+          { wch: 25 }, // GPS 2
+          { wch: 20 }  // Status Total
+        ];
+
+        const filename = `Rekap_Absensi_${selectedBatchId}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(workbook, filename);
+
+        alert(`✅ Rekapan Absensi Berhasil Diunduh!\nNama file: ${filename}`);
+
+      } catch (err) {
+        alert("Terjadi kesalahan saat meng-export data: " + err.message);
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
     }
   </script>
 </body>
