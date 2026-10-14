@@ -412,12 +412,20 @@ async function simpanBatchTraining() {
 // LOAD PILIHAN BATCH UNTUK DROPDOWN (URUT TERBARU DI ATAS)
 // ----------------------------------------------------
 async function loadBatchOptions() {
-  // Menambahkan pengurutan berdasarkan created_at descending (terbaru di paling atas)
-  const { data } = await supabaseClient
+  // Coba ambil data batch dari Supabase
+  let { data, error } = await supabaseClient
     .from('trainings')
     .select('*')
-    .order('created_at', { ascending: false });
-  
+    .order('id', { ascending: false }); // Mengurutkan berdasarkan ID batch terbaru
+
+  // Jika error atau data kosong, panggil ulang query sederhana tanpa order kustom
+  if (error || !data) {
+    const res = await supabaseClient.from('trainings').select('*');
+    data = res.data || [];
+    // Urutkan secara manual dari array lokal (terbaru ke terlama)
+    data.reverse();
+  }
+
   const selectRekap = document.getElementById('adminSelectBatchRekap');
   const selectManual = document.getElementById('manualSelectBatch');
   const selectImport = document.getElementById('importSelectBatch');
@@ -434,7 +442,6 @@ async function loadBatchOptions() {
     if (selectImport) selectImport.innerHTML += optHtml;
   });
 }
-
 // ----------------------------------------------------
 // IMPORT EXCEL PESERTA MASAL DENGAN PILIHAN BATCH
 // ----------------------------------------------------
