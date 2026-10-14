@@ -531,7 +531,7 @@ async function simpanBatchTraining() {
 }
 
 // ----------------------------------------------------
-// LOAD PILIHAN BATCH UNTUK DROPDOWN (URUT TERBARU DI ATAS)
+// LOAD PILIHAN BATCH UNTUK DROPDOWN (URUT DESCENDING / TERBARU DI ATAS)
 // ----------------------------------------------------
 async function loadBatchOptions() {
   const { data, error } = await supabaseClient
@@ -548,6 +548,7 @@ async function loadBatchOptions() {
 
   if (error || !data) return;
 
+  // Pengurutan Descending (Batch terbaru / tanggal terbaru / ID terbesar di atas)
   const sortedData = data.sort((a, b) => {
     if (a.created_at && b.created_at) {
       return new Date(b.created_at) - new Date(a.created_at);
@@ -555,12 +556,8 @@ async function loadBatchOptions() {
     if (a.tgl_mulai && b.tgl_mulai) {
       return new Date(b.tgl_mulai) - new Date(a.tgl_mulai);
     }
-    return 0;
+    return b.id.localeCompare(a.id, undefined, { numeric: true, sensitivity: 'base' });
   });
-
-  if (!data[0]?.created_at && !data[0]?.tgl_mulai) {
-    sortedData.reverse();
-  }
 
   sortedData.forEach(b => {
     const totalHari = b.jadwal_tanggal ? b.jadwal_tanggal.length : '-';
@@ -571,6 +568,41 @@ async function loadBatchOptions() {
   });
 }
 
+// ----------------------------------------------------
+// FILTER DROPDOWN SKP / MASTER TRAINING (URUT DESCENDING BATCH)
+// ----------------------------------------------------
+async function onSKPFilterChange() {
+  const selectedSKP = document.getElementById('dbFilterSKP').value;
+  const selectBatch = document.getElementById('dbFilterBatch');
+  
+  if (!selectBatch) return;
+  selectBatch.innerHTML = '<option value="">-- Semua Batch --</option>';
+
+  const { data } = await supabaseClient.from('trainings').select('*');
+  if (!data) return;
+
+  // Filter berdasarkan SKP/Master Training terpilih
+  let filteredBatches = selectedSKP 
+    ? data.filter(b => b.master_training_id === selectedSKP || b.id.startsWith(selectedSKP))
+    : data;
+
+  // Urutkan Descending (terbaru di atas)
+  filteredBatches.sort((a, b) => {
+    if (a.created_at && b.created_at) {
+      return new Date(b.created_at) - new Date(a.created_at);
+    }
+    if (a.tgl_mulai && b.tgl_mulai) {
+      return new Date(b.tgl_mulai) - new Date(a.tgl_mulai);
+    }
+    return b.id.localeCompare(a.id, undefined, { numeric: true, sensitivity: 'base' });
+  });
+
+  filteredBatches.forEach(b => {
+    selectBatch.innerHTML += `<option value="${b.id}">${b.judul}</option>`;
+  });
+
+  loadDatabasePeserta();
+}
 // ----------------------------------------------------
 // IMPORT EXCEL PESERTA MASAL (AUTO CONVERT TO YYYY-MM-DD)
 // ----------------------------------------------------
