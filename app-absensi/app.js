@@ -1089,3 +1089,22 @@ async function loadDatabasePeserta() {
     `;
   });
 }
+// ----------------------------------------------------
+// 11. LOGIKA NAVIGASI TAB ADMIN
+// ----------------------------------------------------
+function switchTabAdmin(tabName) {
+  document.querySelectorAll('.tab-admin-content').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.tab-admin-btn').forEach(el => {
+    el.classList.remove('bg-emerald-800', 'text-white');
+    el.classList.add('hover:bg-slate-100');
+  });
+
+  if (tabName === 'kelola') {
+    document.getElementById('tabAdminKelola').classList.remove('hidden');
+    document.getElementById('tabBtnAdminKelola').classList.add('bg-emerald-800', 'text-white');
+  } else if (tabName === 'database') {
+    document.getElementById('tabAdminDatabase').classList.remove('hidden');
+    document.getElementById('tabBtnAdminDatabase').classList.add('bg-emerald-800', 'text-white');
+    onSKPFilterChange(); // Re-load data peserta saat tab database dibuka
+  }
+}
