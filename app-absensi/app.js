@@ -1,4 +1,4 @@
-// ----------------------------------------------------
+o// ----------------------------------------------------
 // 1. INISIALISASI SUPABASE
 // ----------------------------------------------------
 const SUPABASE_URL = "https://bxgzkfvqwkzbnikvvjhp.supabase.co";
@@ -996,6 +996,7 @@ async function onSKPFilterChange() {
   const { data } = await supabaseClient.from('trainings').select('*');
   if (!data) return;
 
+  // Filter batch yang mengandung Master Training ID terpilih
   const filteredBatches = selectedSKP 
     ? data.filter(b => b.master_training_id === selectedSKP || b.id.startsWith(selectedSKP))
     : data;
@@ -1006,7 +1007,6 @@ async function onSKPFilterChange() {
 
   loadDatabasePeserta();
 }
-
 async function loadDatabasePeserta() {
   const selectedSKP = document.getElementById('dbFilterSKP').value;
   const selectedBatch = document.getElementById('dbFilterBatch').value;
