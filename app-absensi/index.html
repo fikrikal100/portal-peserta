@@ -191,14 +191,16 @@
 
   </div>
 
-  <script>
+ <script>
+    // 1. INISIALISASI SUPABASE (Gunakan nama variabel 'supabaseClient')
     const SUPABASE_URL = "https://bxgzkfvqwkzbnikvvjhp.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4Z3prZnZxd2t6Ym5pa3Z2amhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5MjQ1NjMsImV4cCI6MjEwNzUwMDU2M30.mSC45wlyGiP2V6UpCTeIJWZs9HVu7Z4ZaqucUFqDqDg";
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentSessionUser = null;
 
+    // 2. LOGIKA LOGIN PESERTA & ADMIN
     async function prosesLogin() {
       const u = document.getElementById('loginUsername').value.trim().toLowerCase();
       const p = document.getElementById('loginPassword').value.trim();
@@ -214,7 +216,7 @@
       btn.disabled = true;
 
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
           .from('users')
           .select('*')
           .eq('username', u)
@@ -231,6 +233,7 @@
           return;
         }
 
+        // Login Berhasil
         currentSessionUser = data;
         document.getElementById('sectionLogin').classList.add('hidden');
         document.getElementById('btnLogout').classList.remove('hidden');
@@ -262,6 +265,7 @@
       location.reload();
     }
 
+    // 3. KAMERA SELFIE & ABSENSI
     async function startCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -275,6 +279,7 @@
       alert("Absensi berhasil dikirim!");
     }
 
+    // 4. FITUR ADMIN: BUAT BATCH & LOAD BATCH
     async function simpanBatchTraining() {
       const masterId = document.getElementById('adminSelectMasterTraining').value;
       const batchNum = document.getElementById('adminInputBatch').value.trim();
@@ -283,7 +288,7 @@
 
       const trainingId = `${masterId}-${batchNum.replace(/\s+/g, '-').toUpperCase()}`;
 
-      const { error } = await supabase.from('trainings').insert([{
+      const { error } = await supabaseClient.from('trainings').insert([{
         id: trainingId,
         master_training_id: masterId,
         batch_number: batchNum,
@@ -300,7 +305,7 @@
     }
 
     async function loadBatchOptions() {
-      const { data } = await supabase.from('trainings').select('*');
+      const { data } = await supabaseClient.from('trainings').select('*');
       const select = document.getElementById('adminSelectBatchRekap');
       select.innerHTML = '<option value="">-- Pilih Batch Training --</option>';
       (data || []).forEach(b => {
@@ -308,6 +313,7 @@
       });
     }
 
+    // 5. FITUR ADMIN: IMPORT EXCEL MASAL PESERTA
     function importExcelPeserta() {
       const fileInput = document.getElementById('fileExcelPeserta');
       const file = fileInput.files[0];
@@ -336,7 +342,7 @@
             };
           });
 
-          const { error } = await supabase.from('users').upsert(usersToInsert);
+          const { error } = await supabaseClient.from('users').upsert(usersToInsert);
           if (error) alert("Gagal import: " + error.message);
           else alert(`Berhasil mengimpor ${usersToInsert.length} akun peserta!`);
 
@@ -347,6 +353,7 @@
       reader.readAsArrayBuffer(file);
     }
 
+    // 6. FITUR ADMIN: UPLOAD SERTIFIKAT MASAL
     async function uploadSertifikatMasal() {
       const fileInput = document.getElementById('fileSertifikatMasal');
       const files = fileInput.files;
@@ -357,14 +364,14 @@
         const file = files[i];
         const filenameWithoutExt = file.name.replace(/\.[^/.]+$/, "").toLowerCase();
 
-        const { data: uploadData, error: uploadErr } = await supabase.storage
+        const { data: uploadData, error: uploadErr } = await supabaseClient.storage
           .from('sertifikat')
           .upload(`public/${file.name}`, file, { upsert: true });
 
         if (!uploadErr) {
-          const { data: urlData } = supabase.storage.from('sertifikat').getPublicUrl(`public/${file.name}`);
+          const { data: urlData } = supabaseClient.storage.from('sertifikat').getPublicUrl(`public/${file.name}`);
           
-          await supabase.from('users')
+          await supabaseClient.from('users')
             .update({ url_sertifikat: urlData.publicUrl })
             .eq('id_sertifikat', filenameWithoutExt);
 
@@ -380,5 +387,3 @@
       alert(`Fitur export rekapitulasi batch ${selectedBatch} sedang disiapkan!`);
     }
   </script>
-</body>
-</html>
