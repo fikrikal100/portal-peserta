@@ -408,21 +408,93 @@ async function simpanBatchTraining() {
   }
 }
 
+// ----------------------------------------------------
+// LOAD PILIHAN BATCH UNTUK DROPDOWN REKAP, MANUAL, & IMPORT EXCEL
+// ----------------------------------------------------
 async function loadBatchOptions() {
   const { data } = await supabaseClient.from('trainings').select('*');
   
   const selectRekap = document.getElementById('adminSelectBatchRekap');
   const selectManual = document.getElementById('manualSelectBatch');
+  const selectImport = document.getElementById('importSelectBatch');
   
-  selectRekap.innerHTML = '<option value="">-- Pilih Batch Training --</option>';
-  selectManual.innerHTML = '<option value="">-- Pilih Batch Pelatihan --</option>';
+  if (selectRekap) selectRekap.innerHTML = '<option value="">-- Pilih Batch Training --</option>';
+  if (selectManual) selectManual.innerHTML = '<option value="">-- Pilih Batch Pelatihan --</option>';
+  if (selectImport) selectImport.innerHTML = '<option value="">-- Pilih Batch Pelatihan --</option>';
 
   (data || []).forEach(b => {
     const totalHari = b.jadwal_tanggal ? b.jadwal_tanggal.length : '-';
     const optHtml = `<option value="${b.id}">${b.judul} (${totalHari} Hari Sesi)</option>`;
-    selectRekap.innerHTML += optHtml;
-    selectManual.innerHTML += optHtml;
+    if (selectRekap) selectRekap.innerHTML += optHtml;
+    if (selectManual) selectManual.innerHTML += optHtml;
+    if (selectImport) selectImport.innerHTML += optHtml;
   });
+}
+
+// ----------------------------------------------------
+// IMPORT EXCEL PESERTA MASAL DENGAN PILIHAN BATCH
+// ----------------------------------------------------
+function importExcelPeserta() {
+  const selectedBatchId = document.getElementById('importSelectBatch').value;
+  const fileInput = document.getElementById('fileExcelPeserta');
+  const file = fileInput.files[0];
+
+  if (!selectedBatchId) return alert("Harap pilih Batch Pelatihan Tujuan terlebih dahulu!");
+  if (!file) return alert("Pilih file Excel/CSV lebih dulu!");
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+      if (!rows || rows.length === 0) {
+        return alert("File Excel kosong atau tidak terbaca!");
+      }
+
+      const usersToInsert = rows.map(r => {
+        const rawNama = r.Nama || r.nama || r["Nama Lengkap"] || "";
+        const rawTglLahir = String(r.TanggalLahir || r.tanggallahir || r["Tanggal Lahir"] || "").trim();
+        const rawNIK = String(r.NIK || r.nik || "-").trim();
+        const rawPerusahaan = String(r.Perusahaan || r.perusahaan || r["Nama Perusahaan"] || "PT Mandiri Maha Daya").trim();
+
+        // Bersihkan tanggal lahir ke format DDMMYYYY untuk password & id_sertifikat
+        // Contoh input Excel: "13-12-1998" -> "13121998"
+        const cleanTgl = rawTglLahir.replace(/[^0-9]/g, ''); 
+        
+        // Buat username tanpa spasi & huruf kecil
+        const formattedUsername = rawNama.toString().replace(/\s+/g, '').toLowerCase();
+        
+        // Formating ID Sertifikat: namalengkap_DDMMYYYY
+        const idSertifikat = `${formattedUsername}_${cleanTgl}`;
+
+        return {
+          username: formattedUsername,
+          password: cleanTgl,
+          nama: rawNama,
+          nik: rawNIK,
+          perusahaan: rawPerusahaan,
+          training_id: selectedBatchId, // Menggunakan Batch Pelatihan yang dipilih dari Dropdown
+          id_sertifikat: idSertifikat,
+          role: 'peserta'
+        };
+      });
+
+      const { error } = await supabaseClient.from('users').upsert(usersToInsert);
+      if (error) alert("Gagal mengimpor data peserta: " + error.message);
+      else {
+        alert(`✅ Berhasil mengimpor ${usersToInsert.length} akun peserta ke dalam Batch: ${selectedBatchId}!`);
+        fileInput.value = '';
+        document.getElementById('importSelectBatch').value = '';
+      }
+
+    } catch (err) {
+      alert("Gagal membaca file Excel: " + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 // ----------------------------------------------------
