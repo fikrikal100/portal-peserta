@@ -9,7 +9,66 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentSessionUser = null;
 let currCalDate = new Date();
 let selectedBatchDates = [];
-let loadedNationalHolidays = {};
+
+// Data awal libur nasional (Lokal agar instan tanpa loading)
+let loadedNationalHolidays = {
+  // 2024
+  "2024-01-01": "Tahun Baru 2024 Masehi",
+  "2024-02-08": "Isra Mikraj Nabi Muhammad SAW",
+  "2024-02-09": "Cuti Bersama Imlek",
+  "2024-02-10": "Tahun Baru Imlek 2575 Kongzili",
+  "2024-03-11": "Hari Suci Nyepi Tahun Baru Saka 1946",
+  "2024-03-29": "Wafat Isa Al Masih",
+  "2024-03-31": "Hari Paskah",
+  "2024-04-10": "Hari Raya Idul Fitri 1445 Hijriah",
+  "2024-04-11": "Hari Raya Idul Fitri 1445 Hijriah",
+  "2024-05-01": "Hari Buruh Internasional",
+  "2024-05-09": "Kenaikan Isa Al Masih",
+  "2024-05-23": "Hari Raya Waisak 2568 BE",
+  "2024-06-01": "Hari Lahir Pancasila",
+  "2024-06-17": "Hari Raya Idul Adha 1445 Hijriah",
+  "2024-07-07": "Tahun Baru Islam 1446 Hijriah",
+  "2024-08-17": "Hari Kemerdekaan Republik Indonesia",
+  "2024-09-16": "Maulid Nabi Muhammad SAW",
+  "2024-12-25": "Hari Raya Natal",
+
+  // 2025
+  "2025-01-01": "Tahun Baru 2025 Masehi",
+  "2025-01-27": "Isra Mikraj Nabi Muhammad SAW",
+  "2025-01-29": "Tahun Baru Imlek 2576 Kongzili",
+  "2025-03-29": "Hari Suci Nyepi Tahun Baru Saka 1947",
+  "2025-03-31": "Hari Raya Idul Fitri 1446 Hijriah",
+  "2025-04-01": "Hari Raya Idul Fitri 1446 Hijriah",
+  "2025-04-18": "Wafat Yesus Kristus",
+  "2025-04-20": "Kebangkitan Yesus Kristus (Paskah)",
+  "2025-05-01": "Hari Buruh Internasional",
+  "2025-05-12": "Hari Raya Waisak 2569 BE",
+  "2025-05-29": "Kenaikan Yesus Kristus",
+  "2025-06-01": "Hari Lahir Pancasila",
+  "2025-06-06": "Hari Raya Idul Adha 1446 Hijriah",
+  "2025-06-27": "1 Muharam Tahun Baru Islam 1447 Hijriah",
+  "2025-08-17": "Proklamasi Kemerdekaan RI",
+  "2025-09-05": "Maulid Nabi Muhammad SAW",
+  "2025-12-25": "Hari Raya Natal",
+
+  // 2026
+  "2026-01-01": "Tahun Baru 2026 Masehi",
+  "2026-01-16": "Isra Mikraj Nabi Muhammad SAW",
+  "2026-02-17": "Tahun Baru Imlek 2577 Kongzili",
+  "2026-03-19": "Hari Suci Nyepi Tahun Baru Saka 1948",
+  "2026-03-20": "Hari Raya Idul Fitri 1447 Hijriah",
+  "2026-03-21": "Hari Raya Idul Fitri 1447 Hijriah",
+  "2026-04-03": "Wafat Yesus Kristus",
+  "2026-05-01": "Hari Buruh Internasional",
+  "2026-05-14": "Kenaikan Yesus Kristus",
+  "2026-05-27": "Hari Raya Idul Adha 1447 Hijriah",
+  "2026-05-31": "Hari Raya Waisak 2570 BE",
+  "2026-06-01": "Hari Lahir Pancasila",
+  "2026-06-16": "Tahun Baru Islam 1448 Hijriah",
+  "2026-08-17": "Proklamasi Kemerdekaan RI",
+  "2026-08-25": "Maulid Nabi Muhammad SAW",
+  "2026-12-25": "Hari Raya Natal"
+};
 
 // ----------------------------------------------------
 // HELPER: CLEAN STRING UNTUK MATCHING FLEXIBLE
@@ -306,7 +365,7 @@ async function ambilAbsen() {
 }
 
 // ----------------------------------------------------
-// FETCH API LIBUR NASIONAL OTOMATIS
+// FETCH API LIBUR NASIONAL OTOMATIS (SUPLEMENTAL UNTUK TAHUN MENDATANG)
 // ----------------------------------------------------
 async function fetchHolidays(year) {
   try {
@@ -322,24 +381,24 @@ async function fetchHolidays(year) {
           loadedNationalHolidays[h.tanggal] = `Cuti Bersama: ${h.keterangan}`;
         }
       });
+      // Re-render kalender setelah data dari API masuk
+      renderCalendar();
     }
   } catch (err) {
-    console.warn(`Gagal memuat API libur nasional tahun ${year}:`, err);
+    console.warn(`API libur nasional offline/timeout tahun ${year}. Menggunakan data bawaan.`);
   }
 }
 
 // ----------------------------------------------------
 // 5. KALENDER MULTI-SELECT PILIHAN ADMIN
 // ----------------------------------------------------
-async function renderCalendar() {
+function renderCalendar() {
   const grid = document.getElementById('calendarGrid');
   if (!grid) return;
   grid.innerHTML = '';
 
   const y = currCalDate.getFullYear();
   const m = currCalDate.getMonth();
-
-  await fetchHolidays(y);
 
   const selectMonth = document.getElementById('calSelectMonth');
   const selectYear = document.getElementById('calSelectYear');
@@ -389,17 +448,19 @@ async function renderCalendar() {
   renderSelectedBadges();
 }
 
-async function jumpCalendarMonthYear() {
+function jumpCalendarMonthYear() {
   const m = parseInt(document.getElementById('calSelectMonth').value);
   const y = parseInt(document.getElementById('calSelectYear').value);
   currCalDate.setFullYear(y);
   currCalDate.setMonth(m);
-  await renderCalendar();
+  renderCalendar();
+  fetchHolidays(y); // Jalankan fetch di background
 }
 
-async function changeMonth(dir) {
+function changeMonth(dir) {
   currCalDate.setMonth(currCalDate.getMonth() + dir);
-  await renderCalendar();
+  renderCalendar();
+  fetchHolidays(currCalDate.getFullYear()); // Jalankan fetch di background
 }
 
 function toggleDateSelection(dateStr) {
