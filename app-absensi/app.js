@@ -121,6 +121,7 @@ async function prosesLogin() {
       document.getElementById('sectionAdmin').classList.remove('hidden');
       loadBatchOptions();
       renderCalendar();
+      onSKPFilterChange(); // Panggil filter database peserta saat admin login
     } else {
       document.getElementById('sectionPeserta').classList.remove('hidden');
       renderPesertaData(data);
@@ -381,7 +382,6 @@ async function fetchHolidays(year) {
           loadedNationalHolidays[h.tanggal] = `Cuti Bersama: ${h.keterangan}`;
         }
       });
-      // Re-render kalender setelah data dari API masuk
       renderCalendar();
     }
   } catch (err) {
@@ -454,13 +454,13 @@ function jumpCalendarMonthYear() {
   currCalDate.setFullYear(y);
   currCalDate.setMonth(m);
   renderCalendar();
-  fetchHolidays(y); // Jalankan fetch di background
+  fetchHolidays(y);
 }
 
 function changeMonth(dir) {
   currCalDate.setMonth(currCalDate.getMonth() + dir);
   renderCalendar();
-  fetchHolidays(currCalDate.getFullYear()); // Jalankan fetch di background
+  fetchHolidays(currCalDate.getFullYear());
 }
 
 function toggleDateSelection(dateStr) {
@@ -667,6 +667,7 @@ function importExcelPeserta() {
         alert(`✅ Berhasil mengimpor ${usersToInsert.length} akun peserta ke dalam Batch: ${selectedBatchId}!`);
         fileInput.value = '';
         document.getElementById('importSelectBatch').value = '';
+        loadDatabasePeserta(); // Re-load database peserta setelah import
       }
 
     } catch (err) {
@@ -719,6 +720,7 @@ async function simpanPesertaManual() {
     document.getElementById('manualNIK').value = '';
     document.getElementById('manualPerusahaan').value = '';
     document.getElementById('manualSelectBatch').value = '';
+    loadDatabasePeserta(); // Re-load database peserta setelah input manual
   }
 }
 
@@ -978,4 +980,112 @@ async function downloadRekapBatchPDF() {
     btn.innerHTML = originalText;
     btn.disabled = false;
   }
+}
+
+// ----------------------------------------------------
+// 10. LOGIKA DATABASE PESERTA (FILTER SKP & BATCH)
+// ----------------------------------------------------
+
+async function onSKPFilterChange() {
+  const selectedSKP = document.getElementById('dbFilterSKP').value;
+  const selectBatch = document.getElementById('dbFilterBatch');
+  
+  if (!selectBatch) return;
+  selectBatch.innerHTML = '<option value="">-- Semua Batch --</option>';
+
+  const { data } = await supabaseClient.from('trainings').select('*');
+  if (!data) return;
+
+  const filteredBatches = selectedSKP 
+    ? data.filter(b => b.master_training_id === selectedSKP || b.id.startsWith(selectedSKP))
+    : data;
+
+  filteredBatches.forEach(b => {
+    selectBatch.innerHTML += `<option value="${b.id}">${b.judul}</option>`;
+  });
+
+  loadDatabasePeserta();
+}
+
+async function loadDatabasePeserta() {
+  const selectedSKP = document.getElementById('dbFilterSKP').value;
+  const selectedBatch = document.getElementById('dbFilterBatch').value;
+  const tbody = document.getElementById('tbodyDatabasePeserta');
+
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400">Memuat data peserta...</td></tr>';
+
+  let query = supabaseClient.from('users').select('*, trainings(*)').eq('role', 'peserta');
+
+  if (selectedBatch) {
+    query = query.eq('training_id', selectedBatch);
+  }
+
+  const { data: pesertaList, error } = await query;
+
+  if (error || !pesertaList || pesertaList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400 italic">Tidak ada data peserta ditemukan.</td></tr>';
+    return;
+  }
+
+  let resultList = pesertaList;
+  if (selectedSKP && !selectedBatch) {
+    resultList = pesertaList.filter(p => {
+      const masterId = p.trainings?.master_training_id || '';
+      const tId = p.training_id || '';
+      return masterId === selectedSKP || tId.startsWith(selectedSKP);
+    });
+  }
+
+  if (resultList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400 italic">Tidak ada peserta untuk SKP ini.</td></tr>';
+    return;
+  }
+
+  const { data: allLogs } = await supabaseClient.from('log_absensi').select('*');
+
+  tbody.innerHTML = '';
+  resultList.forEach((p, idx) => {
+    const training = p.trainings;
+    let listTanggal = training?.jadwal_tanggal || [];
+    const totalSesiWajib = listTanggal.length * 2;
+
+    const userLogs = (allLogs || []).filter(l => l.username === p.username);
+    const totalAbsenHadir = userLogs.length;
+
+    let persenProgres = 0;
+    if (totalSesiWajib > 0) {
+      persenProgres = Math.min(100, Math.round((totalAbsenHadir / totalSesiWajib) * 100));
+    } else if (totalAbsenHadir > 0) {
+      persenProgres = 100;
+    }
+
+    let badgeProgres = `<span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-bold text-[10px]">0% (0/${totalSesiWajib} Sesi)</span>`;
+    if (persenProgres === 100) {
+      badgeProgres = `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold text-[10px]">✓ 100% Selesai</span>`;
+    } else if (persenProgres > 0) {
+      badgeProgres = `<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold text-[10px]">${persenProgres}% (${totalAbsenHadir}/${totalSesiWajib} Sesi)</span>`;
+    }
+
+    tbody.innerHTML += `
+      <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+        <td class="p-3 text-center font-bold text-slate-400">${idx + 1}</td>
+        <td class="p-3">
+          <p class="font-bold text-slate-800">${p.nama || '-'}</p>
+          <p class="text-[10px] text-slate-400">NIK: ${p.nik || '-'}</p>
+        </td>
+        <td class="p-3 font-mono text-[11px]">
+          <span class="text-emerald-700 font-bold">User:</span> ${p.username}<br>
+          <span class="text-amber-700 font-bold">Pass:</span> ${p.password}
+        </td>
+        <td class="p-3 font-medium text-slate-700">${p.perusahaan || '-'}</td>
+        <td class="p-3">
+          <span class="bg-slate-100 text-slate-700 font-bold text-[10px] px-2 py-1 rounded-md border border-slate-200">
+            ${training?.judul || p.training_id || '-'}
+          </span>
+        </td>
+        <td class="p-3 text-center">${badgeProgres}</td>
+      </tr>
+    `;
+  });
 }
