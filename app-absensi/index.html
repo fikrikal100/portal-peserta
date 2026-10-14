@@ -4,14 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portal Absensi & Sertifikasi - PT Mandiri Maha Daya</title>
-  <!-- Supabase JS Client -->
+
+  <!-- Pustaka External (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- SheetJS untuk Parsing & Export Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <!-- Tailwind CSS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- File CSS Lokal -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800 font-sans pb-24">
 
@@ -60,8 +62,6 @@
 
     <!-- 2. DASHBOARD PESERTA -->
     <div id="sectionPeserta" class="hidden space-y-6">
-      
-      <!-- MENU TAB NAVIGASI PESERTA -->
       <div class="bg-white p-1.5 rounded-2xl shadow border border-slate-200 flex justify-around text-xs font-bold text-slate-600 overflow-x-auto">
         <button onclick="switchTabPeserta('profil')" id="tabBtnProfil" class="tab-peserta-btn px-4 py-2.5 rounded-xl bg-emerald-800 text-white flex items-center gap-2 whitespace-nowrap">
           <i class="fa-solid fa-id-card"></i> Data Diri
@@ -117,7 +117,6 @@
 
       <!-- TAB 2: ABSENSI PELATIHAN -->
       <div id="tabPesertaAbsensi" class="tab-peserta-content hidden space-y-5">
-        <!-- MODUL KAMERA ABSENSI REAL-TIME -->
         <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-4">
           <div class="flex justify-between items-center border-b pb-3">
             <div>
@@ -127,7 +126,6 @@
             <span id="badgeStatusSesi" class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full">Sesi Aktif Real-Time</span>
           </div>
 
-          <!-- BINGKAI KAMERA RASIO 4:3 PROPORSIONAL -->
           <div class="relative overflow-hidden rounded-xl bg-black aspect-[4/3] max-w-md mx-auto flex items-center justify-center border-2 border-slate-300 shadow-inner">
             <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>
             <canvas id="canvasAbsen" class="hidden"></canvas>
@@ -141,7 +139,6 @@
           </button>
         </div>
 
-        <!-- TABEL KARTU RIWAYAT ABSENSI PER HARI -->
         <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-3">
           <h3 class="font-bold text-sm text-emerald-900 border-b pb-2"><i class="fa-solid fa-list-check mr-1.5"></i> Jadwal & Matriks Kehadiran Pelatihan</h3>
           <div class="overflow-x-auto">
@@ -217,7 +214,6 @@
           </ul>
         </div>
       </div>
-
     </div>
 
     <!-- 3. DASHBOARD ADMIN -->
@@ -273,7 +269,6 @@
           </div>
         </div>
 
-        <!-- KALENDER MULTI-SELECT TERINTEGRASI -->
         <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-3">
           <div class="flex justify-between items-center border-b pb-2">
             <label class="font-bold text-xs text-slate-800"><i class="fa-solid fa-calendar-days text-emerald-700 mr-1"></i> Klik Tanggal-Tanggal Sesi Pelatihan (Bisa Lompat Hari)</label>
@@ -294,9 +289,7 @@
             <div class="text-emerald-700">Sab</div>
           </div>
 
-          <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-xs">
-            <!-- Rendered via JS -->
-          </div>
+          <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-xs"></div>
 
           <div class="pt-2 flex justify-between items-center text-xs border-t">
             <p class="text-slate-500">Tanggal Terpilih: <b id="textSelectedDatesCount" class="text-emerald-800">0 Hari</b></p>
@@ -390,16 +383,16 @@
         </div>
       </div>
 
-      <!-- DOWNLOAD REKAP ABSENSI -->
+      <!-- DOWNLOAD REKAP ABSENSI PDF A4 -->
       <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-4">
-        <h3 class="font-bold text-sm text-emerald-900 border-b pb-2"><i class="fa-solid fa-file-export mr-1.5"></i> 3. Cetak Rekapan Kehadiran per Batch Pelatihan</h3>
+        <h3 class="font-bold text-sm text-emerald-900 border-b pb-2"><i class="fa-solid fa-file-pdf mr-1.5"></i> 3. Cetak Rekapan Kehadiran per Batch Pelatihan (PDF A4)</h3>
         <div class="flex flex-col sm:flex-row gap-2">
           <select id="adminSelectBatchRekap" class="w-full p-2.5 border rounded-xl text-xs bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
             <option value="">-- Pilih Batch Training --</option>
           </select>
-          <button id="btnExportRekap" onclick="downloadRekapBatch()" class="bg-emerald-800 hover:bg-emerald-900 text-white text-xs px-5 py-2.5 rounded-xl font-bold shadow transition whitespace-nowrap flex items-center justify-center gap-2">
-            <i class="fa-solid fa-file-excel"></i>
-            <span>Export Rekapan</span>
+          <button id="btnExportRekap" onclick="downloadRekapBatchPDF()" class="bg-red-700 hover:bg-red-800 text-white text-xs px-5 py-2.5 rounded-xl font-bold shadow transition whitespace-nowrap flex items-center justify-center gap-2">
+            <i class="fa-solid fa-file-pdf"></i>
+            <span>Export Rekapan PDF A4</span>
           </button>
         </div>
       </div>
@@ -408,629 +401,10 @@
 
   </div>
 
-  <script>
-    // ----------------------------------------------------
-    // 1. INISIALISASI SUPABASE
-    // ----------------------------------------------------
-    const SUPABASE_URL = "https://bxgzkfvqwkzbnikvvjhp.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4Z3prZnZxd2t6Ym5pa3Z2amhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5MjQ1NjMsImV4cCI6MjEwNzUwMDU2M30.mSC45wlyGiP2V6UpCTeIJWZs9HVu7Z4ZaqucUFqDqDg";
-
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    let currentSessionUser = null;
-    let currCalDate = new Date();
-    let selectedBatchDates = [];
-
-    // ----------------------------------------------------
-    // 2. LOGIKA LOGIN & SESSION
-    // ----------------------------------------------------
-    async function prosesLogin() {
-      const u = document.getElementById('loginUsername').value.trim().toLowerCase();
-      const p = document.getElementById('loginPassword').value.trim();
-
-      if (!u || !p) {
-        alert("Harap isi Username dan Password!");
-        return;
-      }
-
-      const btn = document.getElementById('btnLogin');
-      const originalText = btn.innerHTML;
-      btn.innerText = "Memproses...";
-      btn.disabled = true;
-
-      try {
-        const { data, error } = await supabaseClient
-          .from('users')
-          .select('*, trainings(*)')
-          .eq('username', u)
-          .eq('password', p)
-          .maybeSingle();
-
-        if (error) {
-          alert("Terjadi masalah koneksi Supabase: " + error.message);
-          return;
-        }
-
-        if (!data) {
-          alert("Username atau Password salah!");
-          return;
-        }
-
-        currentSessionUser = data;
-        document.getElementById('sectionLogin').classList.add('hidden');
-        document.getElementById('btnLogout').classList.remove('hidden');
-
-        if (data.role === 'admin') {
-          document.getElementById('sectionAdmin').classList.remove('hidden');
-          loadBatchOptions();
-          renderCalendar();
-        } else {
-          document.getElementById('sectionPeserta').classList.remove('hidden');
-          renderPesertaData(data);
-          startCamera();
-        }
-
-      } catch (err) {
-        alert("Terjadi kesalahan sistem: " + err.message);
-      } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-      }
-    }
-
-    function logout() {
-      location.reload();
-    }
-
-    function switchTabPeserta(tabName) {
-      document.querySelectorAll('.tab-peserta-content').forEach(el => el.classList.add('hidden'));
-      document.querySelectorAll('.tab-peserta-btn').forEach(el => {
-        el.classList.remove('bg-emerald-800', 'text-white');
-        el.classList.add('hover:bg-slate-100');
-      });
-
-      if (tabName === 'profil') {
-        document.getElementById('tabPesertaProfil').classList.remove('hidden');
-        document.getElementById('tabBtnProfil').classList.add('bg-emerald-800', 'text-white');
-      } else if (tabName === 'absensi') {
-        document.getElementById('tabPesertaAbsensi').classList.remove('hidden');
-        document.getElementById('tabBtnAbsensi').classList.add('bg-emerald-800', 'text-white');
-      } else if (tabName === 'sertifikat') {
-        document.getElementById('tabPesertaSertifikat').classList.remove('hidden');
-        document.getElementById('tabBtnSertifikat').classList.add('bg-emerald-800', 'text-white');
-      } else if (tabName === 'modul') {
-        document.getElementById('tabPesertaModul').classList.remove('hidden');
-        document.getElementById('tabBtnModul').classList.add('bg-emerald-800', 'text-white');
-      } else if (tabName === 'info') {
-        document.getElementById('tabPesertaInfo').classList.remove('hidden');
-        document.getElementById('tabBtnInfo').classList.add('bg-emerald-800', 'text-white');
-      }
-    }
-
-    function renderPesertaData(user) {
-      document.getElementById('pesertaNama').innerText = user.nama || '-';
-      document.getElementById('pesertaPerusahaan').innerHTML = `<i class="fa-solid fa-building mr-1"></i> Perusahaan: ${user.perusahaan || '-'}`;
-      document.getElementById('pesertaNIK').innerText = user.nik || '-';
-      document.getElementById('pesertaUsername').innerText = user.username || '-';
-      
-      const tInfo = user.trainings;
-      document.getElementById('pesertaTraining').innerText = tInfo ? tInfo.judul : (user.training_id || '-');
-      
-      if (tInfo && tInfo.jadwal_tanggal && tInfo.jadwal_tanggal.length > 0) {
-        const sorted = [...tInfo.jadwal_tanggal].sort();
-        document.getElementById('pesertaJadwal').innerText = `${sorted[0]} s/d ${sorted[sorted.length-1]} (${sorted.length} Hari Pelatihan)`;
-      } else if (tInfo) {
-        document.getElementById('pesertaJadwal').innerText = `${tInfo.tgl_mulai} s/d ${tInfo.tgl_selesai}`;
-      } else {
-        document.getElementById('pesertaJadwal').innerText = 'Sesuai Jadwal Sesi';
-      }
-
-      if (user.url_sertifikat) {
-        document.getElementById('boxSertifikatPeserta').classList.remove('hidden');
-        document.getElementById('pesanSertifikatBelum').classList.add('hidden');
-        document.getElementById('btnDownloadSertifikat').href = user.url_sertifikat;
-      }
-
-      loadMatriksAbsensiUser();
-    }
-
-    // ----------------------------------------------------
-    // 3. LOGIKA ABSENSI REAL-TIME & MATRIKS SUPABASE
-    // ----------------------------------------------------
-    async function loadMatriksAbsensiUser() {
-      if (!currentSessionUser) return;
-
-      const { data: logs } = await supabaseClient
-        .from('log_absensi')
-        .select('*')
-        .eq('username', currentSessionUser.username);
-
-      renderMatriksAbsensi(currentSessionUser.trainings, logs || []);
-    }
-
-    function renderMatriksAbsensi(training, logs = []) {
-      const tbody = document.getElementById('tbodyMatriksAbsensi');
-      tbody.innerHTML = '';
-
-      let listTanggal = [];
-
-      if (training && training.jadwal_tanggal && training.jadwal_tanggal.length > 0) {
-        listTanggal = [...training.jadwal_tanggal].sort();
-      } 
-      else if (training && training.tgl_mulai && training.tgl_selesai) {
-        let start = new Date(training.tgl_mulai);
-        let end = new Date(training.tgl_selesai);
-        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-          listTanggal.push(d.toISOString().split('T')[0]);
-        }
-      }
-
-      if (listTanggal.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3 text-slate-400">Jadwal pelatihan belum diatur oleh Panitia.</td></tr>`;
-        return;
-      }
-
-      listTanggal.forEach(dateStr => {
-        const s1 = logs.find(l => l.tanggal === dateStr && Number(l.sesi) === 1);
-        const s2 = logs.find(l => l.tanggal === dateStr && Number(l.sesi) === 2);
-
-        const badgeS1 = s1 
-          ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2.5 py-1 rounded-full font-bold">✓ Hadir (${s1.waktu_absen ? s1.waktu_absen.substring(11,16) : 'Sesi 1'})</span>` 
-          : `<span class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-semibold">Belum Absen</span>`;
-
-        const badgeS2 = s2 
-          ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2.5 py-1 rounded-full font-bold">✓ Hadir (${s2.waktu_absen ? s2.waktu_absen.substring(11,16) : 'Sesi 2'})</span>` 
-          : `<span class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-semibold">Belum Absen</span>`;
-
-        let statusTotal = `<span class="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold">Pending</span>`;
-        if (s1 && s2) statusTotal = `<span class="bg-emerald-700 text-white text-[10px] px-2.5 py-0.5 rounded-full font-bold">Lengkap 100%</span>`;
-        else if (s1 || s2) statusTotal = `<span class="bg-blue-100 text-blue-800 text-[10px] px-2.5 py-0.5 rounded-full font-bold">Parsial 50%</span>`;
-
-        tbody.innerHTML += `
-          <tr class="border-b border-slate-100 hover:bg-slate-50">
-            <td class="px-3 py-2.5 font-bold text-slate-700">${dateStr}</td>
-            <td class="px-3 py-2.5">${badgeS1}</td>
-            <td class="px-3 py-2.5">${badgeS2}</td>
-            <td class="px-3 py-2.5">${statusTotal}</td>
-          </tr>
-        `;
-      });
-    }
-
-    // ----------------------------------------------------
-    // 4. KAMERA & ABSENSI REAL-TIME
-    // ----------------------------------------------------
-    async function startCamera() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" } 
-        });
-        document.getElementById('webcam').srcObject = stream;
-      } catch (err) {
-        console.warn("Kamera tidak dapat diakses secara langsung:", err);
-      }
-    }
-
-    async function ambilAbsen() {
-      if (!currentSessionUser) return alert("Sesi login tidak ditemukan, harap login ulang!");
-
-      const btn = document.getElementById('btnKirimAbsen');
-      const originalText = btn.innerHTML;
-      btn.innerText = "Mengambil Foto & Lokasi GPS...";
-      btn.disabled = true;
-
-      try {
-        let lat = null, lng = null;
-        try {
-          const position = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 });
-          });
-          lat = position.coords.latitude;
-          lng = position.coords.longitude;
-        } catch (e) {
-          console.warn("GPS tidak diizinkan/timeout, melanjutkan tanpa koordinat.");
-        }
-
-        const video = document.getElementById('webcam');
-        const canvas = document.getElementById('canvasAbsen');
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 480;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const fotoBase64 = canvas.toDataURL('image/jpeg', 0.7);
-
-        const now = new Date();
-        const jam = now.getHours();
-        let sesiNum = 1;
-        if (jam >= 12) sesiNum = 2;
-
-        const tglHariIni = now.toISOString().split('T')[0];
-
-        const { error } = await supabaseClient.from('log_absensi').insert([{
-          username: currentSessionUser.username,
-          training_id: currentSessionUser.training_id,
-          tanggal: tglHariIni,
-          sesi: sesiNum,
-          waktu_absen: now.toISOString(),
-          foto: fotoBase64,
-          latitude: lat,
-          longitude: lng
-        }]);
-
-        if (error) {
-          alert("Gagal menyimpan absensi: " + error.message);
-        } else {
-          alert(`✅ Absensi Sesi ${sesiNum} Berhasil Dicatat!`);
-          loadMatriksAbsensiUser();
-        }
-
-      } catch (err) {
-        alert("Terjadi kesalahan absensi: " + err.message);
-      } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-      }
-    }
-
-    // ----------------------------------------------------
-    // 5. KALENDER MULTI-SELECT PILIHAN ADMIN
-    // ----------------------------------------------------
-    function renderCalendar() {
-      const grid = document.getElementById('calendarGrid');
-      grid.innerHTML = '';
-
-      const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-      const y = currCalDate.getFullYear();
-      const m = currCalDate.getMonth();
-
-      document.getElementById('calendarMonthYear').innerText = `${monthNames[m]} ${y}`;
-
-      const firstDay = new Date(y, m, 1).getDay();
-      const totalDays = new Date(y, m + 1, 0).getDate();
-
-      for (let i = 0; i < firstDay; i++) {
-        grid.innerHTML += `<div></div>`;
-      }
-
-      for (let day = 1; day <= totalDays; day++) {
-        const dateString = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const isSelected = selectedBatchDates.includes(dateString);
-
-        const btnClass = isSelected 
-          ? "bg-emerald-700 text-white font-bold rounded-xl p-2 text-center shadow ring-2 ring-emerald-500 transition"
-          : "bg-white border text-slate-700 font-semibold rounded-xl p-2 text-center hover:bg-emerald-50 transition";
-
-        grid.innerHTML += `
-          <button onclick="toggleDateSelection('${dateString}')" class="${btnClass}">
-            ${day}
-          </button>
-        `;
-      }
-
-      renderSelectedBadges();
-    }
-
-    function toggleDateSelection(dateStr) {
-      const idx = selectedBatchDates.indexOf(dateStr);
-      if (idx > -1) {
-        selectedBatchDates.splice(idx, 1);
-      } else {
-        selectedBatchDates.push(dateStr);
-      }
-      selectedBatchDates.sort();
-      renderCalendar();
-    }
-
-    function resetSelectedDates() {
-      selectedBatchDates = [];
-      renderCalendar();
-    }
-
-    function renderSelectedBadges() {
-      document.getElementById('textSelectedDatesCount').innerText = `${selectedBatchDates.length} Hari`;
-      const container = document.getElementById('containerSelectedBadges');
-      container.innerHTML = '';
-      selectedBatchDates.forEach(d => {
-        container.innerHTML += `
-          <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-            ${d} <i onclick="toggleDateSelection('${d}')" class="fa-solid fa-xmark cursor-pointer hover:text-red-600"></i>
-          </span>
-        `;
-      });
-    }
-
-    function changeMonth(dir) {
-      currCalDate.setMonth(currCalDate.getMonth() + dir);
-      renderCalendar();
-    }
-
-    // ----------------------------------------------------
-    // 6. FITUR ADMIN: BUAT BATCH PELATIHAN
-    // ----------------------------------------------------
-    async function simpanBatchTraining() {
-      const masterId = document.getElementById('adminSelectMasterTraining').value;
-      const batchNum = document.getElementById('adminInputBatch').value.trim();
-      
-      if (!batchNum) return alert("Harap isi Nomor Batch!");
-      if (selectedBatchDates.length === 0) return alert("Harap pilih minimal 1 tanggal pada kalender!");
-
-      const trainingId = `${masterId}-${batchNum.replace(/\s+/g, '-').toUpperCase()}`;
-      const sortedDates = [...selectedBatchDates].sort();
-
-      const { error } = await supabaseClient.from('trainings').upsert([{
-        id: trainingId,
-        master_training_id: masterId,
-        batch_number: batchNum,
-        judul: `Pelatihan ${masterId} - ${batchNum}`,
-        tgl_mulai: sortedDates[0],
-        tgl_selesai: sortedDates[sortedDates.length - 1],
-        jadwal_tanggal: sortedDates
-      }]);
-
-      if (error) alert("Gagal menyimpan batch: " + error.message);
-      else {
-        alert(`✅ Batch Training Berhasil Dibuat: ${trainingId}\n\nJadwal Terpilih (${sortedDates.length} Hari):\n` + sortedDates.join(", "));
-        loadBatchOptions();
-        resetSelectedDates();
-      }
-    }
-
-    async function loadBatchOptions() {
-      const { data } = await supabaseClient.from('trainings').select('*');
-      
-      const selectRekap = document.getElementById('adminSelectBatchRekap');
-      const selectManual = document.getElementById('manualSelectBatch');
-      
-      selectRekap.innerHTML = '<option value="">-- Pilih Batch Training --</option>';
-      selectManual.innerHTML = '<option value="">-- Pilih Batch Pelatihan --</option>';
-
-      (data || []).forEach(b => {
-        const totalHari = b.jadwal_tanggal ? b.jadwal_tanggal.length : '-';
-        const optHtml = `<option value="${b.id}">${b.judul} (${totalHari} Hari Sesi)</option>`;
-        selectRekap.innerHTML += optHtml;
-        selectManual.innerHTML += optHtml;
-      });
-    }
-
-    // ----------------------------------------------------
-    // 7. INPUT PESERTA MANUAL
-    // ----------------------------------------------------
-    async function simpanPesertaManual() {
-      const nama = document.getElementById('manualNama').value.trim();
-      const tglLahirRaw = document.getElementById('manualTglLahir').value;
-      const nik = document.getElementById('manualNIK').value.trim();
-      const perusahaan = document.getElementById('manualPerusahaan').value.trim();
-      const trainingId = document.getElementById('manualSelectBatch').value;
-
-      if (!nama || !tglLahirRaw || !trainingId) {
-        return alert("Harap lengkapi Nama, Tanggal Lahir, dan Pilih Batch Pelatihan!");
-      }
-
-      const parts = tglLahirRaw.split('-');
-      const formattedPassword = `${parts[2]}${parts[1]}${parts[0]}`;
-      const formattedUsername = nama.replace(/\s+/g, '').toLowerCase();
-      const idSertifikat = `${formattedUsername}_${formattedPassword}`;
-
-      const userObject = {
-        username: formattedUsername,
-        password: formattedPassword,
-        nama: nama,
-        nik: nik || '-',
-        tgl_lahir: tglLahirRaw,
-        perusahaan: perusahaan || 'PT Mandiri Maha Daya',
-        training_id: trainingId,
-        id_sertifikat: idSertifikat,
-        role: 'peserta'
-      };
-
-      const { error } = await supabaseClient.from('users').upsert([userObject]);
-
-      if (error) {
-        alert("Gagal menambahkan peserta: " + error.message);
-      } else {
-        alert(`✅ Peserta Berhasil Ditambahkan!\n\nUsername: ${formattedUsername}\nPassword: ${formattedPassword}\nID Sertifikat: ${idSertifikat}`);
-        
-        document.getElementById('manualNama').value = '';
-        document.getElementById('manualTglLahir').value = '';
-        document.getElementById('manualNIK').value = '';
-        document.getElementById('manualPerusahaan').value = '';
-        document.getElementById('manualSelectBatch').value = '';
-      }
-    }
-
-    // ----------------------------------------------------
-    // 8. IMPORT EXCEL & UPLOAD SERTIFIKAT
-    // ----------------------------------------------------
-    function importExcelPeserta() {
-      const fileInput = document.getElementById('fileExcelPeserta');
-      const file = fileInput.files[0];
-      if (!file) return alert("Pilih file Excel lebih dulu!");
-
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const sheetName = workbook.SheetNames[0];
-          const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-
-          const usersToInsert = rows.map(r => {
-            const formattedUsername = String(r.Nama).replace(/\s+/g, '').toLowerCase();
-            const idSertifikat = `${formattedUsername}_${String(r.TanggalLahir).replace(/[^0-9]/g, '')}`;
-
-            return {
-              username: formattedUsername,
-              password: String(r.TanggalLahir),
-              nama: r.Nama,
-              nik: r.NIK ? String(r.NIK) : '-',
-              perusahaan: r.Perusahaan || 'PT Mandiri Maha Daya',
-              training_id: r.KodeTraining,
-              id_sertifikat: idSertifikat,
-              role: 'peserta'
-            };
-          });
-
-          const { error } = await supabaseClient.from('users').upsert(usersToInsert);
-          if (error) alert("Gagal import: " + error.message);
-          else alert(`Berhasil mengimpor ${usersToInsert.length} akun peserta!`);
-
-        } catch (err) {
-          alert("Gagal membaca file Excel: " + err.message);
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    }
-
-    async function uploadSertifikatMasal() {
-      const fileInput = document.getElementById('fileSertifikatMasal');
-      const files = fileInput.files;
-      if (!files.length) return alert("Pilih minimal 1 file PDF sertifikat!");
-
-      let sukses = 0;
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const filenameWithoutExt = file.name.replace(/\.[^/.]+$/, "").toLowerCase();
-
-        const { data: uploadData, error: uploadErr } = await supabaseClient.storage
-          .from('sertifikat')
-          .upload(`public/${file.name}`, file, { upsert: true });
-
-        if (!uploadErr) {
-          const { data: urlData } = supabaseClient.storage.from('sertifikat').getPublicUrl(`public/${file.name}`);
-          
-          await supabaseClient.from('users')
-            .update({ url_sertifikat: urlData.publicUrl })
-            .eq('id_sertifikat', filenameWithoutExt);
-
-          sukses++;
-        }
-      }
-      alert(`Selesai memproses ${sukses} dari ${files.length} sertifikat!`);
-    }
-
-    // ----------------------------------------------------
-    // 9. EXPORT REKAP ABSENSI EXCEL (SUDAH AKTIF 100%)
-    // ----------------------------------------------------
-    async function downloadRekapBatch() {
-      const selectedBatchId = document.getElementById('adminSelectBatchRekap').value;
-      if (!selectedBatchId) return alert("Harap pilih Batch Training terlebih dahulu!");
-
-      const btn = document.getElementById('btnExportRekap');
-      const originalText = btn.innerHTML;
-      btn.innerText = "Mengunduh Data...";
-      btn.disabled = true;
-
-      try {
-        // A. Ambil Info Batch Training
-        const { data: trainingData, error: tErr } = await supabaseClient
-          .from('trainings')
-          .select('*')
-          .eq('id', selectedBatchId)
-          .single();
-
-        if (tErr || !trainingData) {
-          alert("Data batch tidak ditemukan!");
-          return;
-        }
-
-        // B. Ambil Seluruh Peserta di Batch Ini
-        const { data: pesertaList, error: pErr } = await supabaseClient
-          .from('users')
-          .select('*')
-          .eq('training_id', selectedBatchId)
-          .eq('role', 'peserta');
-
-        if (pErr) {
-          alert("Gagal mengambil data peserta: " + pErr.message);
-          return;
-        }
-
-        if (!pesertaList || pesertaList.length === 0) {
-          alert("Belum ada peserta terdaftar di batch ini!");
-          return;
-        }
-
-        // C. Ambil Semua Log Absensi Batch Ini
-        const { data: logList, error: lErr } = await supabaseClient
-          .from('log_absensi')
-          .select('*')
-          .eq('training_id', selectedBatchId);
-
-        if (lErr) {
-          alert("Gagal mengambil log absensi: " + lErr.message);
-          return;
-        }
-
-        // Tentukan Daftar Tanggal Sesi
-        let listTanggal = [];
-        if (trainingData.jadwal_tanggal && trainingData.jadwal_tanggal.length > 0) {
-          listTanggal = [...trainingData.jadwal_tanggal].sort();
-        } else if (trainingData.tgl_mulai && trainingData.tgl_selesai) {
-          let start = new Date(trainingData.tgl_mulai);
-          let end = new Date(trainingData.tgl_selesai);
-          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-            listTanggal.push(d.toISOString().split('T')[0]);
-          }
-        }
-
-        // D. Susun Data Spreadsheet Excel
-        const exportData = [];
-
-        pesertaList.forEach((peserta, idx) => {
-          listTanggal.forEach(dateStr => {
-            const absS1 = (logList || []).find(l => l.username === peserta.username && l.tanggal === dateStr && Number(l.sesi) === 1);
-            const absS2 = (logList || []).find(l => l.username === peserta.username && l.tanggal === dateStr && Number(l.sesi) === 2);
-
-            exportData.push({
-              "No": idx + 1,
-              "Nama Peserta": peserta.nama || '-',
-              "NIK": peserta.nik || '-',
-              "Perusahaan": peserta.perusahaan || '-',
-              "Username": peserta.username,
-              "Batch Training": trainingData.judul,
-              "Tanggal Sesi": dateStr,
-              "Absen Sesi 1 (Pagi)": absS1 ? `HADIR (${absS1.waktu_absen ? absS1.waktu_absen.substring(11, 19) : ''})` : "BELUM ABSEN",
-              "GPS Sesi 1": absS1 && absS1.latitude ? `${absS1.latitude}, ${absS1.longitude}` : "-",
-              "Absen Sesi 2 (Siang)": absS2 ? `HADIR (${absS2.waktu_absen ? absS2.waktu_absen.substring(11, 19) : ''})` : "BELUM ABSEN",
-              "GPS Sesi 2": absS2 && absS2.latitude ? `${absS2.latitude}, ${absS2.longitude}` : "-",
-              "Status Kehadiran Hari Ini": (absS1 && absS2) ? "LENGKAP 100%" : ((absS1 || absS2) ? "PARSIAL 50%" : "TIDAK HADIR")
-            });
-          });
-        });
-
-        // E. Generate File XLSX Menggunakan SheetJS
-        const worksheet = XLSX.utils.json_to_sheet(exportData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Absensi");
-
-        // Set Lebar Kolom Otomatis
-        worksheet['!cols'] = [
-          { wch: 5 },  // No
-          { wch: 25 }, // Nama Peserta
-          { wch: 20 }, // NIK
-          { wch: 25 }, // Perusahaan
-          { wch: 18 }, // Username
-          { wch: 30 }, // Batch Training
-          { wch: 15 }, // Tanggal
-          { wch: 25 }, // Sesi 1
-          { wch: 25 }, // GPS 1
-          { wch: 25 }, // Sesi 2
-          { wch: 25 }, // GPS 2
-          { wch: 20 }  // Status Total
-        ];
-
-        const filename = `Rekap_Absensi_${selectedBatchId}_${new Date().toISOString().split('T')[0]}.xlsx`;
-        XLSX.writeFile(workbook, filename);
-
-        alert(`✅ Rekapan Absensi Berhasil Diunduh!\nNama file: ${filename}`);
-
-      } catch (err) {
-        alert("Terjadi kesalahan saat meng-export data: " + err.message);
-      } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-      }
-    }
-  </script>
+  <!-- CONTAINER HIDDEN TEMPLATE RENDER PDF -->
+  <div id="pdfExportContainer" class="hidden"></div>
+
+  <!-- File JavaScript Lokal -->
+  <script src="app.js"></script>
 </body>
 </html>
