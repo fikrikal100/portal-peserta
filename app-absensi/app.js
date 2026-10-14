@@ -310,28 +310,51 @@ async function ambilAbsen() {
 // ----------------------------------------------------
 function renderCalendar() {
   const grid = document.getElementById('calendarGrid');
+  if (!grid) return;
   grid.innerHTML = '';
 
-  const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
   const y = currCalDate.getFullYear();
   const m = currCalDate.getMonth();
 
-  document.getElementById('calendarMonthYear').innerText = `${monthNames[m]} ${y}`;
+  // Set nilai dropdown bulan & tahun agar sinkron
+  const selectMonth = document.getElementById('calSelectMonth');
+  const selectYear = document.getElementById('calSelectYear');
 
-  const firstDay = new Date(y, m, 1).getDay();
+  if (selectMonth) selectMonth.value = m;
+
+  // Generate pilihan tahun (2 tahun ke belakang s/d 5 tahun ke depan)
+  if (selectYear && selectYear.options.length === 0) {
+    const currentYear = new Date().getFullYear();
+    for (let yr = currentYear - 2; yr <= currentYear + 5; yr++) {
+      selectYear.innerHTML += `<option value="${yr}">${yr}</option>`;
+    }
+  }
+  if (selectYear) selectYear.value = y;
+
+  const firstDay = new Date(y, m, 1).getDay(); // 0 = Minggu
   const totalDays = new Date(y, m + 1, 0).getDate();
 
+  // Kotak kosong untuk offset hari pertama
   for (let i = 0; i < firstDay; i++) {
     grid.innerHTML += `<div></div>`;
   }
 
   for (let day = 1; day <= totalDays; day++) {
     const dateString = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dateObj = new Date(y, m, day);
+    const isSunday = dateObj.getDay() === 0; // Cek jika hari Minggu
     const isSelected = selectedBatchDates.includes(dateString);
 
-    const btnClass = isSelected 
-      ? "bg-emerald-700 text-white font-bold rounded-xl p-2 text-center shadow ring-2 ring-emerald-500 transition"
-      : "bg-white border text-slate-700 font-semibold rounded-xl p-2 text-center hover:bg-emerald-50 transition";
+    let btnClass = "";
+
+    if (isSelected) {
+      btnClass = "bg-emerald-700 text-white font-bold rounded-xl p-2 text-center shadow ring-2 ring-emerald-500 transition";
+    } else if (isSunday) {
+      // Warna merah khusus untuk hari Minggu
+      btnClass = "bg-red-50 border border-red-200 text-red-600 font-bold rounded-xl p-2 text-center hover:bg-red-100 transition";
+    } else {
+      btnClass = "bg-white border text-slate-700 font-semibold rounded-xl p-2 text-center hover:bg-emerald-50 transition";
+    }
 
     grid.innerHTML += `
       <button onclick="toggleDateSelection('${dateString}')" class="${btnClass}">
@@ -343,40 +366,19 @@ function renderCalendar() {
   renderSelectedBadges();
 }
 
-function toggleDateSelection(dateStr) {
-  const idx = selectedBatchDates.indexOf(dateStr);
-  if (idx > -1) {
-    selectedBatchDates.splice(idx, 1);
-  } else {
-    selectedBatchDates.push(dateStr);
-  }
-  selectedBatchDates.sort();
+// Fungsi jump saat dropdown bulan/tahun diubah
+function jumpCalendarMonthYear() {
+  const m = parseInt(document.getElementById('calSelectMonth').value);
+  const y = parseInt(document.getElementById('calSelectYear').value);
+  currCalDate.setFullYear(y);
+  currCalDate.setMonth(m);
   renderCalendar();
-}
-
-function resetSelectedDates() {
-  selectedBatchDates = [];
-  renderCalendar();
-}
-
-function renderSelectedBadges() {
-  document.getElementById('textSelectedDatesCount').innerText = `${selectedBatchDates.length} Hari`;
-  const container = document.getElementById('containerSelectedBadges');
-  container.innerHTML = '';
-  selectedBatchDates.forEach(d => {
-    container.innerHTML += `
-      <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-        ${d} <i onclick="toggleDateSelection('${d}')" class="fa-solid fa-xmark cursor-pointer hover:text-red-600"></i>
-      </span>
-    `;
-  });
 }
 
 function changeMonth(dir) {
   currCalDate.setMonth(currCalDate.getMonth() + dir);
   renderCalendar();
 }
-
 // ----------------------------------------------------
 // 6. FITUR ADMIN: BUAT BATCH PELATIHAN
 // ----------------------------------------------------
