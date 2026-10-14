@@ -346,22 +346,35 @@
             </div>
           </div>
 
-          <!-- B. IMPORT EXCEL MASAL -->
+        <!-- B. IMPORT EXCEL MASAL -->
           <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-3 flex flex-col justify-between">
             <div class="space-y-3">
               <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
                 <i class="fa-solid fa-file-excel text-emerald-700"></i>
                 <span>Import Banyak Peserta (Excel/CSV)</span>
               </h4>
-              <p class="text-[11px] text-slate-500">Format header kolom wajib: <b>Nama, TanggalLahir, Perusahaan, NIK, KodeTraining</b></p>
-              <input type="file" id="fileExcelPeserta" accept=".xlsx, .csv" class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200">
+              <p class="text-[11px] text-slate-500">
+                Format header kolom wajib: <b>Nama, TanggalLahir, NIK, Perusahaan</b><br>
+                <span class="text-[10px] text-slate-400">*Format TanggalLahir: DD-MM-YYYY (Contoh: 13-12-1998)</span>
+              </p>
+
+              <div>
+                <label class="font-semibold text-xs text-slate-700">Pilih Batch Pelatihan Tujuan</label>
+                <select id="importSelectBatch" class="w-full p-2 border rounded-lg mt-0.5 bg-white outline-none focus:ring-1 focus:ring-emerald-500 text-xs">
+                  <option value="">-- Pilih Batch Pelatihan --</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="font-semibold text-xs text-slate-700">Pilih File Excel/CSV</label>
+                <input type="file" id="fileExcelPeserta" accept=".xlsx, .xls, .csv" class="block w-full text-xs text-slate-500 mt-0.5 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200">
+              </div>
             </div>
             
-            <button onclick="importExcelPeserta()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs py-2.5 rounded-lg font-bold shadow transition flex justify-center items-center gap-1.5">
+            <button onclick="importExcelPeserta()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs py-2.5 rounded-lg font-bold shadow transition flex justify-center items-center gap-1.5 mt-3">
               <i class="fa-solid fa-file-arrow-up"></i> Proses Import Excel
             </button>
           </div>
-        </div>
 
     <!-- C. UPLOAD SERTIFIKAT MASAL (ZIP / PDF) -->
 <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-3 mt-4">
