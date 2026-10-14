@@ -161,29 +161,23 @@
         </div>
       </div>
 
-      <!-- TAB 3: CEK SERTIFIKAT -->
-      <div id="tabPesertaSertifikat" class="tab-peserta-content hidden space-y-4">
-        <div class="bg-white p-6 rounded-2xl shadow border border-slate-200 text-center space-y-4">
-          <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
-            <i class="fa-solid fa-certificate"></i>
-          </div>
-          <h3 class="text-base font-bold text-slate-800">Sertifikat Pelatihan K3 Resmi</h3>
-          <p class="text-xs text-slate-500 max-w-md mx-auto">
-            Sertifikat K3 akan diterbitkan dan di-upload oleh Panitia PT Mandiri Maha Daya setelah peserta menyelesaikan seluruh rangkaian sesi pelatihan dan absensi 100%.
-          </p>
+     <!-- TAB 3: CEK SERTIFIKAT (MULTI SERTIFIKAT) -->
+<div id="tabPesertaSertifikat" class="tab-peserta-content hidden space-y-4">
+  <div class="bg-white p-6 rounded-2xl shadow border border-slate-200 text-center space-y-4">
+    <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+      <i class="fa-solid fa-certificate"></i>
+    </div>
+    <h3 class="text-base font-bold text-slate-800">Daftar Sertifikat Pelatihan K3 Resmi</h3>
+    <p class="text-xs text-slate-500 max-w-md mx-auto">
+      Berikut adalah seluruh sertifikat pelatihan K3 yang telah Anda selesaikan dan diterbitkan oleh PT Mandiri Maha Daya.
+    </p>
 
-          <div id="boxSertifikatPeserta" class="hidden bg-emerald-50 border border-emerald-300 p-4 rounded-xl space-y-3 max-w-md mx-auto">
-            <p class="text-xs font-bold text-emerald-900">✅ Sertifikat Anda Sudah Terbit!</p>
-            <a id="btnDownloadSertifikat" href="#" target="_blank" class="inline-block bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-5 py-2.5 rounded-xl font-bold shadow transition">
-              <i class="fa-solid fa-file-arrow-down mr-1"></i> Unduh Sertifikat (PDF)
-            </a>
-          </div>
-
-          <p id="pesanSertifikatBelum" class="text-xs text-amber-700 font-semibold bg-amber-50 p-3 rounded-xl border border-amber-200 max-w-md mx-auto">
-            ⏳ Sertifikat belum tersedia / masih dalam proses verifikasi panitia.
-          </p>
-        </div>
-      </div>
+    <!-- CONTAINER DAFTAR KARTU SERTIFIKAT -->
+    <div id="containerListSertifikatPeserta" class="space-y-3 max-w-lg mx-auto text-left">
+      <p class="text-xs text-center text-slate-400 py-4">Memuat daftar sertifikat...</p>
+    </div>
+  </div>
+</div>
 
       <!-- TAB 4: MODUL PELATIHAN -->
       <div id="tabPesertaModul" class="tab-peserta-content hidden space-y-4">
