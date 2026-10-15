@@ -876,7 +876,7 @@ async function uploadSertifikatMasal() {
 }
 
 // ----------------------------------------------------
-// 9. EXPORT REKAP ABSENSI PDF A4
+// 9. EXPORT REKAP ABSENSI PDF A4 (RAPI PER HARI & LOKASI GPS)
 // ----------------------------------------------------
 async function downloadRekapBatchPDF() {
   const selectedBatchId = document.getElementById('adminSelectBatchRekap').value;
@@ -923,88 +923,169 @@ async function downloadRekapBatchPDF() {
     }
 
     const pdfContainer = document.getElementById('pdfExportContainer');
-    
-    let htmlBody = `
-      <div class="pdf-page" id="pdfTemplateArea">
-        <div class="pdf-header text-center">
-          <h2 style="font-size: 15px; font-weight: bold; color: #065f46; margin: 0;">PT MANDIRI MAHA DAYA</h2>
-          <h3 style="font-size: 12px; font-weight: bold; margin: 3px 0;">LAPORAN REKAPITULASI KEHADIRAN PESERTA K3</h3>
-          <p style="font-size: 11px; font-weight: bold; color: #047857; margin: 2px 0;">PROGRAM: ${trainingData.judul.toUpperCase()}</p>
-          <p style="font-size: 9px; color: #64748b; margin: 0;">Jadwal Pelatihan: ${listTanggal[0] || '-'} s/d ${listTanggal[listTanggal.length-1] || '-'} (${listTanggal.length} Hari Sesi)</p>
-        </div>
-    `;
+    pdfContainer.innerHTML = '';
+
+    let fullHtml = `<style>
+      .pdf-page-wrapper {
+        width: 190mm;
+        padding: 10mm;
+        background: #ffffff;
+        box-sizing: border-box;
+        page-break-after: always;
+      }
+      .pdf-header-kop {
+        text-align: center;
+        border-bottom: 2px solid #065f46;
+        padding-bottom: 8px;
+        margin-bottom: 12px;
+      }
+      .pdf-table-rekap {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10px;
+      }
+      .pdf-table-rekap th {
+        background-color: #065f46;
+        color: #ffffff;
+        padding: 6px 4px;
+        font-size: 9px;
+        text-align: center;
+        border: 1px solid #047857;
+      }
+      .pdf-table-rekap td {
+        border: 1px solid #cbd5e1;
+        padding: 6px 4px;
+        vertical-align: middle;
+      }
+      .tr-peserta-row {
+        page-break-inside: avoid !important;
+      }
+      .img-thumb-pdf {
+        width: 42px;
+        height: 42px;
+        object-fit: cover;
+        border-radius: 6px;
+        display: block;
+        margin: 0 auto 2px auto;
+        border: 1px solid #cbd5e1;
+      }
+      .gps-text-pdf {
+        font-size: 7.5px;
+        color: #475569;
+        text-align: center;
+        margin-top: 1px;
+        line-height: 1.1;
+      }
+    </style>`;
 
     listTanggal.forEach((dateStr, hIdx) => {
-      htmlBody += `
-        <div style="margin-top: 10px; margin-bottom: 6px;">
-          <h4 style="font-size: 10px; font-weight: bold; color: #065f46; background-color: #ecfdf5; padding: 4px 8px; border-left: 3px solid #047857; margin: 0;">
-            HARI KE-${hIdx + 1} : TANGGAL ${dateStr}
-          </h4>
-        </div>
+      fullHtml += `
+        <div class="pdf-page-wrapper">
+          <!-- KOP REKAPITULASI HEADER -->
+          <div class="pdf-header-kop">
+            <h2 style="font-size: 14px; font-weight: bold; color: #065f46; margin: 0;">PT MANDIRI MAHA DAYA</h2>
+            <h3 style="font-size: 11px; font-weight: bold; margin: 2px 0; color: #1e293b;">LAPORAN REKAPITULASI KEHADIRAN PESERTA K3</h3>
+            <p style="font-size: 10px; font-weight: bold; color: #047857; margin: 1px 0;">PROGRAM: ${trainingData.judul.toUpperCase()}</p>
+            <p style="font-size: 8.5px; color: #64748b; margin: 0;">Jadwal Pelatihan: ${listTanggal[0] || '-'} s/d ${listTanggal[listTanggal.length-1] || '-'} (${listTanggal.length} Hari Sesi)</p>
+          </div>
 
-        <table class="pdf-table">
-          <thead>
-            <tr>
-              <th style="width: 5%;">NO</th>
-              <th style="width: 22%;">NAMA PESERTA / NIK</th>
-              <th style="width: 20%;">PERUSAHAAN</th>
-              <th style="width: 20%;">SESI 1 (PAGI)</th>
-              <th style="width: 20%;">SESI 2 (SIANG)</th>
-              <th style="width: 13%;">STATUS</th>
-            </tr>
-          </thead>
-          <tbody>
+          <!-- BANNER HARI SESI -->
+          <div style="margin-bottom: 8px;">
+            <h4 style="font-size: 9.5px; font-weight: bold; color: #065f46; background-color: #ecfdf5; padding: 5px 8px; border-left: 4px solid #047857; margin: 0; border-radius: 4px;">
+              HARI KE-${hIdx + 1} : TANGGAL ${dateStr}
+            </h4>
+          </div>
+
+          <!-- TABEL ABSENSI PESERTA -->
+          <table class="pdf-table-rekap">
+            <thead>
+              <tr>
+                <th style="width: 5%;">NO</th>
+                <th style="width: 25%;">NAMA PESERTA / NIK</th>
+                <th style="width: 20%;">PERUSAHAAN</th>
+                <th style="width: 20%;">SESI 1 (PAGI)</th>
+                <th style="width: 20%;">SESI 2 (SIANG)</th>
+                <th style="width: 10%;">STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
       `;
 
       pesertaList.forEach((p, pIdx) => {
         const absS1 = (logList || []).find(l => l.username === p.username && l.tanggal === dateStr && Number(l.sesi) === 1);
         const absS2 = (logList || []).find(l => l.username === p.username && l.tanggal === dateStr && Number(l.sesi) === 2);
 
-        const imgS1 = absS1 && absS1.foto 
-          ? `<img src="${absS1.foto}" class="img-absen-thumb"><p style="font-size: 8px; text-align: center; margin-top: 2px;">Jam: ${formatJamLokalPerangkat(absS1.waktu_absen)}</p>`
-          : `<span style="color: #dc2626; font-size: 9px; display: block; text-align: center;">Belum Absen</span>`;
+        // Format Tampilan Sesi 1 (Foto, Jam, Lokasi GPS)
+        let displayS1 = `<span style="color: #dc2626; font-size: 8.5px; display: block; text-align: center; font-weight: 600;">Belum Absen</span>`;
+        if (absS1) {
+          const jamTxt = formatJamLokalPerangkat(absS1.waktu_absen);
+          const gpsTxt = (absS1.latitude && absS1.longitude) 
+            ? `📍 ${Number(absS1.latitude).toFixed(4)}, ${Number(absS1.longitude).toFixed(4)}`
+            : `📍 Lokasi N/A`;
+          
+          const imgHtml = absS1.foto ? `<img src="${absS1.foto}" class="img-thumb-pdf">` : '';
+          displayS1 = `
+            ${imgHtml}
+            <div style="text-align: center;">
+              <span style="font-size: 8px; font-weight: bold; color: #065f46;">Jam: ${jamTxt}</span>
+              <div class="gps-text-pdf">${gpsTxt}</div>
+            </div>
+          `;
+        }
 
-        const imgS2 = absS2 && absS2.foto 
-          ? `<img src="${absS2.foto}" class="img-absen-thumb"><p style="font-size: 8px; text-align: center; margin-top: 2px;">Jam: ${formatJamLokalPerangkat(absS2.waktu_absen)}</p>`
-          : `<span style="color: #dc2626; font-size: 9px; display: block; text-align: center;">Belum Absen</span>`;
+        // Format Tampilan Sesi 2 (Foto, Jam, Lokasi GPS)
+        let displayS2 = `<span style="color: #dc2626; font-size: 8.5px; display: block; text-align: center; font-weight: 600;">Belum Absen</span>`;
+        if (absS2) {
+          const jamTxt = formatJamLokalPerangkat(absS2.waktu_absen);
+          const gpsTxt = (absS2.latitude && absS2.longitude) 
+            ? `📍 ${Number(absS2.latitude).toFixed(4)}, ${Number(absS2.longitude).toFixed(4)}`
+            : `📍 Lokasi N/A`;
+          
+          const imgHtml = absS2.foto ? `<img src="${absS2.foto}" class="img-thumb-pdf">` : '';
+          displayS2 = `
+            ${imgHtml}
+            <div style="text-align: center;">
+              <span style="font-size: 8px; font-weight: bold; color: #065f46;">Jam: ${jamTxt}</span>
+              <div class="gps-text-pdf">${gpsTxt}</div>
+            </div>
+          `;
+        }
 
-        let statusStr = `<span style="color: #64748b; font-weight: bold;">0%</span>`;
-        if (absS1 && absS2) statusStr = `<span style="color: #047857; font-weight: bold;">Lengkap 100%</span>`;
-        else if (absS1 || absS2) statusStr = `<span style="color: #2563eb; font-weight: bold;">Parsial 50%</span>`;
+        let statusStr = `<span style="color: #64748b; font-weight: bold; font-size: 8.5px;">0%</span>`;
+        if (absS1 && absS2) statusStr = `<span style="color: #047857; font-weight: bold; font-size: 8.5px;">100%</span>`;
+        else if (absS1 || absS2) statusStr = `<span style="color: #2563eb; font-weight: bold; font-size: 8.5px;">50%</span>`;
 
-        htmlBody += `
-          <tr>
-            <td style="text-align: center;">${pIdx + 1}</td>
+        fullHtml += `
+          <tr class="tr-peserta-row">
+            <td style="text-align: center; font-weight: bold; color: #64748b;">${pIdx + 1}</td>
             <td>
-              <b>${p.nama}</b><br>
-              <span style="font-size: 8px; color: #64748b;">NIK: ${p.nik || '-'}</span>
+              <b style="color: #1e293b;">${p.nama}</b><br>
+              <span style="font-size: 7.5px; color: #64748b;">NIK: ${p.nik || '-'}</span>
             </td>
-            <td>${p.perusahaan || '-'}</td>
-            <td style="text-align: center;">${imgS1}</td>
-            <td style="text-align: center;">${imgS2}</td>
+            <td style="color: #334155;">${p.perusahaan || '-'}</td>
+            <td>${displayS1}</td>
+            <td>${displayS2}</td>
             <td style="text-align: center;">${statusStr}</td>
           </tr>
         `;
       });
 
-      htmlBody += `
-          </tbody>
-        </table>
+      fullHtml += `
+            </tbody>
+          </table>
+
+          <div style="margin-top: 10px; font-size: 7.5px; color: #94a3b8; text-align: right;">
+            PT Mandiri Maha Daya • Halaman ${hIdx + 1} dari ${listTanggal.length}
+          </div>
+        </div>
       `;
     });
 
-    htmlBody += `
-        <div style="margin-top: 15px; font-size: 8px; color: #64748b; text-align: right;">
-          Dicetak Otomatis via Portal Mandiri Maha Daya pada ${new Date().toLocaleString('id-ID')}
-        </div>
-      </div>
-    `;
+    pdfContainer.innerHTML = fullHtml;
 
-    pdfContainer.innerHTML = htmlBody;
-
-    const element = document.getElementById('pdfTemplateArea');
+    const element = pdfContainer;
     const opt = {
-      margin:       0,
+      margin:       [5, 5, 5, 5],
       filename:     `Laporan_Kehadiran_${selectedBatchId}_A4.pdf`,
       image:        { type: 'jpeg', quality: 0.98 },
       html2canvas:  { scale: 2, useCORS: true, scrollY: 0, scrollX: 0 },
