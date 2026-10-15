@@ -10,7 +10,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <!-- JSZip untuk ekstraksi file ZIP sertifikat masal -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -26,7 +25,7 @@
       <div class="bg-white p-1.5 rounded-full text-emerald-800 font-bold text-xs px-2.5 shadow">MMD</div>
       <div>
         <h1 class="font-bold text-sm sm:text-base leading-tight">PT Mandiri Maha Daya</h1>
-        <p class="text-[10px] text-emerald-200">Portal Absensi & Sertifikasi K3</p>
+        <p class="text-[10px] text-emerald-200">Portal Absensi, Modul & Try Out K3</p>
       </div>
     </div>
     <button id="btnLogout" onclick="logout()" class="hidden bg-red-600 hover:bg-red-700 text-xs px-3 py-1.5 rounded-lg font-semibold transition flex items-center gap-1.5">
@@ -78,6 +77,9 @@
         <button onclick="switchTabPeserta('modul')" id="tabBtnModul" class="tab-peserta-btn px-4 py-2.5 rounded-xl hover:bg-slate-100 flex items-center gap-2 whitespace-nowrap">
           <i class="fa-solid fa-book-open"></i> Modul Pelatihan
         </button>
+        <button onclick="switchTabPeserta('tryout')" id="tabBtnTryout" class="tab-peserta-btn px-4 py-2.5 rounded-xl hover:bg-slate-100 flex items-center gap-2 whitespace-nowrap">
+          <i class="fa-solid fa-pen-ruler"></i> Mengukur Kemampuan (Try Out)
+        </button>
         <button onclick="switchTabPeserta('info')" id="tabBtnInfo" class="tab-peserta-btn px-4 py-2.5 rounded-xl hover:bg-slate-100 flex items-center gap-2 whitespace-nowrap">
           <i class="fa-solid fa-bullhorn"></i> Info Penting
         </button>
@@ -114,6 +116,30 @@
           <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
             <p class="text-slate-400 font-semibold">Jadwal Pelatihan</p>
             <p class="font-bold text-slate-800 mt-1 text-sm" id="pesertaJadwal">-</p>
+          </div>
+        </div>
+
+        <!-- HISTORI & HASIL TRY OUT PESERTA -->
+        <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-3">
+          <h3 class="font-bold text-sm text-emerald-900 border-b pb-2 flex items-center gap-2">
+            <i class="fa-solid fa-square-poll-vertical text-emerald-700"></i> Histori & Hasil Try Out Interaktif
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left text-slate-600">
+              <thead class="text-[11px] text-slate-700 uppercase bg-slate-100">
+                <tr>
+                  <th class="px-3 py-2.5 rounded-l-lg">Tanggal</th>
+                  <th class="px-3 py-2.5">Program Pelatihan</th>
+                  <th class="px-3 py-2.5 text-center">Paket</th>
+                  <th class="px-3 py-2.5 text-center">Benar/Salah</th>
+                  <th class="px-3 py-2.5 text-center">Skor</th>
+                  <th class="px-3 py-2.5 rounded-r-lg text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyHistoriTryoutPeserta">
+                <tr><td colspan="6" class="text-center py-4 text-slate-400">Memuat histori try out...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -162,7 +188,7 @@
         </div>
       </div>
 
-      <!-- TAB 3: CEK SERTIFIKAT (MULTI SERTIFIKAT) -->
+      <!-- TAB 3: CEK SERTIFIKAT -->
       <div id="tabPesertaSertifikat" class="tab-peserta-content hidden space-y-4">
         <div class="bg-white p-6 rounded-2xl shadow border border-slate-200 text-center space-y-4">
           <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
@@ -173,14 +199,13 @@
             Berikut adalah seluruh sertifikat pelatihan K3 yang telah Anda selesaikan dan diterbitkan oleh PT Mandiri Maha Daya.
           </p>
 
-          <!-- CONTAINER DAFTAR KARTU SERTIFIKAT -->
           <div id="containerListSertifikatPeserta" class="space-y-3 max-w-lg mx-auto text-left">
             <p class="text-xs text-center text-slate-400 py-4">Memuat daftar sertifikat...</p>
           </div>
         </div>
       </div>
 
-      <!-- TAB 4: MODUL / MATERI PELATIHAN -->
+      <!-- TAB 4: MODUL PELATIHAN -->
       <div id="tabPesertaModul" class="tab-peserta-content hidden space-y-4">
         <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
           <div class="flex items-center justify-between mb-4">
@@ -194,14 +219,33 @@
             </div>
           </div>
 
-          <!-- Grid Folder Modul Pelatihan -->
           <div id="containerFolderModul" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <p class="text-xs text-slate-400 text-center col-span-full py-4">Memuat daftar modul pelatihan...</p>
           </div>
         </div>
       </div>
 
-      <!-- TAB 5: INFORMASI PENTING -->
+      <!-- TAB 5: TRY OUT INTERAKTIF (PESERTA) -->
+      <div id="tabPesertaTryout" class="tab-peserta-content hidden space-y-4">
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-pen-ruler text-emerald-700"></i> Folder Try Out - Mengukur Kemampuan
+              </h3>
+              <p class="text-[11px] text-slate-500 mt-0.5">
+                Pilih folder program pelatihan yang kamu ikuti untuk mulai mengerjakan simulasi soal Try Out.
+              </p>
+            </div>
+          </div>
+
+          <div id="containerFolderTryout" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <p class="text-xs text-slate-400 text-center col-span-full py-4">Memuat folder Try Out...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 6: INFORMASI PENTING -->
       <div id="tabPesertaInfo" class="tab-peserta-content hidden space-y-4">
         <div class="bg-white p-6 rounded-2xl shadow border border-slate-200 space-y-4">
           <div class="flex items-center gap-3 border-b pb-3">
@@ -238,17 +282,20 @@
           <i class="fa-solid fa-sliders"></i> Kelola Training & Peserta
         </button>
         <button onclick="switchTabAdmin('database')" id="tabBtnAdminDatabase" class="tab-admin-btn px-4 py-2.5 rounded-xl hover:bg-slate-100 flex items-center gap-2 whitespace-nowrap transition">
-          <i class="fa-solid fa-database"></i> Database Peserta Pelatihan
+          <i class="fa-solid fa-database"></i> Database Peserta
         </button>
         <button onclick="switchTabAdmin('modul')" id="tabBtnAdminModul" class="tab-admin-btn px-4 py-2.5 rounded-xl hover:bg-slate-100 flex items-center gap-2 whitespace-nowrap transition">
-          <i class="fa-solid fa-folder-open"></i> Database Modul / Materi
+          <i class="fa-solid fa-folder-open"></i> Database Modul
+        </button>
+        <button onclick="switchTabAdmin('soal')" id="tabBtnAdminSoal" class="tab-admin-btn px-4 py-2.5 rounded-xl hover:bg-slate-100 flex items-center gap-2 whitespace-nowrap transition">
+          <i class="fa-solid fa-file-signature"></i> Database Soal Try Out
         </button>
       </div>
 
       <!-- CONTAINER TAB 1: KELOLA TRAINING & PESERTA -->
       <div id="tabAdminKelola" class="tab-admin-content space-y-6">
 
-        <!-- 1. KELOLA BATCH TRAINING DENGAN KALENDER MULTI-SELECT -->
+        <!-- KELOLA BATCH TRAINING -->
         <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-4">
           <h3 class="font-bold text-sm text-emerald-900 border-b pb-2"><i class="fa-solid fa-calendar-plus mr-1.5"></i> 1. Buat Batch Pelatihan K3 & Pilih Tanggal Pelatihan</h3>
           
@@ -256,7 +303,6 @@
             <div>
               <label class="font-semibold text-slate-700">Pilih Jenis Master Training (SKP & Non SKP)</label>
               <select id="adminSelectMasterTraining" class="w-full p-2.5 border rounded-xl mt-1 bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-700">
-                <!-- PROGRAM SKP KEMNAKER -->
                 <option value="AK3U">[SKP] Ahli K3 Umum</option>
                 <option value="P3K">[SKP] Petugas P3K</option>
                 <option value="TKBT1">[SKP] TKBT 1</option>
@@ -281,7 +327,6 @@
                 <option value="B3_RESCUE">[SKP] Petugas Rescue Ruang Terbatas</option>
                 <option value="B3_GAS_DETECTOR">[SKP] Petugas Gas Detector</option>
 
-                <!-- PROGRAM NON SKP (BNSP) -->
                 <option value="AK3U_BNSP">(Non SKP) Ahli K3 Umum BNSP</option>
                 <option value="TKPK1_BNSP">(Non SKP) TKPK 1 BNSP</option>
                 <option value="TKPK2_BNSP">(Non SKP) TKPK 2 BNSP</option>
@@ -295,21 +340,18 @@
             </div>
           </div>
 
-          <!-- KALENDER SELEKSI TANGGAL -->
+          <!-- KALENDER -->
           <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-3">
             <div class="flex justify-between items-center flex-wrap gap-2">
               <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
                 <i class="fa-solid fa-calendar-days text-emerald-700"></i>
-                <span>Klik Tanggal-Tanggal Sesi Pelatihan (Bisa Lompat Hari)</span>
+                <span>Klik Tanggal-Tanggal Sesi Pelatihan</span>
               </h4>
 
-              <!-- NAVIGASI DROPDOWN BULAN & TAHUN -->
               <div class="flex items-center gap-1">
                 <button onclick="changeMonth(-1)" class="p-1 px-2 border rounded-lg bg-white hover:bg-slate-100 text-xs font-bold text-slate-600">
                   <i class="fa-solid fa-chevron-left"></i>
                 </button>
-
-                <!-- DROPDOWN BULAN -->
                 <select id="calSelectMonth" onchange="jumpCalendarMonthYear()" class="text-xs font-bold text-slate-700 border p-1 rounded-lg bg-white outline-none">
                   <option value="0">Januari</option>
                   <option value="1">Februari</option>
@@ -324,19 +366,13 @@
                   <option value="10">November</option>
                   <option value="11">Desember</option>
                 </select>
-
-                <!-- DROPDOWN TAHUN -->
-                <select id="calSelectYear" onchange="jumpCalendarMonthYear()" class="text-xs font-bold text-slate-700 border p-1 rounded-lg bg-white outline-none">
-                  <!-- Otomatis diisi oleh JavaScript -->
-                </select>
-
+                <select id="calSelectYear" onchange="jumpCalendarMonthYear()" class="text-xs font-bold text-slate-700 border p-1 rounded-lg bg-white outline-none"></select>
                 <button onclick="changeMonth(1)" class="p-1 px-2 border rounded-lg bg-white hover:bg-slate-100 text-xs font-bold text-slate-600">
                   <i class="fa-solid fa-chevron-right"></i>
                 </button>
               </div>
             </div>
 
-            <!-- HEADER HARI -->
             <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs">
               <div class="text-red-600">Min</div>
               <div class="text-slate-600">Sen</div>
@@ -347,10 +383,8 @@
               <div class="text-emerald-700">Sab</div>
             </div>
 
-            <!-- GRID TANGGAL -->
             <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-xs"></div>
 
-            <!-- FOOTER DESKRIPSI -->
             <div class="flex justify-between items-center pt-2 border-t text-xs">
               <span class="text-slate-600 font-medium">Tanggal Terpilih: <b id="textSelectedDatesCount" class="text-emerald-700">0 Hari</b></span>
               <button onclick="resetSelectedDates()" class="text-red-600 hover:underline font-semibold">Reset Pilihan</button>
@@ -362,12 +396,12 @@
           </button>
         </div>
 
-        <!-- 2. INPUT PESERTA (MANUAL PER PESERTA & IMPORT EXCEL MASAL) -->
+        <!-- INPUT PESERTA & UPLOAD SERTIFIKAT -->
         <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-4">
           <h3 class="font-bold text-sm text-emerald-900 border-b pb-2"><i class="fa-solid fa-user-plus mr-1.5"></i> 2. Tambah Peserta Pelatihan & Upload Sertifikat</h3>
           
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <!-- A. INPUT MANUAL PER PESERTA -->
+            <!-- MANUAL -->
             <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-3">
               <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
                 <i class="fa-solid fa-user-pen text-emerald-700"></i>
@@ -379,7 +413,6 @@
                   <label class="font-semibold text-slate-700">Nama Lengkap Peserta</label>
                   <input type="text" id="manualNama" placeholder="Contoh: Fikri Haikal" class="w-full p-2 border rounded-lg mt-0.5 bg-white outline-none focus:ring-1 focus:ring-emerald-500">
                 </div>
-
                 <div class="grid grid-cols-2 gap-2">
                   <div>
                     <label class="font-semibold text-slate-700">Tanggal Lahir (KTP)</label>
@@ -390,26 +423,23 @@
                     <input type="text" id="manualNIK" placeholder="32750..." class="w-full p-2 border rounded-lg mt-0.5 bg-white outline-none focus:ring-1 focus:ring-emerald-500">
                   </div>
                 </div>
-
                 <div>
                   <label class="font-semibold text-slate-700">Nama Perusahaan</label>
                   <input type="text" id="manualPerusahaan" placeholder="PT Maju Bersama" class="w-full p-2 border rounded-lg mt-0.5 bg-white outline-none focus:ring-1 focus:ring-emerald-500">
                 </div>
-
                 <div>
                   <label class="font-semibold text-slate-700">Pilih Batch Pelatihan</label>
                   <select id="manualSelectBatch" class="w-full p-2 border rounded-lg mt-0.5 bg-white outline-none focus:ring-1 focus:ring-emerald-500">
                     <option value="">-- Pilih Batch Pelatihan --</option>
                   </select>
                 </div>
-
                 <button onclick="simpanPesertaManual()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs py-2.5 rounded-lg font-bold shadow transition flex justify-center items-center gap-1.5 mt-2">
                   <i class="fa-solid fa-user-check"></i> Simpan Peserta Ini
                 </button>
               </div>
             </div>
 
-            <!-- B. IMPORT EXCEL MASAL -->
+            <!-- EXCEL -->
             <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-3 flex flex-col justify-between">
               <div class="space-y-3">
                 <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
@@ -417,17 +447,14 @@
                   <span>Import Banyak Peserta (Excel/CSV)</span>
                 </h4>
                 <p class="text-[11px] text-slate-500">
-                  Format header kolom wajib: <b>Nama, TanggalLahir, NIK, Perusahaan</b><br>
-                  <span class="text-[10px] text-slate-400">*Format TanggalLahir: DD-MM-YYYY (Contoh: 20-12-1998)</span>
+                  Format header kolom wajib: <b>Nama, TanggalLahir, NIK, Perusahaan</b>
                 </p>
-
                 <div>
                   <label class="font-semibold text-xs text-slate-700">Pilih Batch Pelatihan Tujuan</label>
                   <select id="importSelectBatch" class="w-full p-2 border rounded-lg mt-0.5 bg-white outline-none focus:ring-1 focus:ring-emerald-500 text-xs">
                     <option value="">-- Pilih Batch Pelatihan --</option>
                   </select>
                 </div>
-
                 <div>
                   <label class="font-semibold text-xs text-slate-700">Pilih File Excel/CSV</label>
                   <input type="file" id="fileExcelPeserta" accept=".xlsx, .xls, .csv" class="block w-full text-xs text-slate-500 mt-0.5 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200">
@@ -440,17 +467,12 @@
             </div>
           </div>
 
-          <!-- C. UPLOAD SERTIFIKAT MASAL (ZIP / PDF) -->
+          <!-- SERTIFIKAT ZIP -->
           <div class="border border-slate-200 p-4 rounded-xl bg-slate-50 space-y-3 mt-4">
             <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
               <i class="fa-solid fa-file-zipper text-amber-600"></i>
               <span>Upload & Sync Sertifikat Masal (File PDF / Arsip ZIP)</span>
             </h4>
-            <p class="text-[11px] text-slate-500">
-              Upload beberapa file PDF sekaligus atau <b>1 file .ZIP</b> berisi seluruh PDF sertifikat.<br>
-              Format nama file: <b>namalengkap_kodetraining_tanggallahir.pdf</b><br>
-              (Contoh: <code>fikrihaikal_tkbt1_13121998.pdf</code> atau <code>fikrihaikal_ak3u_13121998.pdf</code>)
-            </p>
             <div class="flex flex-col sm:flex-row gap-2">
               <input type="file" id="fileSertifikatMasal" multiple accept=".pdf, .zip" class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200">
               <button onclick="uploadSertifikatMasal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-5 py-2.5 rounded-lg font-bold shadow transition whitespace-nowrap flex items-center gap-1.5 justify-center">
@@ -460,7 +482,7 @@
           </div>
         </div>
 
-        <!-- 3. CETAK REKAP ABSENSI PDF A4 -->
+        <!-- REKAP PDF -->
         <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-4">
           <h3 class="font-bold text-sm text-emerald-900 border-b pb-2"><i class="fa-solid fa-file-pdf mr-1.5"></i> 3. Cetak Rekapan Kehadiran per Batch Pelatihan (PDF A4)</h3>
           <div class="flex flex-col sm:flex-row gap-2">
@@ -476,7 +498,7 @@
 
       </div>
 
-      <!-- CONTAINER TAB 2: DATABASE PESERTA PELATIHAN -->
+      <!-- CONTAINER TAB 2: DATABASE PESERTA -->
       <div id="tabAdminDatabase" class="tab-admin-content hidden space-y-4">
         <div class="border border-slate-200 p-5 rounded-2xl bg-white space-y-4 shadow-sm">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3 border-slate-100">
@@ -485,17 +507,14 @@
                 <i class="fa-solid fa-users-gear text-emerald-700"></i>
                 <span>Database Peserta Pelatihan</span>
               </h3>
-              <p class="text-[11px] text-slate-500 mt-0.5">Filter peserta berdasarkan Master Training dan Batch Training untuk melihat akun login & progress absensi.</p>
             </div>
           </div>
 
-          <!-- FILTER DROPDOWN MASTER TRAINING & BATCH -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
             <div>
-              <label class="font-bold text-[11px] text-slate-700 block mb-1">Pilih Master Training (SKP & Non SKP)</label>
+              <label class="font-bold text-[11px] text-slate-700 block mb-1">Pilih Master Training</label>
               <select id="dbFilterSKP" onchange="onSKPFilterChange()" class="w-full p-2 border rounded-lg bg-white text-xs outline-none focus:ring-1 focus:ring-emerald-500 font-medium text-slate-700">
-                <option value="">-- Semua Master Training (SKP & Non SKP) --</option>
-                <!-- PROGRAM SKP KEMNAKER -->
+                <option value="">-- Semua Master Training --</option>
                 <option value="AK3U">[SKP] Ahli K3 Umum</option>
                 <option value="P3K">[SKP] Petugas P3K</option>
                 <option value="TKBT1">[SKP] TKBT 1</option>
@@ -520,7 +539,6 @@
                 <option value="B3_RESCUE">[SKP] Petugas Rescue Ruang Terbatas</option>
                 <option value="B3_GAS_DETECTOR">[SKP] Petugas Gas Detector</option>
 
-                <!-- PROGRAM NON SKP (BNSP) -->
                 <option value="AK3U_BNSP">(Non SKP) Ahli K3 Umum BNSP</option>
                 <option value="TKPK1_BNSP">(Non SKP) TKPK 1 BNSP</option>
                 <option value="TKPK2_BNSP">(Non SKP) TKPK 2 BNSP</option>
@@ -528,7 +546,6 @@
                 <option value="TKBT2_BNSP">(Non SKP) TKBT 2 BNSP</option>
               </select>
             </div>
-
             <div>
               <label class="font-bold text-[11px] text-slate-700 block mb-1">Pilih Batch Training</label>
               <select id="dbFilterBatch" onchange="loadDatabasePeserta()" class="w-full p-2 border rounded-lg bg-white text-xs outline-none focus:ring-1 focus:ring-emerald-500 font-medium text-slate-700">
@@ -537,14 +554,13 @@
             </div>
           </div>
 
-          <!-- TABEL DATABASE PESERTA -->
           <div class="overflow-x-auto rounded-xl border border-slate-200">
             <table class="w-full text-left border-collapse text-xs">
               <thead>
                 <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 font-bold text-[11px]">
                   <th class="p-3 w-10 text-center">NO</th>
                   <th class="p-3">NAMA PESERTA / NIK</th>
-                  <th class="p-3">AKUN LOGIN (USER & PASS)</th>
+                  <th class="p-3">AKUN LOGIN</th>
                   <th class="p-3">PERUSAHAAN</th>
                   <th class="p-3">BATCH TRAINING</th>
                   <th class="p-3 text-center">PROGRES ABSENSI</th>
@@ -552,19 +568,15 @@
                 </tr>
               </thead>
               <tbody id="tbodyDatabasePeserta" class="divide-y divide-slate-100 text-slate-600">
-                <tr>
-                  <td colspan="7" class="text-center py-4 text-slate-400 italic text-xs">Silakan pilih program atau Batch untuk menampilkan data peserta.</td>
-                </tr>
+                <tr><td colspan="7" class="text-center py-4 text-slate-400 italic">Memuat data peserta...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- CONTAINER TAB 3: DATABASE MODUL & UPLOAD MATERI -->
+      <!-- CONTAINER TAB 3: DATABASE MODUL -->
       <div id="tabAdminModul" class="tab-admin-content hidden space-y-6">
-        
-        <!-- FORM UPLOAD MODUL BARU -->
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <h3 class="text-sm font-bold text-emerald-900 mb-3 flex items-center gap-2 border-b pb-2">
             <i class="fa-solid fa-cloud-arrow-up text-emerald-700"></i> Upload Modul / Materi Training Baru
@@ -588,19 +600,13 @@
           </div>
         </div>
 
-        <!-- TABEL MANAJEMEN MODUL -->
         <div class="border border-slate-200 p-5 rounded-2xl bg-white space-y-4 shadow-sm">
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3 border-slate-100">
-            <div>
-              <h3 class="font-bold text-sm text-emerald-900 flex items-center gap-2">
-                <i class="fa-solid fa-folder-tree text-emerald-700"></i>
-                <span>Kelola File Modul Pelatihan</span>
-              </h3>
-              <p class="text-[11px] text-slate-500 mt-0.5">Pilih program pelatihan untuk melihat, merubah nama, atau menghapus file modul yang tersimpan.</p>
-            </div>
+          <div class="flex justify-between items-center border-b pb-3">
+            <h3 class="font-bold text-sm text-emerald-900 flex items-center gap-2">
+              <i class="fa-solid fa-folder-tree text-emerald-700"></i> Kelola File Modul Pelatihan
+            </h3>
           </div>
 
-          <!-- DROPDOWN FILTER -->
           <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
             <label class="font-bold text-[11px] text-slate-700 block mb-1">Filter Berdasarkan Judul Training</label>
             <select id="adminFilterModulMaster" onchange="loadDatabaseModulAdmin()" class="w-full p-2.5 border rounded-xl bg-white text-xs outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-700">
@@ -608,7 +614,6 @@
             </select>
           </div>
 
-          <!-- TABEL DAFTAR FILE -->
           <div class="overflow-x-auto rounded-xl border border-slate-200">
             <table class="w-full text-left border-collapse text-xs">
               <thead>
@@ -621,9 +626,120 @@
                 </tr>
               </thead>
               <tbody id="tbodyDatabaseModul" class="divide-y divide-slate-100 text-slate-600">
-                <tr>
-                  <td colspan="5" class="text-center py-4 text-slate-400 italic">Memuat data modul...</td>
+                <tr><td colspan="5" class="text-center py-4 text-slate-400 italic">Memuat data modul...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTAINER TAB 4: DATABASE SOAL TRY OUT (ADMIN) -->
+      <div id="tabAdminSoal" class="tab-admin-content hidden space-y-6">
+        
+        <!-- FORM INPUT SOAL TRY OUT -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <h3 class="text-sm font-bold text-emerald-900 border-b pb-2 flex items-center gap-2">
+            <i class="fa-solid fa-file-circle-plus text-emerald-700"></i> Input Soal Try Out Baru
+          </h3>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="font-bold text-slate-700 block mb-1">Program Training</label>
+              <select id="adminInputSoalMaster" class="w-full p-2.5 border rounded-xl bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
+                <option value="">-- Pilih Program Training --</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-bold text-slate-700 block mb-1">Paket Try Out Ke-</label>
+              <select id="adminInputSoalTryoutKe" class="w-full p-2.5 border rounded-xl bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
+                <option value="1">Try Out 1</option>
+                <option value="2">Try Out 2</option>
+                <option value="3">Try Out 3</option>
+                <option value="4">Try Out 4</option>
+                <option value="5">Try Out 5</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="text-xs">
+            <label class="font-bold text-slate-700 block mb-1">Teks Pertanyaan / Soal</label>
+            <textarea id="adminInputSoalPertanyaan" rows="3" placeholder="Tuliskan pertanyaan soal di sini..." class="w-full p-2.5 border rounded-xl bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none"></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="font-bold text-slate-700 block mb-1">Opsi A</label>
+              <input type="text" id="adminInputOpsiA" placeholder="Jawaban Opsi A" class="w-full p-2 border rounded-lg bg-slate-50 outline-none focus:ring-1 focus:ring-emerald-500">
+            </div>
+            <div>
+              <label class="font-bold text-slate-700 block mb-1">Opsi B</label>
+              <input type="text" id="adminInputOpsiB" placeholder="Jawaban Opsi B" class="w-full p-2 border rounded-lg bg-slate-50 outline-none focus:ring-1 focus:ring-emerald-500">
+            </div>
+            <div>
+              <label class="font-bold text-slate-700 block mb-1">Opsi C</label>
+              <input type="text" id="adminInputOpsiC" placeholder="Jawaban Opsi C" class="w-full p-2 border rounded-lg bg-slate-50 outline-none focus:ring-1 focus:ring-emerald-500">
+            </div>
+            <div>
+              <label class="font-bold text-slate-700 block mb-1">Opsi D</label>
+              <input type="text" id="adminInputOpsiD" placeholder="Jawaban Opsi D" class="w-full p-2 border rounded-lg bg-slate-50 outline-none focus:ring-1 focus:ring-emerald-500">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs items-end">
+            <div>
+              <label class="font-bold text-emerald-800 block mb-1">Kunci Jawaban Yang Benar</label>
+              <select id="adminInputKunciJawaban" class="w-full p-2.5 border-2 border-emerald-500 rounded-xl bg-emerald-50 font-bold text-emerald-900 outline-none">
+                <option value="A">Opsi A</option>
+                <option value="B">Opsi B</option>
+                <option value="C">Opsi C</option>
+                <option value="D">Opsi D</option>
+              </select>
+            </div>
+            <button onclick="simpanSoalTryoutAdmin()" id="btnSimpanSoal" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-xl text-xs transition shadow flex justify-center items-center gap-2">
+              <i class="fa-solid fa-floppy-disk"></i> Simpan Soal Ke Database
+            </button>
+          </div>
+        </div>
+
+        <!-- TABEL LIST SOAL TRY OUT -->
+        <div class="border border-slate-200 p-5 rounded-2xl bg-white space-y-4 shadow-sm">
+          <h3 class="font-bold text-sm text-emerald-900 border-b pb-2 flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-emerald-700"></i> Daftar Soal Try Out Terdaftar
+          </h3>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div>
+              <label class="font-bold text-[11px] text-slate-700 block mb-1">Filter Program Training</label>
+              <select id="adminFilterSoalMaster" onchange="loadDatabaseSoalAdmin()" class="w-full p-2 border rounded-lg bg-white text-xs outline-none focus:ring-1 focus:ring-emerald-500">
+                <option value="">-- Semua Program Training --</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-bold text-[11px] text-slate-700 block mb-1">Filter Paket Try Out</label>
+              <select id="adminFilterSoalTryoutKe" onchange="loadDatabaseSoalAdmin()" class="w-full p-2 border rounded-lg bg-white text-xs outline-none focus:ring-1 focus:ring-emerald-500">
+                <option value="">-- Semua Paket --</option>
+                <option value="1">Try Out 1</option>
+                <option value="2">Try Out 2</option>
+                <option value="3">Try Out 3</option>
+                <option value="4">Try Out 4</option>
+                <option value="5">Try Out 5</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 font-bold text-[11px]">
+                  <th class="p-3 w-10 text-center">NO</th>
+                  <th class="p-3">PROGRAM / PAKET</th>
+                  <th class="p-3">PERTANYAAN & OPSI JAWABAN</th>
+                  <th class="p-3 text-center">KUNCI</th>
+                  <th class="p-3 text-center">AKSI</th>
                 </tr>
+              </thead>
+              <tbody id="tbodyDatabaseSoal" class="divide-y divide-slate-100 text-slate-600">
+                <tr><td colspan="5" class="text-center py-4 text-slate-400 italic">Memuat database soal...</td></tr>
               </tbody>
             </table>
           </div>
@@ -637,9 +753,6 @@
 
   <!-- CONTAINER TEMPLATE RENDER PDF (OFF-SCREEN) -->
   <div id="pdfExportContainer" style="position: absolute; left: -9999px; top: 0;"></div>
-
-  <!-- File JavaScript Lokal -->
-  <script src="app.js"></script>
 
   <!-- MODAL EDIT PESERTA -->
   <div id="modalEditPeserta" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
@@ -660,7 +773,6 @@
           <label class="font-bold text-slate-700 block mb-1">Nama Lengkap Peserta</label>
           <input type="text" id="editNama" class="w-full p-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500">
         </div>
-
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="font-bold text-slate-700 block mb-1">NIK (Nomor KTP)</label>
@@ -671,7 +783,6 @@
             <input type="text" id="editTglLahir" placeholder="15-10-1998" class="w-full p-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500">
           </div>
         </div>
-
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="font-bold text-slate-700 block mb-1">Username Login</label>
@@ -682,12 +793,10 @@
             <input type="text" id="editPassword" class="w-full p-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500">
           </div>
         </div>
-
         <div>
           <label class="font-bold text-slate-700 block mb-1">Nama Perusahaan</label>
           <input type="text" id="editPerusahaan" class="w-full p-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500">
         </div>
-
         <div>
           <label class="font-bold text-slate-700 block mb-1">Batch Pelatihan</label>
           <select id="editSelectBatch" class="w-full p-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 bg-white">
@@ -707,35 +816,121 @@
     </div>
   </div>
 
-  <!-- MODAL POP-UP ISI FOLDER MODUL (PESERTA) -->
-  <div id="modalIsiFolderModul" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden border border-slate-100 flex flex-col max-h-[85vh]">
+  <!-- MODAL EDIT SOAL (ADMIN) -->
+  <div id="modalEditSoalAdmin" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 w-full max-w-xl relative max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-pen-to-square text-emerald-700"></i> Edit Soal Try Out
+        </h3>
+        <button onclick="tutupModalEditSoalAdmin()" class="text-slate-400 hover:text-slate-600 transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <input type="hidden" id="editSoalId">
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Teks Pertanyaan</label>
+          <textarea id="editSoalPertanyaan" rows="3" class="w-full p-2.5 border rounded-xl outline-none focus:ring-1 focus:ring-emerald-500"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Opsi A</label>
+            <input type="text" id="editSoalOpsiA" class="w-full p-2 border rounded-lg outline-none focus:ring-1 focus:ring-emerald-500">
+          </div>
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Opsi B</label>
+            <input type="text" id="editSoalOpsiB" class="w-full p-2 border rounded-lg outline-none focus:ring-1 focus:ring-emerald-500">
+          </div>
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Opsi C</label>
+            <input type="text" id="editSoalOpsiC" class="w-full p-2 border rounded-lg outline-none focus:ring-1 focus:ring-emerald-500">
+          </div>
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Opsi D</label>
+            <input type="text" id="editSoalOpsiD" class="w-full p-2 border rounded-lg outline-none focus:ring-1 focus:ring-emerald-500">
+          </div>
+        </div>
+        <div>
+          <label class="font-bold text-emerald-800 block mb-1">Kunci Jawaban</label>
+          <select id="editSoalKunci" class="w-full p-2 border-2 border-emerald-500 rounded-lg font-bold bg-emerald-50 outline-none">
+            <option value="A">Opsi A</option>
+            <option value="B">Opsi B</option>
+            <option value="C">Opsi C</option>
+            <option value="D">Opsi D</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 mt-6 border-t pt-3">
+        <button onclick="tutupModalEditSoalAdmin()" class="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg">Batal</button>
+        <button onclick="simpanPerubahanSoalAdmin()" id="btnSimpanEditSoal" class="px-4 py-2 bg-emerald-700 text-white text-xs font-bold rounded-lg shadow">Simpan Perubahan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PAKET TRY OUT (PESERTA) -->
+  <div id="modalListPaketTryout" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden border border-slate-100 flex flex-col">
       <div class="p-4 bg-emerald-900 text-white flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-emerald-800 text-white flex items-center justify-center text-xl">
+          <div class="w-10 h-10 rounded-xl bg-emerald-800 flex items-center justify-center text-xl">
             <i class="fa-solid fa-folder-open"></i>
           </div>
           <div>
-            <h3 id="modalJudulFolder" class="text-sm font-bold">Judul Training</h3>
-            <p class="text-[10px] text-emerald-200">Katalog Modul & Materi Pembelajaran</p>
+            <h3 id="modalJudulTryoutFolder" class="text-sm font-bold">Judul Training</h3>
+            <p class="text-[10px] text-emerald-200">Pilih Paket Soal Try Out Interaktif</p>
           </div>
         </div>
-        <button onclick="tutupModalFolderModul()" class="text-white/80 hover:text-white text-xl">
+        <button onclick="tutupModalPaketTryout()" class="text-white/80 hover:text-white text-xl">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
-      <div id="containerListFileFolder" class="p-4 overflow-y-auto flex-1 space-y-2">
-        <!-- Item file dirender otomatis oleh JS -->
-      </div>
+      <div id="containerListPaketPaket" class="p-4 space-y-3"></div>
 
-      <div class="p-3 bg-slate-50 border-t border-slate-200 text-right">
-        <button onclick="tutupModalFolderModul()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs px-4 py-2 rounded-xl font-bold transition">
-          Tutup
-        </button>
+      <div class="p-3 bg-slate-50 border-t text-right">
+        <button onclick="tutupModalPaketTryout()" class="bg-slate-200 text-slate-700 text-xs px-4 py-2 rounded-xl font-bold">Tutup</button>
       </div>
     </div>
   </div>
+
+  <!-- MODAL PENGERJAAN UJIAN TRY OUT (PESERTA) -->
+  <div id="modalLembarTryout" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-4 hidden">
+    <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col h-[92vh]">
+      
+      <!-- HEADER UJIAN & TIMER -->
+      <div class="p-4 bg-emerald-900 text-white flex justify-between items-center shadow">
+        <div>
+          <span class="bg-emerald-700 text-emerald-100 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase" id="tryoutHeaderMaster">AK3U</span>
+          <h3 class="text-sm font-bold mt-0.5" id="tryoutHeaderTitle">Simulasi Try Out 1</h3>
+        </div>
+        <div class="bg-black/40 border border-white/20 px-3 py-1.5 rounded-xl text-center">
+          <p class="text-[9px] text-emerald-200 uppercase font-bold">Sisa Waktu</p>
+          <p class="text-base font-extrabold text-amber-400 font-mono" id="tryoutTimerText">60:00</p>
+        </div>
+      </div>
+
+      <!-- BODY SOAL -->
+      <div id="tryoutBodyContent" class="p-5 overflow-y-auto flex-1 space-y-6 bg-slate-50">
+        <!-- Soal dirender otomatis oleh JS -->
+      </div>
+
+      <!-- FOOTER SUBMIT -->
+      <div class="p-4 bg-white border-t flex justify-between items-center shadow-lg">
+        <span class="text-xs text-slate-500 font-semibold" id="tryoutCounterInfo">Terjawab 0 dari 0 soal</span>
+        <button onclick="submitTryoutSelesai(false)" id="btnKirimTryout" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow transition">
+          Selesaikan & Kirim Jawaban
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- File JavaScript Lokal -->
+  <script src="app.js"></script>
     
 </body>
 </html>
