@@ -10,6 +10,11 @@ let currentSessionUser = null;
 let currCalDate = new Date();
 let selectedBatchDates = [];
 
+// Variable State Fitur Try Out
+let currentTryOutExam = null;
+let tryOutTimerInterval = null;
+let userTryOutAnswers = {};
+
 // Data awal libur nasional (Lokal agar instan tanpa loading)
 let loadedNationalHolidays = {
   // 2024
@@ -149,6 +154,7 @@ async function prosesLogin() {
       renderCalendar();
       onSKPFilterChange();
       loadDropdownMasterModulAdmin();
+      loadDropdownTryOutAdmin();
     } else {
       document.getElementById('sectionPeserta').classList.remove('hidden');
       renderPesertaData(data);
@@ -187,6 +193,10 @@ function switchTabPeserta(tabName) {
     document.getElementById('tabPesertaModul').classList.remove('hidden');
     document.getElementById('tabBtnModul').classList.add('bg-emerald-800', 'text-white');
     loadKatalogModulPeserta();
+  } else if (tabName === 'tryout') {
+    document.getElementById('tabPesertaTryOut').classList.remove('hidden');
+    document.getElementById('tabBtnTryOut').classList.add('bg-emerald-800', 'text-white');
+    loadKatalogTryOutPeserta();
   } else if (tabName === 'info') {
     document.getElementById('tabPesertaInfo').classList.remove('hidden');
     document.getElementById('tabBtnInfo').classList.add('bg-emerald-800', 'text-white');
@@ -1832,10 +1842,8 @@ function peringatanModulTerkunci(namaProgram) {
 }
 
 // ----------------------------------------------------
-// FUNGSI BARU: MANAJEMEN DATABASE MODUL (LOAD, EDIT, HAPUS)
+// MANAJEMEN DATABASE MODUL (LOAD, EDIT, HAPUS)
 // ----------------------------------------------------
-
-// Load Tabel Database Modul yang Terdaftar di Supabase
 async function loadDatabaseModulAdmin() {
   const tbody = document.getElementById('tbodyDatabaseModul');
   const selectedMasterId = document.getElementById('adminFilterModulMaster')?.value;
@@ -1892,7 +1900,6 @@ async function loadDatabaseModulAdmin() {
   }
 }
 
-// Edit Nama Modul
 async function editNamaModulAdmin(id, oldFileName) {
   const newName = prompt("Masukkan nama file modul yang baru:", oldFileName);
   if (!newName || newName.trim() === '' || newName === oldFileName) return;
@@ -1910,7 +1917,6 @@ async function editNamaModulAdmin(id, oldFileName) {
   }
 }
 
-// Hapus File Modul
 async function hapusModulAdmin(id, fileName) {
   if (!confirm(`Apakah Anda yakin ingin menghapus file modul "${fileName}"?`)) return;
 
@@ -1924,6 +1930,315 @@ async function hapusModulAdmin(id, fileName) {
   } else {
     alert("🗑️ File modul berhasil dihapus!");
     loadDatabaseModulAdmin();
+  }
+}
+
+// ----------------------------------------------------
+// 12. FITUR TRY OUT (KATALOG, UJIAN, ADMIN, SYNC SUPABASE)
+// ----------------------------------------------------
+
+// Populate Dropdown Admin untuk Upload Bank Soal Try Out
+function loadDropdownTryOutAdmin() {
+  const selectMaster = document.getElementById('adminSelectTryOutMaster');
+  const selectRekap = document.getElementById('adminFilterTryOutMaster');
+
+  if (selectMaster) selectMaster.innerHTML = '<option value="">-- Pilih Program K3 --</option>';
+  if (selectRekap) selectRekap.innerHTML = '<option value="">-- Semua Program --</option>';
+
+  KATALOG_MODUL_MASTER.forEach(m => {
+    const opt = `<option value="${m.master_id}">${m.nama_program}</option>`;
+    if (selectMaster) selectMaster.innerHTML += opt;
+    if (selectRekap) selectRekap.innerHTML += opt;
+  });
+}
+
+// Admin: Simpan/Upload Soal Try Out Baru
+async function simpanSoalTryOutAdmin() {
+  const masterId = document.getElementById('adminSelectTryOutMaster')?.value;
+  const judul = document.getElementById('adminInputTryOutJudul')?.value.trim();
+  const durasi = parseInt(document.getElementById('adminInputTryOutDurasi')?.value || "60");
+  const jsonRaw = document.getElementById('adminTextareaTryOutQuestions')?.value.trim();
+
+  if (!masterId || !judul || !jsonRaw) {
+    return alert("Harap lengkapi Program K3, Judul Try Out, dan format JSON Soal!");
+  }
+
+  let questionsParsed = [];
+  try {
+    questionsParsed = JSON.parse(jsonRaw);
+    if (!Array.isArray(questionsParsed) || questionsParsed.length === 0) {
+      throw new Error("Format JSON harus berupa Array object soal yang berisi soal, pilihan (A,B,C,D), dan kunci.");
+    }
+  } catch (err) {
+    return alert("Format JSON Soal tidak valid!\nSaran format:\n[\n  {\n    \"id\": 1,\n    \"soal\": \"Apa kepanjangan K3?\",\n    \"a\": \"Keselamatan...\",\n    \"b\": \"Kesehatan...\",\n    \"c\": \"Keselamatan dan Kesehatan Kerja\",\n    \"d\": \"Keamanan...\",\n    \"kunci\": \"c\"\n  }\n]");
+  }
+
+  const { error } = await supabaseClient.from('tryouts').insert([{
+    master_id: masterId,
+    judul: judul,
+    durasi_menit: durasi,
+    questions: questionsParsed
+  }]);
+
+  if (error) {
+    alert("Gagal menyimpan bank soal Try Out: " + error.message);
+  } else {
+    alert("✅ Bank Soal Try Out Berhasil Disimpan!");
+    document.getElementById('adminInputTryOutJudul').value = '';
+    document.getElementById('adminTextareaTryOutQuestions').value = '';
+    loadRekapNilaiTryOutAdmin();
+  }
+}
+
+// Peserta: Load Daftar Paket Try Out yang Tersedia
+async function loadKatalogTryOutPeserta() {
+  const container = document.getElementById('containerKatalogTryOut');
+  if (!container || !currentSessionUser) return;
+
+  container.innerHTML = '<p class="text-xs text-slate-400 text-center col-span-full py-4">Memuat paket Try Out K3...</p>';
+
+  try {
+    const { data: tryouts, error } = await supabaseClient
+      .from('tryouts')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    const { data: scores } = await supabaseClient
+      .from('tryout_scores')
+      .select('*')
+      .eq('username', currentSessionUser.username);
+
+    if (error || !tryouts || tryouts.length === 0) {
+      container.innerHTML = `
+        <div class="col-span-full text-center py-8 bg-slate-50 rounded-2xl border border-slate-200">
+          <i class="fa-solid fa-file-pen text-slate-300 text-4xl mb-2"></i>
+          <p class="text-xs font-bold text-slate-500">Belum Ada Paket Try Out yang Tersedia.</p>
+          <p class="text-[10px] text-slate-400 mt-1">Panitia belum mempublikasikan simulasi ujian untuk program ini.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = '';
+    tryouts.forEach(t => {
+      const userScore = (scores || []).find(s => s.tryout_id === t.id);
+      const totalSoal = Array.isArray(t.questions) ? t.questions.length : 0;
+
+      let badgeStatus = `<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">Belum Dikerjakan</span>`;
+      let btnAction = `
+        <button onclick="mulaiTryOutPeserta(${t.id})" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-4 py-2 rounded-xl font-bold shadow transition flex items-center gap-1">
+          <i class="fa-solid fa-play text-[10px]"></i> Mulai Try Out
+        </button>
+      `;
+
+      if (userScore) {
+        const isLulus = userScore.score >= 70;
+        badgeStatus = isLulus 
+          ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">✓ Lulus (Nilai: ${userScore.score})</span>`
+          : `<span class="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded-full">Belum Lulus (Nilai: ${userScore.score})</span>`;
+
+        btnAction = `
+          <button onclick="mulaiTryOutPeserta(${t.id})" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3 py-2 rounded-xl font-bold transition flex items-center gap-1 border border-slate-300">
+            <i class="fa-solid fa-rotate-right text-[10px]"></i> Ulangi
+          </button>
+        `;
+      }
+
+      container.innerHTML += `
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow transition flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="bg-slate-100 text-slate-700 font-extrabold text-[9px] px-2 py-0.5 rounded-md uppercase">${t.master_id}</span>
+              ${badgeStatus}
+            </div>
+            <h4 class="text-sm font-bold text-slate-800">${t.judul}</h4>
+            <div class="flex items-center gap-3 text-[11px] text-slate-500 mt-2">
+              <span><i class="fa-solid fa-clock text-emerald-700 mr-1"></i>${t.durasi_menit || 60} Menit</span>
+              <span><i class="fa-solid fa-list-check text-emerald-700 mr-1"></i>${totalSoal} Soal Pilihan Ganda</span>
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+            <span class="text-[10px] text-slate-400 font-semibold">Batas Kelulusan: 70</span>
+            ${btnAction}
+          </div>
+        </div>
+      `;
+    });
+
+  } catch (err) {
+    container.innerHTML = '<p class="text-xs text-red-500 text-center col-span-full py-4">Gagal memuat katalog Try Out.</p>';
+  }
+}
+
+// Peserta: Mulai Pengerjaan Try Out
+async function mulaiTryOutPeserta(tryoutId) {
+  try {
+    const { data: tryout, error } = await supabaseClient
+      .from('tryouts')
+      .select('*')
+      .eq('id', tryoutId)
+      .single();
+
+    if (error || !tryout) return alert("Data Try Out tidak ditemukan!");
+
+    currentTryOutExam = tryout;
+    userTryOutAnswers = {};
+
+    document.getElementById('tryoutJudulModal').innerText = tryout.judul;
+    renderSoalTryOutModal(tryout.questions || []);
+
+    // Show Modal Pengerjaan
+    document.getElementById('modalPengerjaanTryOut').classList.remove('hidden');
+
+    // Start Timer
+    let sisaDetik = (tryout.durasi_menit || 60) * 60;
+    const timerEl = document.getElementById('tryoutTimerDisplay');
+
+    if (tryOutTimerInterval) clearInterval(tryOutTimerInterval);
+
+    tryOutTimerInterval = setInterval(() => {
+      sisaDetik--;
+      const m = Math.floor(sisaDetik / 60);
+      const s = sisaDetik % 60;
+      if (timerEl) timerEl.innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+      if (sisaDetik <= 0) {
+        clearInterval(tryOutTimerInterval);
+        alert("⏰ Waktu pengerjaan Try Out telah habis! Jawaban kamu akan disubmit otomatis.");
+        submitJawabanTryOut();
+      }
+    }, 1000);
+
+  } catch (err) {
+    alert("Gagal memulai Try Out: " + err.message);
+  }
+}
+
+// Render List Soal di Modal
+function renderSoalTryOutModal(questions) {
+  const container = document.getElementById('containerSoalTryOut');
+  if (!container) return;
+
+  container.innerHTML = '';
+  questions.forEach((q, idx) => {
+    container.innerHTML += `
+      <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl mb-4">
+        <p class="text-xs font-bold text-slate-800 mb-3">${idx + 1}. ${q.soal}</p>
+        <div class="space-y-2 text-xs">
+          <label class="flex items-start gap-2 cursor-pointer p-2 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 transition">
+            <input type="radio" name="soal_${q.id}" value="a" onchange="pilihJawabanTryOut('${q.id}', 'a')" class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
+            <span><b>A.</b> ${q.a}</span>
+          </label>
+          <label class="flex items-start gap-2 cursor-pointer p-2 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 transition">
+            <input type="radio" name="soal_${q.id}" value="b" onchange="pilihJawabanTryOut('${q.id}', 'b')" class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
+            <span><b>B.</b> ${q.b}</span>
+          </label>
+          <label class="flex items-start gap-2 cursor-pointer p-2 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 transition">
+            <input type="radio" name="soal_${q.id}" value="c" onchange="pilihJawabanTryOut('${q.id}', 'c')" class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
+            <span><b>C.</b> ${q.c}</span>
+          </label>
+          <label class="flex items-start gap-2 cursor-pointer p-2 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 transition">
+            <input type="radio" name="soal_${q.id}" value="d" onchange="pilihJawabanTryOut('${q.id}', 'd')" class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
+            <span><b>D.</b> ${q.d}</span>
+          </label>
+        </div>
+      </div>
+    `;
+  });
+}
+
+// Simpan Pilihan Jawaban
+function pilihJawabanTryOut(soalId, pilihanKey) {
+  userTryOutAnswers[soalId] = pilihanKey;
+}
+
+// Submit & Koreksi Jawaban Try Out
+async function submitJawabanTryOut() {
+  if (!currentTryOutExam) return;
+
+  if (tryOutTimerInterval) clearInterval(tryOutTimerInterval);
+
+  const questions = currentTryOutExam.questions || [];
+  let benarCount = 0;
+
+  questions.forEach(q => {
+    const userAns = userTryOutAnswers[q.id];
+    if (userAns && userAns.toLowerCase() === (q.kunci || '').toLowerCase()) {
+      benarCount++;
+    }
+  });
+
+  const totalSoal = questions.length;
+  const nilaiAkhir = totalSoal > 0 ? Math.round((benarCount / totalSoal) * 100) : 0;
+
+  try {
+    const { error } = await supabaseClient.from('tryout_scores').upsert([{
+      username: currentSessionUser.username,
+      tryout_id: currentTryOutExam.id,
+      score: nilaiAkhir,
+      total_benar: benarCount,
+      total_soal: totalSoal
+    }], { onConflict: 'username,tryout_id' });
+
+    if (error) {
+      alert("Gagal menyimpan hasil nilai Try Out: " + error.message);
+    } else {
+      alert(`🎯 SIMULASI TRY OUT SELESAI!\n\nJumlah Benar: ${benarCount} dari ${totalSoal} Soal\nNilai Akhir: ${nilaiAkhir}\nStatus: ${nilaiAkhir >= 70 ? 'LULUS (>=70)' : 'BELUM LULUS (<70)'}`);
+      document.getElementById('modalPengerjaanTryOut').classList.add('hidden');
+      loadKatalogTryOutPeserta();
+    }
+  } catch (err) {
+    alert("Terjadi masalah saat mengirim nilai Try Out: " + err.message);
+  }
+}
+
+// Admin: Load Rekap Nilai Try Out Peserta
+async function loadRekapNilaiTryOutAdmin() {
+  const tbody = document.getElementById('tbodyRekapTryOutAdmin');
+  const selectedMaster = document.getElementById('adminFilterTryOutMaster')?.value;
+
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400">Memuat rekapitulasi nilai Try Out...</td></tr>';
+
+  try {
+    let query = supabaseClient.from('tryout_scores').select('*, tryouts(*), users(*)').order('created_at', { ascending: false });
+
+    const { data: scores, error } = await query;
+
+    if (error || !scores || scores.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400 italic">Belum ada nilai Try Out peserta yang tercatat.</td></tr>';
+      return;
+    }
+
+    let filtered = scores;
+    if (selectedMaster) {
+      filtered = scores.filter(s => s.tryouts?.master_id === selectedMaster);
+    }
+
+    tbody.innerHTML = '';
+    filtered.forEach((s, idx) => {
+      const isLulus = s.score >= 70;
+      const statusBadge = isLulus 
+        ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">✓ Lulus</span>`
+        : `<span class="bg-red-100 text-red-800 text-[10px] px-2 py-0.5 rounded-full font-bold">Belum Lulus</span>`;
+
+      tbody.innerHTML += `
+        <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+          <td class="p-3 text-center font-bold text-slate-400">${idx + 1}</td>
+          <td class="p-3">
+            <p class="font-bold text-slate-800">${s.users?.nama || s.username}</p>
+            <p class="text-[10px] text-slate-400">${s.users?.perusahaan || '-'}</p>
+          </td>
+          <td class="p-3 font-semibold text-slate-700">${s.tryouts?.judul || '-'}</td>
+          <td class="p-3 text-center font-mono font-bold">${s.total_benar} / ${s.total_soal}</td>
+          <td class="p-3 text-center font-bold text-emerald-800 text-sm">${s.score}</td>
+          <td class="p-3 text-center">${statusBadge}</td>
+        </tr>
+      `;
+    });
+
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-red-500">Gagal memuat rekapitulasi Try Out.</td></tr>';
   }
 }
 
@@ -1949,6 +2264,11 @@ window.switchTabAdmin = function(tabName) {
     document.getElementById('tabBtnAdminModul').classList.add('bg-emerald-800', 'text-white');
     loadDropdownMasterModulAdmin();
     loadDatabaseModulAdmin();
+  } else if (tabName === 'tryout') {
+    document.getElementById('tabAdminTryOut').classList.remove('hidden');
+    document.getElementById('tabBtnAdminTryOut').classList.add('bg-emerald-800', 'text-white');
+    loadDropdownTryOutAdmin();
+    loadRekapNilaiTryOutAdmin();
   }
 };
 
@@ -1974,3 +2294,11 @@ window.tutupModalFolderModul = tutupModalFolderModul;
 window.loadDatabaseModulAdmin = loadDatabaseModulAdmin;
 window.editNamaModulAdmin = editNamaModulAdmin;
 window.hapusModulAdmin = hapusModulAdmin;
+
+// Export Fungsi Try Out
+window.simpanSoalTryOutAdmin = simpanSoalTryOutAdmin;
+window.loadKatalogTryOutPeserta = loadKatalogTryOutPeserta;
+window.mulaiTryOutPeserta = mulaiTryOutPeserta;
+window.pilihJawabanTryOut = pilihJawabanTryOut;
+window.submitJawabanTryOut = submitJawabanTryOut;
+window.loadRekapNilaiTryOutAdmin = loadRekapNilaiTryOutAdmin;
