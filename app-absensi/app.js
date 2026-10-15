@@ -95,6 +95,17 @@ function sortBatchesDescending(batchArray) {
   });
 }
 
+// HELPER: FORMAT JAM LOKAL PERANGKAT PESERTA (WIB / WITA / WIT)
+function formatJamLokalPerangkat(isoString) {
+  if (!isoString) return '-';
+  const dateObj = new Date(isoString);
+  return dateObj.toLocaleTimeString('id-ID', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    hour12: false 
+  });
+}
+
 // ----------------------------------------------------
 // 2. LOGIKA LOGIN & SESSION
 // ----------------------------------------------------
@@ -255,19 +266,12 @@ async function loadMatriksAbsensiUser() {
     .select('*')
     .eq('username', currentSessionUser.username);
 
-  // Helper untuk format jam sesuai zona waktu perangkat peserta (WIB/WITA/WIT)
-function formatJamLokalPerangkat(isoString) {
-  if (!isoString) return '-';
-  const dateObj = new Date(isoString);
-  return dateObj.toLocaleTimeString('id-ID', { 
-    hour: '2-digit', 
-    minute: '2-digit', 
-    hour12: false 
-  });
+  renderMatriksAbsensi(currentSessionUser.trainings, logs || []);
 }
 
 function renderMatriksAbsensi(training, logs = []) {
   const tbody = document.getElementById('tbodyMatriksAbsensi');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
   let listTanggal = [];
@@ -314,6 +318,7 @@ function renderMatriksAbsensi(training, logs = []) {
     `;
   });
 }
+
 // ----------------------------------------------------
 // 4. KAMERA & ABSENSI REAL-TIME
 // ----------------------------------------------------
@@ -746,6 +751,7 @@ async function simpanPesertaManual() {
     loadDatabasePeserta();
   }
 }
+
 // ----------------------------------------------------
 // UPLOAD & SYNC SERTIFIKAT MASAL
 // ----------------------------------------------------
@@ -942,11 +948,11 @@ async function downloadRekapBatchPDF() {
         const absS2 = (logList || []).find(l => l.username === p.username && l.tanggal === dateStr && Number(l.sesi) === 2);
 
         const imgS1 = absS1 && absS1.foto 
-          ? `<img src="${absS1.foto}" class="img-absen-thumb"><p style="font-size: 8px; text-align: center; margin-top: 2px;">Jam: ${absS1.waktu_absen ? absS1.waktu_absen.substring(11,16) : '-'}</p>`
+          ? `<img src="${absS1.foto}" class="img-absen-thumb"><p style="font-size: 8px; text-align: center; margin-top: 2px;">Jam: ${formatJamLokalPerangkat(absS1.waktu_absen)}</p>`
           : `<span style="color: #dc2626; font-size: 9px; display: block; text-align: center;">Belum Absen</span>`;
 
         const imgS2 = absS2 && absS2.foto 
-          ? `<img src="${absS2.foto}" class="img-absen-thumb"><p style="font-size: 8px; text-align: center; margin-top: 2px;">Jam: ${absS2.waktu_absen ? absS2.waktu_absen.substring(11,16) : '-'}</p>`
+          ? `<img src="${absS2.foto}" class="img-absen-thumb"><p style="font-size: 8px; text-align: center; margin-top: 2px;">Jam: ${formatJamLokalPerangkat(absS2.waktu_absen)}</p>`
           : `<span style="color: #dc2626; font-size: 9px; display: block; text-align: center;">Belum Absen</span>`;
 
         let statusStr = `<span style="color: #64748b; font-weight: bold;">0%</span>`;
