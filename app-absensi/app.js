@@ -71,14 +71,13 @@ let loadedNationalHolidays = {
 };
 
 // ----------------------------------------------------
-// HELPER: CLEAN STRING UNTUK MATCHING FLEXIBLE
+// HELPER FUNCTIONS
 // ----------------------------------------------------
 function cleanStringForMatch(str) {
   if (!str) return '';
   return str.toString().toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
-// HELPER: SORT DESCENDING UNTUK BATCH
 function sortBatchesDescending(batchArray) {
   return batchArray.sort((a, b) => {
     if (a.created_at && b.created_at) {
@@ -95,7 +94,6 @@ function sortBatchesDescending(batchArray) {
   });
 }
 
-// HELPER: FORMAT JAM LOKAL PERANGKAT PESERTA (WIB / WITA / WIT)
 function formatJamLokalPerangkat(isoString) {
   if (!isoString) return '-';
   const dateObj = new Date(isoString);
@@ -103,7 +101,6 @@ function formatJamLokalPerangkat(isoString) {
 
   const jam = String(dateObj.getHours()).padStart(2, '0');
   const menit = String(dateObj.getMinutes()).padStart(2, '0');
-  
   return `${jam}:${menit}`;
 }
 
@@ -188,15 +185,54 @@ function switchTabPeserta(tabName) {
   } else if (tabName === 'modul') {
     document.getElementById('tabPesertaModul').classList.remove('hidden');
     document.getElementById('tabBtnModul').classList.add('bg-emerald-800', 'text-white');
-    loadKatalogModulPeserta(); // <--- DITAMBAHKAN DI SINI
+    loadKatalogModulPeserta();
   } else if (tabName === 'info') {
     document.getElementById('tabPesertaInfo').classList.remove('hidden');
     document.getElementById('tabBtnInfo').classList.add('bg-emerald-800', 'text-white');
   }
 }
 
+// RENDER DATA PESERTA & RIWAYAT MULTI-TRAINING
+async function renderPesertaData(user) {
+  document.getElementById('pesertaNama').innerText = user.nama || '-';
+  document.getElementById('pesertaPerusahaan').innerHTML = `<i class="fa-solid fa-building mr-1"></i> Perusahaan: ${user.perusahaan || '-'}`;
+  document.getElementById('pesertaNIK').innerText = user.nik || '-';
+  document.getElementById('pesertaUsername').innerText = user.username || '-';
+
+  // Ambil Riwayat Seluruh Training yang pernah diikuti user dari Absensi & Sertifikat
+  const userTrainingsSet = new Set();
+  if (user.training_id) userTrainingsSet.add(user.training_id);
+
+  const { data: logs } = await supabaseClient.from('log_absensi').select('training_id').eq('username', user.username);
+  if (logs) logs.forEach(l => { if (l.training_id) userTrainingsSet.add(l.training_id); });
+
+  const { data: certs } = await supabaseClient.from('certificates').select('training_id').eq('username', user.username);
+  if (certs) certs.forEach(c => { if (c.training_id) userTrainingsSet.add(c.training_id); });
+
+  const allTrainingsList = Array.from(userTrainingsSet);
+  
+  // Tampilkan di Profil
+  const elTraining = document.getElementById('pesertaTraining');
+  if (elTraining) {
+    elTraining.innerHTML = allTrainingsList.map(t => `<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full mr-1">${t}</span>`).join(' ');
+  }
+
+  const tInfo = user.trainings;
+  if (tInfo && tInfo.jadwal_tanggal && tInfo.jadwal_tanggal.length > 0) {
+    const sorted = [...tInfo.jadwal_tanggal].sort();
+    document.getElementById('pesertaJadwal').innerText = `${sorted[0]} s/d ${sorted[sorted.length-1]} (${sorted.length} Hari Pelatihan)`;
+  } else if (tInfo) {
+    document.getElementById('pesertaJadwal').innerText = `${tInfo.tgl_mulai} s/d ${tInfo.tgl_selesai}`;
+  } else {
+    document.getElementById('pesertaJadwal').innerText = 'Sesuai Sesi Pelatihan';
+  }
+
+  loadSertifikatPeserta(user.username);
+  loadMatriksAbsensiUser();
+}
+
 // ----------------------------------------------------
-// RENDER DAFTAR SERTIFIKAT (TAMPILKAN BANYAK KARTU SERTIFIKAT)
+// RENDER DAFTAR SERTIFIKAT
 // ----------------------------------------------------
 async function loadSertifikatPeserta(username) {
   const container = document.getElementById('containerListSertifikatPeserta');
@@ -236,7 +272,7 @@ async function loadSertifikatPeserta(username) {
 }
 
 // ----------------------------------------------------
-// 3. LOGIKA ABSENSI REAL-TIME & MATRIKS SUPABASE
+// 3. LOGIKA ABSENSI REAL-TIME & MATRIKS
 // ----------------------------------------------------
 async function loadMatriksAbsensiUser() {
   if (!currentSessionUser) return;
@@ -316,9 +352,7 @@ async function startCamera() {
 async function ambilAbsen() {
   if (!currentSessionUser) return alert("Sesi login tidak ditemukan, harap login ulang!");
 
-  // ----------------------------------------------------
-  // VALIDASI JADWAL PELATIHAN (Mencegah Absen Luar Jadwal)
-  // ----------------------------------------------------
+  // VALIDASI JADWAL PELATIHAN
   const training = currentSessionUser.trainings;
   let listTanggal = [];
 
@@ -342,24 +376,19 @@ async function ambilAbsen() {
   const tglAwal = listTanggal[0];
   const tglAkhir = listTanggal[listTanggal.length - 1];
 
-  // 1. Cek jika masa pelatihan sudah selesai
   if (tglHariIni > tglAkhir) {
     return alert(`⛔ Pelatihan Kamu Sudah Selesai!\nMasa pelatihan telah berakhir pada tanggal ${tglAkhir}. Akses absensi sudah ditutup.`);
   }
 
-  // 2. Cek jika masa pelatihan belum dimulai
   if (tglHariIni < tglAwal) {
     return alert(`⏳ Pelatihan Belum Dimulai!\nJadwal pelatihan kamu baru akan dimulai pada tanggal ${tglAwal}.`);
   }
 
-  // 3. Cek jika tanggal hari ini tidak ada dalam daftar tanggal sesi aktif
   if (!listTanggal.includes(tglHariIni)) {
     return alert(`⚠️ Hari Ini Libur / Tidak Ada Sesi!\nTanggal ${tglHariIni} tidak termasuk dalam jadwal sesi pelatihan kamu.`);
   }
 
-  // ----------------------------------------------------
-  // PROSES ABSENSI (Hanya berjalan jika tanggal valid)
-  // ----------------------------------------------------
+  // PROSES ABSENSI
   const btn = document.getElementById('btnKirimAbsen');
   const originalText = btn.innerHTML;
   btn.innerText = "Mengambil Foto & Lokasi GPS...";
@@ -591,7 +620,7 @@ async function simpanBatchTraining() {
 }
 
 // ----------------------------------------------------
-// LOAD PILIHAN BATCH UNTUK DROPDOWN (URUT DESCENDING)
+// LOAD PILIHAN BATCH UNTUK DROPDOWN
 // ----------------------------------------------------
 async function loadBatchOptions() {
   const { data, error } = await supabaseClient
@@ -726,7 +755,7 @@ function importExcelPeserta() {
 }
 
 // ----------------------------------------------------
-// 7. INPUT PESERTA MANUAL (FLEXIBLE FORMAT DD-MM-YYYY)
+// 7. INPUT PESERTA MANUAL
 // ----------------------------------------------------
 async function simpanPesertaManual() {
   const nama = document.getElementById('manualNama').value.trim();
@@ -893,7 +922,7 @@ async function uploadSertifikatMasal() {
 }
 
 // ----------------------------------------------------
-// 9. EXPORT REKAP ABSENSI PDF A4 (FORMAT TANGGAL DD-MM-YYYY)
+// 9. EXPORT REKAP ABSENSI PDF A4
 // ----------------------------------------------------
 async function downloadRekapBatchPDF() {
   const selectedBatchId = document.getElementById('adminSelectBatchRekap').value;
@@ -939,7 +968,6 @@ async function downloadRekapBatchPDF() {
       }
     }
 
-    // Helper mengubah YYYY-MM-DD menjadi DD-MM-YYYY
     const formatTanggalIndo = (dateStr) => {
       if (!dateStr) return '-';
       const parts = dateStr.split('-');
@@ -1016,7 +1044,6 @@ async function downloadRekapBatchPDF() {
 
       fullHtml += `
         <div class="pdf-page-wrapper">
-          <!-- KOP REKAPITULASI HEADER -->
           <div class="pdf-header-kop">
             <h2 style="font-size: 14px; font-weight: bold; color: #065f46; margin: 0;">PT MANDIRI MAHA DAYA</h2>
             <h3 style="font-size: 11px; font-weight: bold; margin: 2px 0; color: #1e293b;">LAPORAN REKAPITULASI KEHADIRAN PESERTA K3</h3>
@@ -1024,14 +1051,12 @@ async function downloadRekapBatchPDF() {
             <p style="font-size: 8.5px; color: #64748b; margin: 0;">Jadwal Pelatihan: ${tglAwalIndo} s/d ${tglAkhirIndo} (${listTanggal.length} Hari Sesi)</p>
           </div>
 
-          <!-- BANNER HARI SESI -->
           <div style="margin-bottom: 8px;">
             <h4 style="font-size: 9.5px; font-weight: bold; color: #065f46; background-color: #ecfdf5; padding: 5px 8px; border-left: 4px solid #047857; margin: 0; border-radius: 4px;">
               HARI KE-${hIdx + 1} : TANGGAL ${dateFormattedDDMMYYYY}
             </h4>
           </div>
 
-          <!-- TABEL ABSENSI PESERTA -->
           <table class="pdf-table-rekap">
             <thead>
               <tr>
@@ -1050,7 +1075,6 @@ async function downloadRekapBatchPDF() {
         const absS1 = (logList || []).find(l => l.username === p.username && l.tanggal === dateStr && Number(l.sesi) === 1);
         const absS2 = (logList || []).find(l => l.username === p.username && l.tanggal === dateStr && Number(l.sesi) === 2);
 
-        // Format Tampilan Sesi 1
         let displayS1 = `<span style="color: #dc2626; font-size: 8.5px; display: block; text-align: center; font-weight: 600;">Belum Absen</span>`;
         if (absS1) {
           const jamTxt = formatJamLokalPerangkat(absS1.waktu_absen);
@@ -1068,7 +1092,6 @@ async function downloadRekapBatchPDF() {
           `;
         }
 
-        // Format Tampilan Sesi 2
         let displayS2 = `<span style="color: #dc2626; font-size: 8.5px; display: block; text-align: center; font-weight: 600;">Belum Absen</span>`;
         if (absS2) {
           const jamTxt = formatJamLokalPerangkat(absS2.waktu_absen);
@@ -1143,7 +1166,6 @@ async function downloadRekapBatchPDF() {
 // ----------------------------------------------------
 // 10. FITUR FILTER & EDIT PESERTA DATABASE
 // ----------------------------------------------------
-
 async function onSKPFilterChange() {
   const selectSKP = document.getElementById('dbFilterSKP');
   const selectBatch = document.getElementById('dbFilterBatch');
@@ -1372,58 +1394,36 @@ async function simpanPerubahanPeserta() {
 }
 
 // ----------------------------------------------------
-// EKSPOR FUNGSI KE SCOPE GLOBAL (MENCEGAH REFERENCE ERROR)
-// ----------------------------------------------------
-window.switchTabAdmin = function(tabName) {
-  document.querySelectorAll('.tab-admin-content').forEach(el => el.classList.add('hidden'));
-  document.querySelectorAll('.tab-admin-btn').forEach(el => {
-    el.classList.remove('bg-emerald-800', 'text-white');
-    el.classList.add('hover:bg-slate-100');
-  });
-
-  if (tabName === 'kelola') {
-    document.getElementById('tabAdminKelola').classList.remove('hidden');
-    document.getElementById('tabBtnAdminKelola').classList.add('bg-emerald-800', 'text-white');
-  } else if (tabName === 'database') {
-    document.getElementById('tabAdminDatabase').classList.remove('hidden');
-    document.getElementById('tabBtnAdminDatabase').classList.add('bg-emerald-800', 'text-white');
-    onSKPFilterChange();
-  }
-};
-
-window.onSKPFilterChange = onSKPFilterChange;
-window.loadDatabasePeserta = loadDatabasePeserta;
-window.bukaModalEditPeserta = bukaModalEditPeserta;
-window.tutupModalEditPeserta = tutupModalEditPeserta;
-window.simpanPerubahanPeserta = simpanPerubahanPeserta;
-
-// ----------------------------------------------------
-// DAFTAR MASTER KATALOG MODUL MANDIRI MAHA DAYA
+// 11. DAFTAR MASTER KATALOG MODUL (SKP & NON-SKP BNSP)
 // ----------------------------------------------------
 const KATALOG_MODUL_MASTER = [
+  // --- PROGRAM SKP KEMNAKER / BNSP ---
   {
     master_id: "TKPK1",
-    nama_program: "TKPK 1 BNSP",
+    kategori: "SKP / BNSP",
+    nama_program: "TKPK 1 BNSP / Kemnaker",
     deskripsi: "Tenaga Kerja Pada Ketinggian Tingkat 1",
     file_list: [
       { nama: "Modul K3 Ketinggian Dasar.pdf", url: "#" },
       { nama: "Panduan Alat Pelindung Jatuh (PPE).pdf", url: "#" },
-      { nama: "SOP Bekerja di Ketinggian.pdf", url: "#" }
+      { nama: "SOP Bekerja di Ketinggian & Anchoring.pdf", url: "#" }
     ]
   },
   {
     master_id: "TKPK2",
-    nama_program: "TKPK 2 BNSP",
+    kategori: "SKP / BNSP",
+    nama_program: "TKPK 2 BNSP / Kemnaker",
     deskripsi: "Tenaga Kerja Pada Ketinggian Tingkat 2",
     file_list: [
-      { nama: "Modul Advanced Rope Access.pdf", url: "#" },
-      { nama: "Teknik Rescue & Evakuasi Ketinggian.pdf", url: "#" }
+      { nama: "Modul Advanced Rope Access Technique.pdf", url: "#" },
+      { nama: "Teknik Rescue & Evakuasi Korban Ketinggian.pdf", url: "#" }
     ]
   },
   {
     master_id: "TKBT1",
-    nama_program: "TKBT 1 BNSP",
-    deskripsi: "Tenaga Kerja Bangunan Tinggi 1",
+    kategori: "SKP / BNSP",
+    nama_program: "TKBT 1 BNSP / Kemnaker",
+    deskripsi: "Tenaga Kerja Bangunan Tinggi Tingkat 1",
     file_list: [
       { nama: "Modul Struktur Perancah & Scaffolding.pdf", url: "#" },
       { nama: "Inspeksi Keselamatan Bangunan Tinggi.pdf", url: "#" }
@@ -1431,64 +1431,113 @@ const KATALOG_MODUL_MASTER = [
   },
   {
     master_id: "TKBT2",
-    nama_program: "TKBT 2 BNSP",
-    deskripsi: "Tenaga Kerja Bangunan Tinggi 2",
+    kategori: "SKP / BNSP",
+    nama_program: "TKBT 2 BNSP / Kemnaker",
+    deskripsi: "Tenaga Kerja Bangunan Tinggi Tingkat 2",
     file_list: [
-      { nama: "Modul Pengawasan PekerjaanScaffolding.pdf", url: "#" }
+      { nama: "Modul Pengawasan Pekerjaan Scaffolding.pdf", url: "#" },
+      { nama: "Analisis Beban Perancah & Keselamatan Kerja.pdf", url: "#" }
     ]
   },
   {
     master_id: "AK3U",
+    kategori: "SKP / Kemnaker",
     nama_program: "Ahli K3 Umum BNSP / Kemnaker",
-    deskripsi: "Pembinaan & Lisensi K3 Umum",
+    deskripsi: "Pembinaan & Lisensi Ahli K3 Umum",
     file_list: [
-      { nama: "Himpunan Peraturan Perundangan K3.pdf", url: "#" },
-      { nama: "Modul Manajemen Risiko & Analisis Bahaya (JSA).pdf", url: "#" },
+      { nama: "Himpunan Peraturan Perundangan K3 RI.pdf", url: "#" },
+      { nama: "Modul Manajemen Risiko & JSA.pdf", url: "#" },
       { nama: "Panduan Laporan Praktek Kerja Lapangan (PKL).pdf", url: "#" }
+    ]
+  },
+
+  // --- PROGRAM NON-SKP BNSP ---
+  {
+    master_id: "NON-AK3U",
+    kategori: "Non-SKP BNSP",
+    nama_program: "(Non SKP) Ahli K3 Umum BNSP",
+    deskripsi: "Sertifikasi Kompetensi Ahli K3 Umum BNSP",
+    file_list: [
+      { nama: "Modul Unit Kompetensi K3 BNSP.pdf", url: "#" },
+      { nama: "Panduan Pembuatan Portofolio Asesmen BNSP.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "NON-TKPK1",
+    kategori: "Non-SKP BNSP",
+    nama_program: "(Non SKP) TKPK 1 BNSP",
+    deskripsi: "Sertifikasi BNSP Tenaga Kerja Pada Ketinggian 1",
+    file_list: [
+      { nama: "Modul Sertifikasi Kompetensi TKPK 1.pdf", url: "#" },
+      { nama: "Panduan Uji Praktik Asesmen TKPK 1.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "NON-TKPK2",
+    kategori: "Non-SKP BNSP",
+    nama_program: "(Non SKP) TKPK 2 BNSP",
+    deskripsi: "Sertifikasi BNSP Tenaga Kerja Pada Ketinggian 2",
+    file_list: [
+      { nama: "Modul Sertifikasi Kompetensi TKPK 2.pdf", url: "#" },
+      { nama: "Panduan Uji Praktik Asesmen TKPK 2.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "NON-TKBT1",
+    kategori: "Non-SKP BNSP",
+    nama_program: "(Non SKP) TKBT 1 BNSP",
+    deskripsi: "Sertifikasi BNSP Tenaga Kerja Bangunan Tinggi 1",
+    file_list: [
+      { nama: "Modul Sertifikasi Kompetensi TKBT 1.pdf", url: "#" },
+      { nama: "Panduan Uji Praktik Asesmen TKBT 1.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "NON-TKBT2",
+    kategori: "Non-SKP BNSP",
+    nama_program: "(Non SKP) TKBT 2 BNSP",
+    deskripsi: "Sertifikasi BNSP Tenaga Kerja Bangunan Tinggi 2",
+    file_list: [
+      { nama: "Modul Sertifikasi Kompetensi TKBT 2.pdf", url: "#" },
+      { nama: "Panduan Uji Praktik Asesmen TKBT 2.pdf", url: "#" }
     ]
   }
 ];
 
 // ----------------------------------------------------
-// LOGIKA SINKRONISASI HISTORI TRAINING & RENDER FOLDER MODUL
+// LOGIKA BUKA MODUL DARI BANYAK TRAINING
 // ----------------------------------------------------
 async function loadKatalogModulPeserta() {
   const container = document.getElementById('containerFolderModul');
   if (!container || !currentSessionUser) return;
 
-  container.innerHTML = '<p class="text-xs text-slate-400 text-center col-span-full py-4">Sistem sedang mendata histori pelatihan kamu...</p>';
+  container.innerHTML = '<p class="text-xs text-slate-400 text-center col-span-full py-4">Mengecek histori pelatihan kamu...</p>';
 
   try {
-    // 1. Ambil Histori Pelatihan dari Tabel log_absensi & data user saat ini
-    const { data: userLogs } = await supabaseClient
-      .from('log_absensi')
-      .select('training_id')
-      .eq('username', currentSessionUser.username);
-
-    // Kumpulkan semua training_id yang pernah dimiliki user ini
     const setHistoriTraining = new Set();
 
-    // Tambahkan training_id dari profil akun aktif
     if (currentSessionUser.training_id) {
       setHistoriTraining.add(currentSessionUser.training_id.toUpperCase());
     }
 
-    // Tambahkan dari histori absensi
-    if (userLogs) {
-      userLogs.forEach(l => {
-        if (l.training_id) setHistoriTraining.add(l.training_id.toUpperCase());
-      });
-    }
+    const { data: logs } = await supabaseClient.from('log_absensi').select('training_id').eq('username', currentSessionUser.username);
+    if (logs) logs.forEach(l => { if (l.training_id) setHistoriTraining.add(l.training_id.toUpperCase()); });
 
-    // 2. Render Katalog Folder Modul
+    const { data: certs } = await supabaseClient.from('certificates').select('training_id').eq('username', currentSessionUser.username);
+    if (certs) certs.forEach(c => { if (c.training_id) setHistoriTraining.add(c.training_id.toUpperCase()); });
+
+    const listHistoriUser = Array.from(setHistoriTraining);
+
     container.innerHTML = '';
 
     KATALOG_MODUL_MASTER.forEach(modul => {
-      // Cek apakah master_id modul ada di dalam histori training peserta
-      const isUnlocked = Array.from(setHistoriTraining).some(tId => tId.includes(modul.master_id));
+      const isUnlocked = listHistoriUser.some(tId => {
+        const cleanTId = cleanStringForMatch(tId);
+        const cleanMId = cleanStringForMatch(modul.master_id);
+        return cleanTId.includes(cleanMId);
+      });
 
       if (isUnlocked) {
-        // TAMPILAN FOLDER TERBUKA (AKSES DIBERIKAN)
         let htmlFiles = modul.file_list.map(f => `
           <div class="flex items-center justify-between p-2 bg-slate-50 hover:bg-emerald-50 rounded-lg text-xs transition border border-slate-100 mt-1.5">
             <span class="font-semibold text-slate-700 truncate pr-2"><i class="fa-solid fa-file-pdf text-red-600 mr-1.5"></i> ${f.nama}</span>
@@ -1499,14 +1548,14 @@ async function loadKatalogModulPeserta() {
         `).join('');
 
         container.innerHTML += `
-          <div class="bg-white border-2 border-emerald-500/30 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+          <div class="bg-white border-2 border-emerald-500/40 rounded-2xl p-4 shadow-sm relative overflow-hidden">
             <div class="flex items-start justify-between">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-lg font-bold">
                   <i class="fa-solid fa-folder-open"></i>
                 </div>
                 <div>
-                  <span class="bg-emerald-100 text-emerald-800 text-[9px] font-extrabold px-2 py-0.5 rounded-full">AKSES DIBERIKAN</span>
+                  <span class="bg-emerald-100 text-emerald-800 text-[9px] font-extrabold px-2 py-0.5 rounded-full">AKSES TERBUKA</span>
                   <h4 class="text-xs font-bold text-slate-800 mt-1">${modul.nama_program}</h4>
                 </div>
               </div>
@@ -1514,14 +1563,13 @@ async function loadKatalogModulPeserta() {
             <p class="text-[10px] text-slate-500 mt-2">${modul.deskripsi}</p>
             
             <div class="mt-3 pt-3 border-t border-slate-100">
-              <p class="text-[10px] font-bold text-slate-600 mb-1">Daftar Modul Pembelajaran:</p>
+              <p class="text-[10px] font-bold text-slate-600 mb-1">Materi Pembelajaran:</p>
               ${htmlFiles}
             </div>
           </div>
         `;
 
       } else {
-        // TAMPILAN FOLDER TERKUNCI
         container.innerHTML += `
           <div onclick="peringatanModulTerkunci('${modul.nama_program}')" class="bg-slate-50 border border-slate-200 rounded-2xl p-4 cursor-pointer hover:border-slate-300 transition relative overflow-hidden group">
             <div class="flex items-start justify-between">
@@ -1554,5 +1602,42 @@ async function loadKatalogModulPeserta() {
 }
 
 function peringatanModulTerkunci(namaProgram) {
-  alert(`🔒 AKSES MODUL TERKUNCI!\n\nModul "${namaProgram}" hanya dapat diakses oleh peserta yang terdaftar resmi pada pelatihan ini di PT Mandiri Maha Daya.`);
+  alert(`🔒 AKSES MODUL TERKUNCI!\n\nModul "${namaProgram}" hanya terbuka jika akun kamu terdaftar pada pelatihan ini di PT Mandiri Maha Daya.`);
 }
+
+// ----------------------------------------------------
+// EKSPOR FUNGSI KE SCOPE GLOBAL
+// ----------------------------------------------------
+window.switchTabAdmin = function(tabName) {
+  document.querySelectorAll('.tab-admin-content').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.tab-admin-btn').forEach(el => {
+    el.classList.remove('bg-emerald-800', 'text-white');
+    el.classList.add('hover:bg-slate-100');
+  });
+
+  if (tabName === 'kelola') {
+    document.getElementById('tabAdminKelola').classList.remove('hidden');
+    document.getElementById('tabBtnAdminKelola').classList.add('bg-emerald-800', 'text-white');
+  } else if (tabName === 'database') {
+    document.getElementById('tabAdminDatabase').classList.remove('hidden');
+    document.getElementById('tabBtnAdminDatabase').classList.add('bg-emerald-800', 'text-white');
+    onSKPFilterChange();
+  }
+};
+
+window.prosesLogin = prosesLogin;
+window.logout = logout;
+window.switchTabPeserta = switchTabPeserta;
+window.ambilAbsen = ambilAbsen;
+window.simpanBatchTraining = simpanBatchTraining;
+window.importExcelPeserta = importExcelPeserta;
+window.simpanPesertaManual = simpanPesertaManual;
+window.uploadSertifikatMasal = uploadSertifikatMasal;
+window.downloadRekapBatchPDF = downloadRekapBatchPDF;
+window.onSKPFilterChange = onSKPFilterChange;
+window.loadDatabasePeserta = loadDatabasePeserta;
+window.bukaModalEditPeserta = bukaModalEditPeserta;
+window.tutupModalEditPeserta = tutupModalEditPeserta;
+window.simpanPerubahanPeserta = simpanPerubahanPeserta;
+window.loadKatalogModulPeserta = loadKatalogModulPeserta;
+window.peringatanModulTerkunci = peringatanModulTerkunci;
