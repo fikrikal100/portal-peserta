@@ -98,10 +98,8 @@ function sortBatchesDescending(batchArray) {
 // HELPER: FORMAT JAM LOKAL PERANGKAT PESERTA (WIB / WITA / WIT)
 function formatJamLokalPerangkat(isoString) {
   if (!isoString) return '-';
-  
-  // Membaca ISO String dan mengonversi otomatis ke Waktu Lokal (WIB/WITA/WIT)
   const dateObj = new Date(isoString);
-  if (isNaN(dateObj.getTime())) return '-';
+  if (isNaN(dateObj.getTime())) return isoString;
 
   const jam = String(dateObj.getHours()).padStart(2, '0');
   const menit = String(dateObj.getMinutes()).padStart(2, '0');
@@ -407,6 +405,7 @@ async function ambilAbsen() {
     btn.disabled = false;
   }
 }
+
 // ----------------------------------------------------
 // FETCH API LIBUR NASIONAL OTOMATIS
 // ----------------------------------------------------
@@ -573,7 +572,7 @@ async function simpanBatchTraining() {
 }
 
 // ----------------------------------------------------
-// LOAD PILIHAN BATCH UNTUK DROPDOWN (URUT DESCENDING / TERBARU DI ATAS)
+// LOAD PILIHAN BATCH UNTUK DROPDOWN (URUT DESCENDING)
 // ----------------------------------------------------
 async function loadBatchOptions() {
   const { data, error } = await supabaseClient
@@ -721,7 +720,6 @@ async function simpanPesertaManual() {
     return alert("Harap lengkapi Nama, Tanggal Lahir, dan Pilih Batch Pelatihan!");
   }
 
-  // Bersihkan input tanggal lahir agar hanya menyisakan angka
   const digits = tglLahirRaw.replace(/[^0-9]/g, '');
 
   if (digits.length !== 8) {
@@ -732,8 +730,8 @@ async function simpanPesertaManual() {
   const month = digits.substring(2, 4);
   const year = digits.substring(4, 8);
 
-  const formattedDateForDb = `${year}-${month}-${day}`; // Format YYYY-MM-DD untuk database
-  const formattedDDMMYYYY = `${day}${month}${year}`;     // Password akun (DDMMYYYY)
+  const formattedDateForDb = `${year}-${month}-${day}`;
+  const formattedDDMMYYYY = `${day}${month}${year}`;
   const formattedUsername = nama.replace(/\s+/g, '').toLowerCase();
   const idSertifikat = `${formattedUsername}_${formattedDDMMYYYY}`;
 
@@ -922,12 +920,12 @@ async function downloadRekapBatchPDF() {
       }
     }
 
-    // Helper untuk mengubah YYYY-MM-DD menjadi DD-MM-YYYY
+    // Helper mengubah YYYY-MM-DD menjadi DD-MM-YYYY
     const formatTanggalIndo = (dateStr) => {
       if (!dateStr) return '-';
       const parts = dateStr.split('-');
       if (parts.length === 3) {
-        return `${parts[2]}-${parts[1]}-${parts[0]}`; // DD-MM-YYYY
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
       }
       return dateStr;
     };
@@ -1124,13 +1122,39 @@ async function downloadRekapBatchPDF() {
 }
 
 // ----------------------------------------------------
-// 10. FITUR EDIT PESERTA & DATABASE
+// 10. FITUR FILTER & EDIT PESERTA DATABASE
 // ----------------------------------------------------
 
-// Render Tabel Database Peserta dengan Aksi Edit
+async function onSKPFilterChange() {
+  const selectSKP = document.getElementById('dbFilterSKP');
+  const selectBatch = document.getElementById('dbFilterBatch');
+  
+  if (!selectBatch) return;
+  const selectedSKP = selectSKP ? selectSKP.value : '';
+  selectBatch.innerHTML = '<option value="">-- Semua Batch --</option>';
+
+  const { data } = await supabaseClient.from('trainings').select('*');
+  if (!data) return;
+
+  let filteredBatches = selectedSKP 
+    ? data.filter(b => b.master_training_id === selectedSKP || b.id.startsWith(selectedSKP))
+    : data;
+
+  filteredBatches = sortBatchesDescending(filteredBatches);
+
+  filteredBatches.forEach(b => {
+    selectBatch.innerHTML += `<option value="${b.id}">${b.judul}</option>`;
+  });
+
+  loadDatabasePeserta();
+}
+
 async function loadDatabasePeserta() {
-  const selectedSKP = document.getElementById('dbFilterSKP').value;
-  const selectedBatch = document.getElementById('dbFilterBatch').value;
+  const selectSKP = document.getElementById('dbFilterSKP');
+  const selectBatch = document.getElementById('dbFilterBatch');
+  
+  const selectedSKP = selectSKP ? selectSKP.value : '';
+  const selectedBatch = selectBatch ? selectBatch.value : '';
   const tbody = document.getElementById('tbodyDatabasePeserta');
 
   if (!tbody) return;
@@ -1188,7 +1212,6 @@ async function loadDatabasePeserta() {
       badgeProgres = `<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold text-[10px]">${persenProgres}% (${totalAbsenHadir}/${totalSesiWajib} Sesi)</span>`;
     }
 
-    // Escape String JSON untuk dipassing aman ke fungsi JS
     const userDataJson = JSON.stringify(p).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
 
     tbody.innerHTML += `
@@ -1219,13 +1242,12 @@ async function loadDatabasePeserta() {
   });
 }
 
-// Buka Modal & Isi Form Data Peserta
+// Buka Modal Edit Peserta
 async function bukaModalEditPeserta(user) {
   document.getElementById('editOriginalUsername').value = user.username;
   document.getElementById('editNama').value = user.nama || '';
   document.getElementById('editNIK').value = user.nik || '';
   
-  // Format Tanggal Lahir ke DD-MM-YYYY
   let tglLahirFormatted = '';
   if (user.tgl_lahir) {
     const parts = user.tgl_lahir.split('-');
@@ -1238,7 +1260,6 @@ async function bukaModalEditPeserta(user) {
   document.getElementById('editPassword').value = user.password || '';
   document.getElementById('editPerusahaan').value = user.perusahaan || '';
 
-  // Populasikan Dropdown Batch Pelatihan
   const selectBatch = document.getElementById('editSelectBatch');
   selectBatch.innerHTML = '<option value="">-- Pilih Batch Pelatihan --</option>';
 
@@ -1259,7 +1280,7 @@ function tutupModalEditPeserta() {
   document.getElementById('modalEditPeserta').classList.add('hidden');
 }
 
-// Simpan Perubahan Edit Peserta ke Supabase
+// Simpan Perubahan Edit Peserta
 async function simpanPerubahanPeserta() {
   const originalUsername = document.getElementById('editOriginalUsername').value;
   const nama = document.getElementById('editNama').value.trim();
@@ -1274,83 +1295,7 @@ async function simpanPerubahanPeserta() {
     return alert("Harap lengkapi Nama, Username, Password, dan Batch Pelatihan!");
   }
 
-  // Format Tanggal Lahir ke YYYY-MM-DD untuk Database
   let formattedDateForDb = '';
   const digits = tglLahirRaw.replace(/[^0-9]/g, '');
   if (digits.length === 8) {
-    const d = digits.substring(0, 2);
-    const m = digits.substring(2, 4);
-    const y = digits.substring(4, 8);
-    formattedDateForDb = `${y}-${m}-${d}`;
-  } else if (tglLahirRaw.includes('-')) {
-    const parts = tglLahirRaw.split('-');
-    if (parts.length === 3 && parts[0].length === 2) {
-      formattedDateForDb = `${parts[2]}-${parts[1]}-${parts[0]}`;
-    } else {
-      formattedDateForDb = tglLahirRaw;
-    }
-  } else {
-    formattedDateForDb = tglLahirRaw;
-  }
-
-  const idSertifikat = `${username}_${password}`;
-
-  const btn = document.getElementById('btnSimpanEditPeserta');
-  const originalText = btn.innerHTML;
-  btn.innerText = "Menyimpan...";
-  btn.disabled = true;
-
-  try {
-    const updatedUser = {
-      username: username,
-      password: password,
-      nama: nama,
-      nik: nik || '-',
-      tgl_lahir: formattedDateForDb,
-      perusahaan: perusahaan || 'PT Mandiri Maha Daya',
-      training_id: trainingId,
-      id_sertifikat: idSertifikat
-    };
-
-    const { error } = await supabaseClient
-      .from('users')
-      .update(updatedUser)
-      .eq('username', originalUsername);
-
-    if (error) {
-      alert("Gagal memperbarui data peserta: " + error.message);
-    } else {
-      alert("✅ Data peserta berhasil diperbarui!");
-      tutupModalEditPeserta();
-      loadDatabasePeserta();
-    }
-  } catch (err) {
-    alert("Terjadi kesalahan sistem: " + err.message);
-  } finally {
-    btn.innerHTML = originalText;
-    btn.disabled = false;
-  }
-}
-// ----------------------------------------------------
-// EKSPOR FUNGSI KE SCOPE GLOBAL (Mencegah ReferenceError)
-// ----------------------------------------------------
-window.switchTabAdmin = function(tabName) {
-  document.querySelectorAll('.tab-admin-content').forEach(el => el.classList.add('hidden'));
-  document.querySelectorAll('.tab-admin-btn').forEach(el => {
-    el.classList.remove('bg-emerald-800', 'text-white');
-    el.classList.add('hover:bg-slate-100');
-  });
-
-  if (tabName === 'kelola') {
-    document.getElementById('tabAdminKelola').classList.remove('hidden');
-    document.getElementById('tabBtnAdminKelola').classList.add('bg-emerald-800', 'text-white');
-  } else if (tabName === 'database') {
-    document.getElementById('tabAdminDatabase').classList.remove('hidden');
-    document.getElementById('tabBtnAdminDatabase').classList.add('bg-emerald-800', 'text-white');
-    onSKPFilterChange();
-  }
-};
-
-window.bukaModalEditPeserta = bukaModalEditPeserta;
-window.tutupModalEditPeserta = tutupModalEditPeserta;
-window.simpanPerubahanPeserta = simpanPerubahanPeserta;
+    const d = digits.
