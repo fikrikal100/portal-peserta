@@ -200,7 +200,6 @@ async function renderPesertaData(user) {
   document.getElementById('pesertaNIK').innerText = user.nik || '-';
   document.getElementById('pesertaUsername').innerText = user.username || '-';
 
-  // Ambil Riwayat Seluruh Training yang pernah diikuti user dari Absensi & Sertifikat
   const userTrainingsSet = new Set();
   if (user.training_id) userTrainingsSet.add(user.training_id);
 
@@ -212,7 +211,6 @@ async function renderPesertaData(user) {
 
   const allTrainingsList = Array.from(userTrainingsSet);
   
-  // Tampilkan di Profil
   const elTraining = document.getElementById('pesertaTraining');
   if (elTraining) {
     elTraining.innerHTML = allTrainingsList.map(t => `<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full mr-1">${t}</span>`).join(' ');
@@ -353,7 +351,6 @@ async function startCamera() {
 async function ambilAbsen() {
   if (!currentSessionUser) return alert("Sesi login tidak ditemukan, harap login ulang!");
 
-  // VALIDASI JADWAL PELATIHAN
   const training = currentSessionUser.trainings;
   let listTanggal = [];
 
@@ -389,7 +386,6 @@ async function ambilAbsen() {
     return alert(`⚠️ Hari Ini Libur / Tidak Ada Sesi!\nTanggal ${tglHariIni} tidak termasuk dalam jadwal sesi pelatihan kamu.`);
   }
 
-  // PROSES ABSENSI
   const btn = document.getElementById('btnKirimAbsen');
   const originalText = btn.innerHTML;
   btn.innerText = "Mengambil Foto & Lokasi GPS...";
@@ -496,6 +492,7 @@ function renderCalendar() {
   if (selectMonth) selectMonth.value = m;
 
   if (selectYear && selectYear.options.length === 0) {
+    selectYear.innerHTML = '';
     const currentYear = new Date().getFullYear();
     for (let yr = currentYear - 2; yr <= currentYear + 5; yr++) {
       selectYear.innerHTML += `<option value="${yr}">${yr}</option>`;
@@ -1358,9 +1355,11 @@ async function simpanPerubahanPeserta() {
   const idSertifikat = `${username}_${password}`;
 
   const btn = document.getElementById('btnSimpanEditPeserta');
-  const originalText = btn.innerHTML;
-  btn.innerText = "Menyimpan...";
-  btn.disabled = true;
+  const originalText = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.innerText = "Menyimpan...";
+    btn.disabled = true;
+  }
 
   try {
     const updatedUser = {
@@ -1388,9 +1387,11 @@ async function simpanPerubahanPeserta() {
     }
   } catch (err) {
     alert("Terjadi kesalahan sistem: " + err.message);
-  } font-medium {
-    btn.innerHTML = originalText;
-    btn.disabled = false;
+  } finally {
+    if (btn) {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
   }
 }
 
@@ -1611,7 +1612,6 @@ async function uploadMateriTrainingAdmin() {
     const fileExt = file.name.split('.').pop();
     const storagePath = `modul_${masterId}_${Date.now()}.${fileExt}`;
 
-    // Upload ke bucket storage Supabase 'sertifikat'
     const { error: uploadErr } = await supabaseClient.storage
       .from('sertifikat')
       .upload(storagePath, file, { upsert: true });
@@ -1620,7 +1620,6 @@ async function uploadMateriTrainingAdmin() {
 
     const { data: urlData } = supabaseClient.storage.from('sertifikat').getPublicUrl(storagePath);
 
-    // Insert data file ke tabel training_modules
     const { error: insertErr } = await supabaseClient.from('training_modules').insert([{
       master_id: masterId,
       file_name: file.name,
