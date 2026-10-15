@@ -1331,3 +1331,26 @@ async function simpanPerubahanPeserta() {
     btn.disabled = false;
   }
 }
+// ----------------------------------------------------
+// EKSPOR FUNGSI KE SCOPE GLOBAL (Mencegah ReferenceError)
+// ----------------------------------------------------
+window.switchTabAdmin = function(tabName) {
+  document.querySelectorAll('.tab-admin-content').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.tab-admin-btn').forEach(el => {
+    el.classList.remove('bg-emerald-800', 'text-white');
+    el.classList.add('hover:bg-slate-100');
+  });
+
+  if (tabName === 'kelola') {
+    document.getElementById('tabAdminKelola').classList.remove('hidden');
+    document.getElementById('tabBtnAdminKelola').classList.add('bg-emerald-800', 'text-white');
+  } else if (tabName === 'database') {
+    document.getElementById('tabAdminDatabase').classList.remove('hidden');
+    document.getElementById('tabBtnAdminDatabase').classList.add('bg-emerald-800', 'text-white');
+    onSKPFilterChange();
+  }
+};
+
+window.bukaModalEditPeserta = bukaModalEditPeserta;
+window.tutupModalEditPeserta = tutupModalEditPeserta;
+window.simpanPerubahanPeserta = simpanPerubahanPeserta;
