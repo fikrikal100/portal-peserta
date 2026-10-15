@@ -337,6 +337,50 @@ async function startCamera() {
 async function ambilAbsen() {
   if (!currentSessionUser) return alert("Sesi login tidak ditemukan, harap login ulang!");
 
+  // ----------------------------------------------------
+  // VALIDASI JADWAL PELATIHAN (Mencegah Absen Luar Jadwal)
+  // ----------------------------------------------------
+  const training = currentSessionUser.trainings;
+  let listTanggal = [];
+
+  if (training && training.jadwal_tanggal && training.jadwal_tanggal.length > 0) {
+    listTanggal = [...training.jadwal_tanggal].sort();
+  } else if (training && training.tgl_mulai && training.tgl_selesai) {
+    let start = new Date(training.tgl_mulai);
+    let end = new Date(training.tgl_selesai);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      listTanggal.push(d.toISOString().split('T')[0]);
+    }
+  }
+
+  const now = new Date();
+  const tglHariIni = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+  if (listTanggal.length === 0) {
+    return alert("⚠️ Jadwal pelatihan kamu belum diatur oleh Panitia!");
+  }
+
+  const tglAwal = listTanggal[0];
+  const tglAkhir = listTanggal[listTanggal.length - 1];
+
+  // 1. Cek jika masa pelatihan sudah selesai
+  if (tglHariIni > tglAkhir) {
+    return alert(`⛔ Pelatihan Kamu Sudah Selesai!\nMasa pelatihan telah berakhir pada tanggal ${tglAkhir}. Akses absensi sudah ditutup.`);
+  }
+
+  // 2. Cek jika masa pelatihan belum dimulai
+  if (tglHariIni < tglAwal) {
+    return alert(`⏳ Pelatihan Belum Dimulai!\nJadwal pelatihan kamu baru akan dimulai pada tanggal ${tglAwal}.`);
+  }
+
+  // 3. Cek jika tanggal hari ini tidak ada dalam daftar tanggal sesi aktif
+  if (!listTanggal.includes(tglHariIni)) {
+    return alert(`⚠️ Hari Ini Libur / Tidak Ada Sesi!\nTanggal ${tglHariIni} tidak termasuk dalam jadwal sesi pelatihan kamu.`);
+  }
+
+  // ----------------------------------------------------
+  // PROSES ABSENSI (Hanya berjalan jika tanggal valid)
+  // ----------------------------------------------------
   const btn = document.getElementById('btnKirimAbsen');
   const originalText = btn.innerHTML;
   btn.innerText = "Mengambil Foto & Lokasi GPS...";
@@ -362,14 +406,10 @@ async function ambilAbsen() {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const fotoBase64 = canvas.toDataURL('image/jpeg', 0.7);
 
-    const now = new Date();
     const jam = now.getHours();
     let sesiNum = 1;
     if (jam >= 12) sesiNum = 2;
 
-    const tglHariIni = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    
-    // Teks jam lokal bersih yang akan tersimpan persis di Supabase
     const waktuAbsenTeks = now.toLocaleString('id-ID', {
       year: 'numeric',
       month: '2-digit',
@@ -378,7 +418,7 @@ async function ambilAbsen() {
       minute: '2-digit',
       second: '2-digit',
       hour12: false
-    }); 
+    });
 
     const { error } = await supabaseClient.from('log_absensi').insert([{
       username: currentSessionUser.username,
