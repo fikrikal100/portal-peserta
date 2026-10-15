@@ -1584,11 +1584,16 @@ const KATALOG_MODUL_MASTER = [
 
 // Populate Dropdown Admin untuk Upload Materi Training
 function loadDropdownMasterModulAdmin() {
-  const select = document.getElementById('adminSelectMasterModul');
-  if (!select) return;
-  select.innerHTML = '<option value="">-- Pilih Judul Training --</option>';
+  const selectUpload = document.getElementById('adminSelectMasterModul');
+  const selectFilter = document.getElementById('adminFilterModulMaster');
+
+  if (selectUpload) selectUpload.innerHTML = '<option value="">-- Pilih Judul Training --</option>';
+  if (selectFilter) selectFilter.innerHTML = '<option value="">-- Semua Judul Training --</option>';
+
   KATALOG_MODUL_MASTER.forEach(m => {
-    select.innerHTML += `<option value="${m.master_id}">${m.nama_program}</option>`;
+    const optHtml = `<option value="${m.master_id}">${m.nama_program}</option>`;
+    if (selectUpload) selectUpload.innerHTML += optHtml;
+    if (selectFilter) selectFilter.innerHTML += optHtml;
   });
 }
 
@@ -1629,9 +1634,12 @@ async function uploadMateriTrainingAdmin() {
 
     if (insertErr) throw insertErr;
 
-    alert(`✅ File "${file.name}" berhasil diunggah ke folder modul ${masterId}!`);
+    alert(`✅ File "${file.name}" berhasil diunggah!`);
     if (fileInput) fileInput.value = '';
     document.getElementById('adminSelectMasterModul').value = '';
+
+    // Refresh otomatis tabel database modul
+    loadDatabaseModulAdmin();
 
   } catch (err) {
     alert("Gagal mengunggah file materi: " + err.message);
@@ -1824,6 +1832,102 @@ function peringatanModulTerkunci(namaProgram) {
 }
 
 // ----------------------------------------------------
+// FUNGSI BARU: MANAJEMEN DATABASE MODUL (LOAD, EDIT, HAPUS)
+// ----------------------------------------------------
+
+// Load Tabel Database Modul yang Terdaftar di Supabase
+async function loadDatabaseModulAdmin() {
+  const tbody = document.getElementById('tbodyDatabaseModul');
+  const selectedMasterId = document.getElementById('adminFilterModulMaster')?.value;
+
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-slate-400">Memuat data modul...</td></tr>';
+
+  try {
+    let query = supabaseClient.from('training_modules').select('*').order('created_at', { ascending: false });
+
+    if (selectedMasterId) {
+      query = query.eq('master_id', selectedMasterId);
+    }
+
+    const { data: files, error } = await query;
+
+    if (error || !files || files.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-slate-400 italic">Tidak ada file modul ditemukan.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = '';
+    files.forEach((f, idx) => {
+      const programObj = KATALOG_MODUL_MASTER.find(m => m.master_id === f.master_id);
+      const namaProgram = programObj ? programObj.nama_program : f.master_id;
+
+      tbody.innerHTML += `
+        <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+          <td class="p-3 text-center font-bold text-slate-400">${idx + 1}</td>
+          <td class="p-3 font-semibold text-slate-700">${namaProgram}</td>
+          <td class="p-3 font-medium text-slate-800">${f.file_name}</td>
+          <td class="p-3 text-center font-bold uppercase text-[10px] text-emerald-800">
+            <span class="bg-emerald-100 px-2 py-0.5 rounded-full">${f.file_type || 'PDF'}</span>
+          </td>
+          <td class="p-3 text-center">
+            <div class="flex items-center justify-center gap-1.5">
+              <a href="${f.file_url}" target="_blank" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10px] px-2 py-1 rounded-lg font-bold transition" title="Buka / Preview File">
+                <i class="fa-solid fa-eye"></i>
+              </a>
+              <button onclick="editNamaModulAdmin(${f.id}, '${f.file_name.replace(/'/g, "\\'")}')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-[10px] px-2 py-1 rounded-lg font-bold border border-amber-300 transition" title="Ganti Nama File">
+                <i class="fa-solid fa-pen-to-square"></i> Edit
+              </button>
+              <button onclick="hapusModulAdmin(${f.id}, '${f.file_name.replace(/'/g, "\\'")}')" class="bg-red-100 hover:bg-red-200 text-red-800 text-[10px] px-2 py-1 rounded-lg font-bold border border-red-300 transition" title="Hapus File Modul">
+                <i class="fa-solid fa-trash"></i> Hapus
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500">Gagal memuat modul pelatihan.</td></tr>';
+  }
+}
+
+// Edit Nama Modul
+async function editNamaModulAdmin(id, oldFileName) {
+  const newName = prompt("Masukkan nama file modul yang baru:", oldFileName);
+  if (!newName || newName.trim() === '' || newName === oldFileName) return;
+
+  const { error } = await supabaseClient
+    .from('training_modules')
+    .update({ file_name: newName.trim() })
+    .eq('id', id);
+
+  if (error) {
+    alert("Gagal merubah nama file: " + error.message);
+  } else {
+    alert("✅ Nama file modul berhasil diperbarui!");
+    loadDatabaseModulAdmin();
+  }
+}
+
+// Hapus File Modul
+async function hapusModulAdmin(id, fileName) {
+  if (!confirm(`Apakah Anda yakin ingin menghapus file modul "${fileName}"?`)) return;
+
+  const { error } = await supabaseClient
+    .from('training_modules')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    alert("Gagal menghapus modul: " + error.message);
+  } else {
+    alert("🗑️ File modul berhasil dihapus!");
+    loadDatabaseModulAdmin();
+  }
+}
+
+// ----------------------------------------------------
 // EKSPOR FUNGSI KE SCOPE GLOBAL
 // ----------------------------------------------------
 window.switchTabAdmin = function(tabName) {
@@ -1840,6 +1944,11 @@ window.switchTabAdmin = function(tabName) {
     document.getElementById('tabAdminDatabase').classList.remove('hidden');
     document.getElementById('tabBtnAdminDatabase').classList.add('bg-emerald-800', 'text-white');
     onSKPFilterChange();
+  } else if (tabName === 'modul') {
+    document.getElementById('tabAdminModul').classList.remove('hidden');
+    document.getElementById('tabBtnAdminModul').classList.add('bg-emerald-800', 'text-white');
+    loadDropdownMasterModulAdmin();
+    loadDatabaseModulAdmin();
   }
 };
 
@@ -1862,3 +1971,6 @@ window.peringatanModulTerkunci = peringatanModulTerkunci;
 window.uploadMateriTrainingAdmin = uploadMateriTrainingAdmin;
 window.bukaModalFolderModul = bukaModalFolderModul;
 window.tutupModalFolderModul = tutupModalFolderModul;
+window.loadDatabaseModulAdmin = loadDatabaseModulAdmin;
+window.editNamaModulAdmin = editNamaModulAdmin;
+window.hapusModulAdmin = hapusModulAdmin;
