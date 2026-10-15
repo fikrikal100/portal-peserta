@@ -255,7 +255,15 @@ async function loadMatriksAbsensiUser() {
     .select('*')
     .eq('username', currentSessionUser.username);
 
-  renderMatriksAbsensi(currentSessionUser.trainings, logs || []);
+  // Helper untuk format jam sesuai zona waktu perangkat peserta (WIB/WITA/WIT)
+function formatJamLokalPerangkat(isoString) {
+  if (!isoString) return '-';
+  const dateObj = new Date(isoString);
+  return dateObj.toLocaleTimeString('id-ID', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    hour12: false 
+  });
 }
 
 function renderMatriksAbsensi(training, logs = []) {
@@ -285,11 +293,11 @@ function renderMatriksAbsensi(training, logs = []) {
     const s2 = logs.find(l => l.tanggal === dateStr && Number(l.sesi) === 2);
 
     const badgeS1 = s1 
-      ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2.5 py-1 rounded-full font-bold">✓ Hadir (${s1.waktu_absen ? s1.waktu_absen.substring(11,16) : 'Sesi 1'})</span>` 
+      ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2.5 py-1 rounded-full font-bold">✓ Hadir (${formatJamLokalPerangkat(s1.waktu_absen)})</span>` 
       : `<span class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-semibold">Belum Absen</span>`;
 
     const badgeS2 = s2 
-      ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2.5 py-1 rounded-full font-bold">✓ Hadir (${s2.waktu_absen ? s2.waktu_absen.substring(11,16) : 'Sesi 2'})</span>` 
+      ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2.5 py-1 rounded-full font-bold">✓ Hadir (${formatJamLokalPerangkat(s2.waktu_absen)})</span>` 
       : `<span class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-semibold">Belum Absen</span>`;
 
     let statusTotal = `<span class="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold">Pending</span>`;
@@ -306,7 +314,6 @@ function renderMatriksAbsensi(training, logs = []) {
     `;
   });
 }
-
 // ----------------------------------------------------
 // 4. KAMERA & ABSENSI REAL-TIME
 // ----------------------------------------------------
