@@ -1298,4 +1298,82 @@ async function simpanPerubahanPeserta() {
   let formattedDateForDb = '';
   const digits = tglLahirRaw.replace(/[^0-9]/g, '');
   if (digits.length === 8) {
-    const d = digits.
+    const d = digits.substring(0, 2);
+    const m = digits.substring(2, 4);
+    const y = digits.substring(4, 8);
+    formattedDateForDb = `${y}-${m}-${d}`;
+  } else if (tglLahirRaw.includes('-')) {
+    const parts = tglLahirRaw.split('-');
+    if (parts.length === 3 && parts[0].length === 2) {
+      formattedDateForDb = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    } else {
+      formattedDateForDb = tglLahirRaw;
+    }
+  } else {
+    formattedDateForDb = tglLahirRaw;
+  }
+
+  const idSertifikat = `${username}_${password}`;
+
+  const btn = document.getElementById('btnSimpanEditPeserta');
+  const originalText = btn.innerHTML;
+  btn.innerText = "Menyimpan...";
+  btn.disabled = true;
+
+  try {
+    const updatedUser = {
+      username: username,
+      password: password,
+      nama: nama,
+      nik: nik || '-',
+      tgl_lahir: formattedDateForDb,
+      perusahaan: perusahaan || 'PT Mandiri Maha Daya',
+      training_id: trainingId,
+      id_sertifikat: idSertifikat
+    };
+
+    const { error } = await supabaseClient
+      .from('users')
+      .update(updatedUser)
+      .eq('username', originalUsername);
+
+    if (error) {
+      alert("Gagal memperbarui data peserta: " + error.message);
+    } else {
+      alert("✅ Data peserta berhasil diperbarui!");
+      tutupModalEditPeserta();
+      loadDatabasePeserta();
+    }
+  } catch (err) {
+    alert("Terjadi kesalahan sistem: " + err.message);
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
+// ----------------------------------------------------
+// EKSPOR FUNGSI KE SCOPE GLOBAL (MENCEGAH REFERENCE ERROR)
+// ----------------------------------------------------
+window.switchTabAdmin = function(tabName) {
+  document.querySelectorAll('.tab-admin-content').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.tab-admin-btn').forEach(el => {
+    el.classList.remove('bg-emerald-800', 'text-white');
+    el.classList.add('hover:bg-slate-100');
+  });
+
+  if (tabName === 'kelola') {
+    document.getElementById('tabAdminKelola').classList.remove('hidden');
+    document.getElementById('tabBtnAdminKelola').classList.add('bg-emerald-800', 'text-white');
+  } else if (tabName === 'database') {
+    document.getElementById('tabAdminDatabase').classList.remove('hidden');
+    document.getElementById('tabBtnAdminDatabase').classList.add('bg-emerald-800', 'text-white');
+    onSKPFilterChange();
+  }
+};
+
+window.onSKPFilterChange = onSKPFilterChange;
+window.loadDatabasePeserta = loadDatabasePeserta;
+window.bukaModalEditPeserta = bukaModalEditPeserta;
+window.tutupModalEditPeserta = tutupModalEditPeserta;
+window.simpanPerubahanPeserta = simpanPerubahanPeserta;
