@@ -188,32 +188,11 @@ function switchTabPeserta(tabName) {
   } else if (tabName === 'modul') {
     document.getElementById('tabPesertaModul').classList.remove('hidden');
     document.getElementById('tabBtnModul').classList.add('bg-emerald-800', 'text-white');
+    loadKatalogModulPeserta(); // <--- DITAMBAHKAN DI SINI
   } else if (tabName === 'info') {
     document.getElementById('tabPesertaInfo').classList.remove('hidden');
     document.getElementById('tabBtnInfo').classList.add('bg-emerald-800', 'text-white');
   }
-}
-
-function renderPesertaData(user) {
-  document.getElementById('pesertaNama').innerText = user.nama || '-';
-  document.getElementById('pesertaPerusahaan').innerHTML = `<i class="fa-solid fa-building mr-1"></i> Perusahaan: ${user.perusahaan || '-'}`;
-  document.getElementById('pesertaNIK').innerText = user.nik || '-';
-  document.getElementById('pesertaUsername').innerText = user.username || '-';
-  
-  const tInfo = user.trainings;
-  document.getElementById('pesertaTraining').innerText = tInfo ? tInfo.judul : (user.training_id || '-');
-  
-  if (tInfo && tInfo.jadwal_tanggal && tInfo.jadwal_tanggal.length > 0) {
-    const sorted = [...tInfo.jadwal_tanggal].sort();
-    document.getElementById('pesertaJadwal').innerText = `${sorted[0]} s/d ${sorted[sorted.length-1]} (${sorted.length} Hari Pelatihan)`;
-  } else if (tInfo) {
-    document.getElementById('pesertaJadwal').innerText = `${tInfo.tgl_mulai} s/d ${tInfo.tgl_selesai}`;
-  } else {
-    document.getElementById('pesertaJadwal').innerText = 'Sesuai Jadwal Sesi';
-  }
-
-  loadSertifikatPeserta(user.username);
-  loadMatriksAbsensiUser();
 }
 
 // ----------------------------------------------------
@@ -1417,3 +1396,163 @@ window.loadDatabasePeserta = loadDatabasePeserta;
 window.bukaModalEditPeserta = bukaModalEditPeserta;
 window.tutupModalEditPeserta = tutupModalEditPeserta;
 window.simpanPerubahanPeserta = simpanPerubahanPeserta;
+
+// ----------------------------------------------------
+// DAFTAR MASTER KATALOG MODUL MANDIRI MAHA DAYA
+// ----------------------------------------------------
+const KATALOG_MODUL_MASTER = [
+  {
+    master_id: "TKPK1",
+    nama_program: "TKPK 1 BNSP",
+    deskripsi: "Tenaga Kerja Pada Ketinggian Tingkat 1",
+    file_list: [
+      { nama: "Modul K3 Ketinggian Dasar.pdf", url: "#" },
+      { nama: "Panduan Alat Pelindung Jatuh (PPE).pdf", url: "#" },
+      { nama: "SOP Bekerja di Ketinggian.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "TKPK2",
+    nama_program: "TKPK 2 BNSP",
+    deskripsi: "Tenaga Kerja Pada Ketinggian Tingkat 2",
+    file_list: [
+      { nama: "Modul Advanced Rope Access.pdf", url: "#" },
+      { nama: "Teknik Rescue & Evakuasi Ketinggian.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "TKBT1",
+    nama_program: "TKBT 1 BNSP",
+    deskripsi: "Tenaga Kerja Bangunan Tinggi 1",
+    file_list: [
+      { nama: "Modul Struktur Perancah & Scaffolding.pdf", url: "#" },
+      { nama: "Inspeksi Keselamatan Bangunan Tinggi.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "TKBT2",
+    nama_program: "TKBT 2 BNSP",
+    deskripsi: "Tenaga Kerja Bangunan Tinggi 2",
+    file_list: [
+      { nama: "Modul Pengawasan PekerjaanScaffolding.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "AK3U",
+    nama_program: "Ahli K3 Umum BNSP / Kemnaker",
+    deskripsi: "Pembinaan & Lisensi K3 Umum",
+    file_list: [
+      { nama: "Himpunan Peraturan Perundangan K3.pdf", url: "#" },
+      { nama: "Modul Manajemen Risiko & Analisis Bahaya (JSA).pdf", url: "#" },
+      { nama: "Panduan Laporan Praktek Kerja Lapangan (PKL).pdf", url: "#" }
+    ]
+  }
+];
+
+// ----------------------------------------------------
+// LOGIKA SINKRONISASI HISTORI TRAINING & RENDER FOLDER MODUL
+// ----------------------------------------------------
+async function loadKatalogModulPeserta() {
+  const container = document.getElementById('containerFolderModul');
+  if (!container || !currentSessionUser) return;
+
+  container.innerHTML = '<p class="text-xs text-slate-400 text-center col-span-full py-4">Sistem sedang mendata histori pelatihan kamu...</p>';
+
+  try {
+    // 1. Ambil Histori Pelatihan dari Tabel log_absensi & data user saat ini
+    const { data: userLogs } = await supabaseClient
+      .from('log_absensi')
+      .select('training_id')
+      .eq('username', currentSessionUser.username);
+
+    // Kumpulkan semua training_id yang pernah dimiliki user ini
+    const setHistoriTraining = new Set();
+
+    // Tambahkan training_id dari profil akun aktif
+    if (currentSessionUser.training_id) {
+      setHistoriTraining.add(currentSessionUser.training_id.toUpperCase());
+    }
+
+    // Tambahkan dari histori absensi
+    if (userLogs) {
+      userLogs.forEach(l => {
+        if (l.training_id) setHistoriTraining.add(l.training_id.toUpperCase());
+      });
+    }
+
+    // 2. Render Katalog Folder Modul
+    container.innerHTML = '';
+
+    KATALOG_MODUL_MASTER.forEach(modul => {
+      // Cek apakah master_id modul ada di dalam histori training peserta
+      const isUnlocked = Array.from(setHistoriTraining).some(tId => tId.includes(modul.master_id));
+
+      if (isUnlocked) {
+        // TAMPILAN FOLDER TERBUKA (AKSES DIBERIKAN)
+        let htmlFiles = modul.file_list.map(f => `
+          <div class="flex items-center justify-between p-2 bg-slate-50 hover:bg-emerald-50 rounded-lg text-xs transition border border-slate-100 mt-1.5">
+            <span class="font-semibold text-slate-700 truncate pr-2"><i class="fa-solid fa-file-pdf text-red-600 mr-1.5"></i> ${f.nama}</span>
+            <a href="${f.url}" target="_blank" class="bg-emerald-700 hover:bg-emerald-800 text-white px-2.5 py-1 rounded text-[10px] font-bold whitespace-nowrap transition">
+              <i class="fa-solid fa-download"></i> Unduh
+            </a>
+          </div>
+        `).join('');
+
+        container.innerHTML += `
+          <div class="bg-white border-2 border-emerald-500/30 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-lg font-bold">
+                  <i class="fa-solid fa-folder-open"></i>
+                </div>
+                <div>
+                  <span class="bg-emerald-100 text-emerald-800 text-[9px] font-extrabold px-2 py-0.5 rounded-full">AKSES DIBERIKAN</span>
+                  <h4 class="text-xs font-bold text-slate-800 mt-1">${modul.nama_program}</h4>
+                </div>
+              </div>
+            </div>
+            <p class="text-[10px] text-slate-500 mt-2">${modul.deskripsi}</p>
+            
+            <div class="mt-3 pt-3 border-t border-slate-100">
+              <p class="text-[10px] font-bold text-slate-600 mb-1">Daftar Modul Pembelajaran:</p>
+              ${htmlFiles}
+            </div>
+          </div>
+        `;
+
+      } else {
+        // TAMPILAN FOLDER TERKUNCI
+        container.innerHTML += `
+          <div onclick="peringatanModulTerkunci('${modul.nama_program}')" class="bg-slate-50 border border-slate-200 rounded-2xl p-4 cursor-pointer hover:border-slate-300 transition relative overflow-hidden group">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-slate-200 text-slate-500 flex items-center justify-center text-lg font-bold group-hover:scale-105 transition">
+                  <i class="fa-solid fa-folder-minus"></i>
+                </div>
+                <div>
+                  <span class="bg-slate-200 text-slate-600 text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 w-max">
+                    <i class="fa-solid fa-lock text-[8px]"></i> TERKUNCI
+                  </span>
+                  <h4 class="text-xs font-bold text-slate-600 mt-1">${modul.nama_program}</h4>
+                </div>
+              </div>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-2">${modul.deskripsi}</p>
+            
+            <div class="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between text-[10px] text-slate-400 font-semibold">
+              <span>🔒 Kunci Modul Otomatis</span>
+              <span class="text-emerald-700 font-bold group-hover:underline">Info Akses <i class="fa-solid fa-chevron-right text-[8px]"></i></span>
+            </div>
+          </div>
+        `;
+      }
+    });
+
+  } catch (err) {
+    container.innerHTML = '<p class="text-xs text-red-500 text-center col-span-full py-4">Gagal memuat modul pelatihan.</p>';
+  }
+}
+
+function peringatanModulTerkunci(namaProgram) {
+  alert(`🔒 AKSES MODUL TERKUNCI!\n\nModul "${namaProgram}" hanya dapat diakses oleh peserta yang terdaftar resmi pada pelatihan ini di PT Mandiri Maha Daya.`);
+}
