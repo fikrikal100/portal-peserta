@@ -560,5 +560,73 @@
 
   <!-- File JavaScript Lokal -->
   <script src="app.js"></script>
+
+  <!-- MODAL EDIT PESERTA -->
+<div id="modalEditPeserta" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+  <div class="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 w-full max-w-lg mx-4 relative">
+    <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
+      <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+        <i class="fa-solid fa-user-pen text-emerald-700"></i> Edit Data Peserta
+      </h3>
+      <button onclick="tutupModalEditPeserta()" class="text-slate-400 hover:text-slate-600 transition">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <!-- Hidden Field untuk ID Username Asli -->
+    <input type="hidden" id="editOriginalUsername">
+
+    <div class="space-y-3 text-xs">
+      <div>
+        <label class="font-bold text-slate-700 block mb-1">Nama Lengkap Peserta</label>
+        <input type="text" id="editNama" class="w-full p-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500">
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">NIK (Nomor KTP)</label>
+          <input type="text" id="editNIK" class="w-full p-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500">
+        </div>
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Tanggal Lahir (DD-MM-YYYY)</label>
+          <input type="text" id="editTglLahir" placeholder="15-10-1998" class="w-full p-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Username Login</label>
+          <input type="text" id="editUsername" class="w-full p-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 bg-slate-50">
+        </div>
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Password Login</label>
+          <input type="text" id="editPassword" class="w-full p-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500">
+        </div>
+      </div>
+
+      <div>
+        <label class="font-bold text-slate-700 block mb-1">Nama Perusahaan</label>
+        <input type="text" id="editPerusahaan" class="w-full p-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500">
+      </div>
+
+      <div>
+        <label class="font-bold text-slate-700 block mb-1">Batch Pelatihan</label>
+        <select id="editSelectBatch" class="w-full p-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 bg-white">
+          <option value="">-- Pilih Batch Pelatihan --</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-2 mt-6 border-t border-slate-100 pt-3">
+      <button onclick="tutupModalEditPeserta()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition">
+        Batal
+      </button>
+      <button onclick="simpanPerubahanPeserta()" id="btnSimpanEditPeserta" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-lg shadow transition">
+        <i class="fa-solid fa-floppy-disk mr-1"></i> Simpan Perubahan
+      </button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
