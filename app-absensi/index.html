@@ -240,6 +240,9 @@
         <button onclick="switchTabAdmin('database')" id="tabBtnAdminDatabase" class="tab-admin-btn px-4 py-2.5 rounded-xl hover:bg-slate-100 flex items-center gap-2 whitespace-nowrap transition">
           <i class="fa-solid fa-database"></i> Database Peserta Pelatihan
         </button>
+        <button onclick="switchTabAdmin('modul')" id="tabBtnAdminModul" class="tab-admin-btn px-4 py-2.5 rounded-xl hover:bg-slate-100 flex items-center gap-2 whitespace-nowrap transition">
+          <i class="fa-solid fa-folder-open"></i> Database Modul / Materi
+        </button>
       </div>
 
       <!-- CONTAINER TAB 1: KELOLA TRAINING & PESERTA -->
@@ -457,33 +460,9 @@
           </div>
         </div>
 
-        <!-- 3. FORM UPLOAD MATERI & MODUL TRAINING ADMIN -->
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <h3 class="text-sm font-bold text-emerald-900 mb-3 flex items-center gap-2 border-b pb-2">
-            <i class="fa-solid fa-cloud-arrow-up text-emerald-700"></i> 3. Upload Modul / Materi Training
-          </h3>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Judul Training</label>
-              <select id="adminSelectMasterModul" class="w-full text-xs p-2.5 border rounded-xl bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
-                <option value="">-- Pilih Judul Training --</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Pilih File (PDF, PPT, RAR, ZIP)</label>
-              <input type="file" id="fileMateriTraining" accept=".pdf,.ppt,.pptx,.rar,.zip" class="w-full text-xs p-2 border rounded-xl bg-slate-50" />
-            </div>
-            <div class="flex items-end">
-              <button onclick="uploadMateriTrainingAdmin()" id="btnUploadMateri" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition shadow flex items-center justify-center gap-2">
-                <i class="fa-solid fa-upload"></i> Upload File Modul
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. CETAK REKAP ABSENSI PDF A4 -->
+        <!-- 3. CETAK REKAP ABSENSI PDF A4 -->
         <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-4">
-          <h3 class="font-bold text-sm text-emerald-900 border-b pb-2"><i class="fa-solid fa-file-pdf mr-1.5"></i> 4. Cetak Rekapan Kehadiran per Batch Pelatihan (PDF A4)</h3>
+          <h3 class="font-bold text-sm text-emerald-900 border-b pb-2"><i class="fa-solid fa-file-pdf mr-1.5"></i> 3. Cetak Rekapan Kehadiran per Batch Pelatihan (PDF A4)</h3>
           <div class="flex flex-col sm:flex-row gap-2">
             <select id="adminSelectBatchRekap" class="w-full p-2.5 border rounded-xl text-xs bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
               <option value="">-- Pilih Batch Training --</option>
@@ -580,6 +559,76 @@
             </table>
           </div>
         </div>
+      </div>
+
+      <!-- CONTAINER TAB 3: DATABASE MODUL & UPLOAD MATERI -->
+      <div id="tabAdminModul" class="tab-admin-content hidden space-y-6">
+        
+        <!-- FORM UPLOAD MODUL BARU -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <h3 class="text-sm font-bold text-emerald-900 mb-3 flex items-center gap-2 border-b pb-2">
+            <i class="fa-solid fa-cloud-arrow-up text-emerald-700"></i> Upload Modul / Materi Training Baru
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Judul Training</label>
+              <select id="adminSelectMasterModul" class="w-full text-xs p-2.5 border rounded-xl bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
+                <option value="">-- Pilih Judul Training --</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Pilih File (PDF, PPT, RAR, ZIP)</label>
+              <input type="file" id="fileMateriTraining" accept=".pdf,.ppt,.pptx,.rar,.zip" class="w-full text-xs p-2 border rounded-xl bg-slate-50" />
+            </div>
+            <div class="flex items-end">
+              <button onclick="uploadMateriTrainingAdmin()" id="btnUploadMateri" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition shadow flex items-center justify-center gap-2">
+                <i class="fa-solid fa-upload"></i> Upload File Modul
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABEL MANAJEMEN MODUL -->
+        <div class="border border-slate-200 p-5 rounded-2xl bg-white space-y-4 shadow-sm">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3 border-slate-100">
+            <div>
+              <h3 class="font-bold text-sm text-emerald-900 flex items-center gap-2">
+                <i class="fa-solid fa-folder-tree text-emerald-700"></i>
+                <span>Kelola File Modul Pelatihan</span>
+              </h3>
+              <p class="text-[11px] text-slate-500 mt-0.5">Pilih program pelatihan untuk melihat, merubah nama, atau menghapus file modul yang tersimpan.</p>
+            </div>
+          </div>
+
+          <!-- DROPDOWN FILTER -->
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <label class="font-bold text-[11px] text-slate-700 block mb-1">Filter Berdasarkan Judul Training</label>
+            <select id="adminFilterModulMaster" onchange="loadDatabaseModulAdmin()" class="w-full p-2.5 border rounded-xl bg-white text-xs outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-700">
+              <option value="">-- Semua Judul Training --</option>
+            </select>
+          </div>
+
+          <!-- TABEL DAFTAR FILE -->
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 font-bold text-[11px]">
+                  <th class="p-3 w-10 text-center">NO</th>
+                  <th class="p-3">PROGRAM TRAINING</th>
+                  <th class="p-3">NAMA FILE</th>
+                  <th class="p-3 text-center">TIPE FILE</th>
+                  <th class="p-3 text-center">AKSI</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyDatabaseModul" class="divide-y divide-slate-100 text-slate-600">
+                <tr>
+                  <td colspan="5" class="text-center py-4 text-slate-400 italic">Memuat data modul...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
 
     </div>
