@@ -98,12 +98,15 @@ function sortBatchesDescending(batchArray) {
 // HELPER: FORMAT JAM LOKAL PERANGKAT PESERTA (WIB / WITA / WIT)
 function formatJamLokalPerangkat(isoString) {
   if (!isoString) return '-';
+  
+  // Membaca ISO String dan mengonversi otomatis ke Waktu Lokal (WIB/WITA/WIT)
   const dateObj = new Date(isoString);
-  return dateObj.toLocaleTimeString('id-ID', { 
-    hour: '2-digit', 
-    minute: '2-digit', 
-    hour12: false 
-  });
+  if (isNaN(dateObj.getTime())) return '-';
+
+  const jam = String(dateObj.getHours()).padStart(2, '0');
+  const menit = String(dateObj.getMinutes()).padStart(2, '0');
+  
+  return `${jam}:${menit}`;
 }
 
 // ----------------------------------------------------
