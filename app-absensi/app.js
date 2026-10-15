@@ -1394,15 +1394,58 @@ async function simpanPerubahanPeserta() {
 }
 
 // ----------------------------------------------------
-// 11. DAFTAR MASTER KATALOG MODUL (SKP & NON-SKP BNSP)
+// 11. DAFTAR MASTER KATALOG MODUL LENGKAP (29 PROGRAM)
 // ----------------------------------------------------
 const KATALOG_MODUL_MASTER = [
-  // --- PROGRAM SKP KEMNAKER / BNSP ---
+  // ====================================================
+  // KELOMPOK 1: PEMBINAAN K3 KEMNAKER RI (23 PROGRAM)
+  // ====================================================
+  {
+    master_id: "AK3U",
+    kategori: "KEMNAKER",
+    nama_program: "AK3U - Kemnaker RI",
+    deskripsi: "Pembinaan & Lisensi Ahli K3 Umum Kemnaker RI",
+    file_list: [
+      { nama: "Himpunan Peraturan Perundangan K3 RI.pdf", url: "#" },
+      { nama: "Modul Manajemen Risiko & JSA.pdf", url: "#" },
+      { nama: "Panduan Laporan PKL K3 Umum.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "P3K",
+    kategori: "KEMNAKER",
+    nama_program: "P3K - Kemnaker RI",
+    deskripsi: "Pertolongan Pertama Pada Kecelakaan Kerja Kemnaker RI",
+    file_list: [
+      { nama: "Modul Pertolongan Pertama Pada Kecelakaan.pdf", url: "#" },
+      { nama: "Panduan Penanganan Darurat Medis Tempat Kerja.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "TKBT1",
+    kategori: "KEMNAKER",
+    nama_program: "TKBT 1 - Kemnaker RI",
+    deskripsi: "Tenaga Kerja Bangunan Tinggi Tingkat 1 Kemnaker RI",
+    file_list: [
+      { nama: "Modul Struktur Perancah & Scaffolding.pdf", url: "#" },
+      { nama: "Inspeksi Keselamatan Bangunan Tinggi.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "TKBT2",
+    kategori: "KEMNAKER",
+    nama_program: "TKBT 2 - Kemnaker RI",
+    deskripsi: "Tenaga Kerja Bangunan Tinggi Tingkat 2 Kemnaker RI",
+    file_list: [
+      { nama: "Modul Pengawasan Pekerjaan Scaffolding.pdf", url: "#" },
+      { nama: "Analisis Beban Perancah & Keselamatan Kerja.pdf", url: "#" }
+    ]
+  },
   {
     master_id: "TKPK1",
-    kategori: "SKP / BNSP",
-    nama_program: "TKPK 1 BNSP / Kemnaker",
-    deskripsi: "Tenaga Kerja Pada Ketinggian Tingkat 1",
+    kategori: "KEMNAKER",
+    nama_program: "TKPK 1 - Kemnaker RI",
+    deskripsi: "Tenaga Kerja Pada Ketinggian Tingkat 1 Kemnaker RI",
     file_list: [
       { nama: "Modul K3 Ketinggian Dasar.pdf", url: "#" },
       { nama: "Panduan Alat Pelindung Jatuh (PPE).pdf", url: "#" },
@@ -1411,101 +1454,252 @@ const KATALOG_MODUL_MASTER = [
   },
   {
     master_id: "TKPK2",
-    kategori: "SKP / BNSP",
-    nama_program: "TKPK 2 BNSP / Kemnaker",
-    deskripsi: "Tenaga Kerja Pada Ketinggian Tingkat 2",
+    kategori: "KEMNAKER",
+    nama_program: "TKPK 2 - Kemnaker RI",
+    deskripsi: "Tenaga Kerja Pada Ketinggian Tingkat 2 Kemnaker RI",
     file_list: [
       { nama: "Modul Advanced Rope Access Technique.pdf", url: "#" },
       { nama: "Teknik Rescue & Evakuasi Korban Ketinggian.pdf", url: "#" }
     ]
   },
   {
-    master_id: "TKBT1",
-    kategori: "SKP / BNSP",
-    nama_program: "TKBT 1 BNSP / Kemnaker",
-    deskripsi: "Tenaga Kerja Bangunan Tinggi Tingkat 1",
+    master_id: "TKPK3",
+    kategori: "KEMNAKER",
+    nama_program: "TKPK 3 - Kemnaker RI",
+    deskripsi: "Tenaga Kerja Pada Ketinggian Tingkat 3 Kemnaker RI",
     file_list: [
-      { nama: "Modul Struktur Perancah & Scaffolding.pdf", url: "#" },
-      { nama: "Inspeksi Keselamatan Bangunan Tinggi.pdf", url: "#" }
+      { nama: "Modul Perencanaan & Manajerial Pekerjaan Ketinggian.pdf", url: "#" },
+      { nama: "SOP Kompleks & Manajemen Safety Rope Access.pdf", url: "#" }
     ]
   },
   {
-    master_id: "TKBT2",
-    kategori: "SKP / BNSP",
-    nama_program: "TKBT 2 BNSP / Kemnaker",
-    deskripsi: "Tenaga Kerja Bangunan Tinggi Tingkat 2",
+    master_id: "GONDOLA",
+    kategori: "KEMNAKER",
+    nama_program: "Operator Gondola - Kemnaker RI",
+    deskripsi: "Pengoperasian & Keselamatan Operator Gondola Kemnaker RI",
     file_list: [
-      { nama: "Modul Pengawasan Pekerjaan Scaffolding.pdf", url: "#" },
-      { nama: "Analisis Beban Perancah & Keselamatan Kerja.pdf", url: "#" }
+      { nama: "Modul Pengoperasian Safe Gondola.pdf", url: "#" },
+      { nama: "Inspeksi K3 Pengangkut Gondola.pdf", url: "#" }
     ]
   },
   {
-    master_id: "AK3U",
-    kategori: "SKP / Kemnaker",
-    nama_program: "Ahli K3 Umum BNSP / Kemnaker",
-    deskripsi: "Pembinaan & Lisensi Ahli K3 Umum",
+    master_id: "TEKNISI-LISTRIK",
+    kategori: "KEMNAKER",
+    nama_program: "Teknisi K3 Listrik - Kemnaker RI",
+    deskripsi: "Pembinaan Teknisi Keselamatan Listrik Kemnaker RI",
     file_list: [
-      { nama: "Himpunan Peraturan Perundangan K3 RI.pdf", url: "#" },
-      { nama: "Modul Manajemen Risiko & JSA.pdf", url: "#" },
-      { nama: "Panduan Laporan Praktek Kerja Lapangan (PKL).pdf", url: "#" }
+      { nama: "Modul PUIL & Pemeliharaan Instalasi Listrik.pdf", url: "#" },
+      { nama: "Inspeksi & Prosedur LOTO Listrik.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "AHLI-LISTRIK",
+    kategori: "KEMNAKER",
+    nama_program: "Ahli K3 Listrik - Kemnaker RI",
+    deskripsi: "Pembinaan & Lisensi Ahli K3 Listrik Kemnaker RI",
+    file_list: [
+      { nama: "Modul Perencanaan & Pengawasan K3 Listrik.pdf", url: "#" },
+      { nama: "Audit & Evaluasi Proteksi Listrik Pabrik.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "TEKNISI-PERANCAH",
+    kategori: "KEMNAKER",
+    nama_program: "Teknisi Perancah - Kemnaker RI",
+    deskripsi: "Pemasangan & Pembongkaran Perancah Kemnaker RI",
+    file_list: [
+      { nama: "Modul Teknik Pemasangan Scaffolding Standard.pdf", url: "#" },
+      { nama: "Inspeksi Beban & Kelayakan Perancah.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "SUPERVISI-PERANCAH",
+    kategori: "KEMNAKER",
+    nama_program: "Supervisi Perancah - Kemnaker RI",
+    deskripsi: "Pengawasan & Inspeksi Keselamatan Perancah Kemnaker RI",
+    file_list: [
+      { nama: "Modul Pengawasan Struktur Scaffolding Kompleks.pdf", url: "#" },
+      { nama: "Panduan Check Sheet Kelayakan Scaffolding.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "AHLI-UTAMA-KONSTRUKSI",
+    kategori: "KEMNAKER",
+    nama_program: "Ahli Utama K3 Konstruksi - Kemnaker RI",
+    deskripsi: "Manajemen K3 Konstruksi Tingkat Utama Kemnaker RI",
+    file_list: [
+      { nama: "Modul Manajemen Risiko Konstruksi Skala Besar.pdf", url: "#" },
+      { nama: "Sistem Pengawasan Keselamatan Proyek Utama.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "AHLI-MADYA-KONSTRUKSI",
+    kategori: "KEMNAKER",
+    nama_program: "Ahli Madya K3 Konstruksi - Kemnaker RI",
+    deskripsi: "Manajemen K3 Konstruksi Tingkat Madya Kemnaker RI",
+    file_list: [
+      { nama: "Modul RK3K & Safety Plan Proyek Konstruksi.pdf", url: "#" },
+      { nama: "Audit & Evaluasi K3 Proyek Lapangan.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "AHLI-MUDA-KONSTRUKSI",
+    kategori: "KEMNAKER",
+    nama_program: "Ahli Muda K3 Konstruksi - Kemnaker RI",
+    deskripsi: "Pelaksanaan K3 Proyek Konstruksi Kemnaker RI",
+    file_list: [
+      { nama: "Modul Pengawasan Keselamatan Proyek Konstruksi.pdf", url: "#" },
+      { nama: "SOP & JSA Pekerjaan Konstruksi.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "OPERATOR-ELEVATOR",
+    kategori: "KEMNAKER",
+    nama_program: "Operator Elevator - Kemnaker RI",
+    deskripsi: "Pengoperasian & Keselamatan Lift Kemnaker RI",
+    file_list: [
+      { nama: "Modul Pengoperasian Safe Elevator & Lift.pdf", url: "#" },
+      { nama: "SOP Penanganan Kondisi Darurat Lift.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "TEKNISI-ELEVATOR",
+    kategori: "KEMNAKER",
+    nama_program: "Teknisi Elevator - Kemnaker RI",
+    deskripsi: "Pemeliharaan & Perbaikan Elevator Kemnaker RI",
+    file_list: [
+      { nama: "Modul Maintenance & Inspeksi Teknis Lift.pdf", url: "#" },
+      { nama: "Troubleshooting Sistem Keselamatan Elevator.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "TEKNISI-CONFINED-SPACE",
+    kategori: "KEMNAKER",
+    nama_program: "Teknisi Ruang Terbatas - Kemnaker RI",
+    deskripsi: "Teknisi K3 Pekerjaan Ruang Terbatas Kemnaker RI",
+    file_list: [
+      { nama: "Modul Keselamatan Bekerja di Confined Space.pdf", url: "#" },
+      { nama: "SOP Ventilasi & Alat Pelindung Pernapasan (SCBA).pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "RESCUE-CONFINED-SPACE",
+    kategori: "KEMNAKER",
+    nama_program: "Petugas Rescue Ruang Terbatas - Kemnaker RI",
+    deskripsi: "Evakuasi & Penyelamatan Ruang Terbatas Kemnaker RI",
+    file_list: [
+      { nama: "Modul Teknik Rescue & Evakuasi Confined Space.pdf", url: "#" },
+      { nama: "Penanganan Korban Gas Berbahaya & SCBA.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "GAS-DETECTOR",
+    kategori: "KEMNAKER",
+    nama_program: "Petugas Gas Detector - Kemnaker RI",
+    deskripsi: "Pengukuran Gas Berbahaya di Tempat Kerja Kemnaker RI",
+    file_list: [
+      { nama: "Modul Kalibrasi & Pengoperasian Gas Detector.pdf", url: "#" },
+      { nama: "Analisis Ambang Batas Gas Berbahaya (LEL/Toxic).pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "FORKLIFT",
+    kategori: "KEMNAKER",
+    nama_program: "Operator Forklift - Kemnaker RI",
+    deskripsi: "Pengoperasian & Keselamatan Forklift Kemnaker RI",
+    file_list: [
+      { nama: "Modul Pengoperasian & Maintenance Forklift.pdf", url: "#" },
+      { nama: "K3 Pesawat Angkat & Angkut Kemnaker.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "ESKAVATOR",
+    kategori: "KEMNAKER",
+    nama_program: "Operator Eskavator - Kemnaker RI",
+    deskripsi: "Pengoperasian Alat Berat Eskavator Kemnaker RI",
+    file_list: [
+      { nama: "Modul Pengoperasian & Maintenance Eskavator.pdf", url: "#" },
+      { nama: "Safety Operation Alat Berat Lapangan.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "GRIDER",
+    kategori: "KEMNAKER",
+    nama_program: "Operator Grider - Kemnaker RI",
+    deskripsi: "Pengoperasian Motor Grader Alat Berat Kemnaker RI",
+    file_list: [
+      { nama: "Modul Safe Operation Motor Grader.pdf", url: "#" },
+      { nama: "K3 Pengoperasian Alat Berat Konstruksi.pdf", url: "#" }
     ]
   },
 
-  // --- PROGRAM NON-SKP BNSP ---
+  // ====================================================
+  // KELOMPOK 2: SERTIFIKASI KOMPETENSI BNSP (6 PROGRAM)
+  // ====================================================
   {
-    master_id: "NON-AK3U",
-    kategori: "Non-SKP BNSP",
-    nama_program: "(Non SKP) Ahli K3 Umum BNSP",
+    master_id: "BNSP-AK3U",
+    kategori: "BNSP",
+    nama_program: "AK3U - BNSP",
     deskripsi: "Sertifikasi Kompetensi Ahli K3 Umum BNSP",
     file_list: [
-      { nama: "Modul Unit Kompetensi K3 BNSP.pdf", url: "#" },
-      { nama: "Panduan Pembuatan Portofolio Asesmen BNSP.pdf", url: "#" }
+      { nama: "Modul Standar Unit Kompetensi Ahli K3 Umum.pdf", url: "#" },
+      { nama: "Panduan Penyusunan Portofolio Asesmen BNSP.pdf", url: "#" }
     ]
   },
   {
-    master_id: "NON-TKPK1",
-    kategori: "Non-SKP BNSP",
-    nama_program: "(Non SKP) TKPK 1 BNSP",
+    master_id: "BNSP-TKPK1",
+    kategori: "BNSP",
+    nama_program: "TKPK 1 - BNSP",
     deskripsi: "Sertifikasi BNSP Tenaga Kerja Pada Ketinggian 1",
     file_list: [
-      { nama: "Modul Sertifikasi Kompetensi TKPK 1.pdf", url: "#" },
-      { nama: "Panduan Uji Praktik Asesmen TKPK 1.pdf", url: "#" }
+      { nama: "Modul Unit Kompetensi TKPK 1 BNSP.pdf", url: "#" },
+      { nama: "Panduan Uji Praktik & Asesmen TKPK 1.pdf", url: "#" }
     ]
   },
   {
-    master_id: "NON-TKPK2",
-    kategori: "Non-SKP BNSP",
-    nama_program: "(Non SKP) TKPK 2 BNSP",
+    master_id: "BNSP-TKPK2",
+    kategori: "BNSP",
+    nama_program: "TKPK 2 - BNSP",
     deskripsi: "Sertifikasi BNSP Tenaga Kerja Pada Ketinggian 2",
     file_list: [
-      { nama: "Modul Sertifikasi Kompetensi TKPK 2.pdf", url: "#" },
-      { nama: "Panduan Uji Praktik Asesmen TKPK 2.pdf", url: "#" }
+      { nama: "Modul Unit Kompetensi TKPK 2 BNSP.pdf", url: "#" },
+      { nama: "Panduan Uji Praktik & Asesmen TKPK 2.pdf", url: "#" }
     ]
   },
   {
-    master_id: "NON-TKBT1",
-    kategori: "Non-SKP BNSP",
-    nama_program: "(Non SKP) TKBT 1 BNSP",
+    master_id: "BNSP-TKPK3",
+    kategori: "BNSP",
+    nama_program: "TKPK 3 - BNSP",
+    deskripsi: "Sertifikasi BNSP Tenaga Kerja Pada Ketinggian 3",
+    file_list: [
+      { nama: "Modul Unit Kompetensi Manajerial TKPK 3 BNSP.pdf", url: "#" },
+      { nama: "Panduan Uji Asesmen & Uji Lisan TKPK 3.pdf", url: "#" }
+    ]
+  },
+  {
+    master_id: "BNSP-TKBT1",
+    kategori: "BNSP",
+    nama_program: "TKBT 1 - BNSP",
     deskripsi: "Sertifikasi BNSP Tenaga Kerja Bangunan Tinggi 1",
     file_list: [
-      { nama: "Modul Sertifikasi Kompetensi TKBT 1.pdf", url: "#" },
-      { nama: "Panduan Uji Praktik Asesmen TKBT 1.pdf", url: "#" }
+      { nama: "Modul Unit Kompetensi TKBT 1 BNSP.pdf", url: "#" },
+      { nama: "Panduan Uji Praktik & Asesmen TKBT 1.pdf", url: "#" }
     ]
   },
   {
-    master_id: "NON-TKBT2",
-    kategori: "Non-SKP BNSP",
-    nama_program: "(Non SKP) TKBT 2 BNSP",
+    master_id: "BNSP-TKBT2",
+    kategori: "BNSP",
+    nama_program: "TKBT 2 - BNSP",
     deskripsi: "Sertifikasi BNSP Tenaga Kerja Bangunan Tinggi 2",
     file_list: [
-      { nama: "Modul Sertifikasi Kompetensi TKBT 2.pdf", url: "#" },
-      { nama: "Panduan Uji Praktik Asesmen TKBT 2.pdf", url: "#" }
+      { nama: "Modul Unit Kompetensi TKBT 2 BNSP.pdf", url: "#" },
+      { nama: "Panduan Uji Praktik & Asesmen TKBT 2.pdf", url: "#" }
     ]
   }
 ];
 
 // ----------------------------------------------------
-// LOGIKA BUKA MODUL DARI BANYAK TRAINING
+// LOGIKA RENDER FOLDER MODUL DENGAN AKSES TERKUNCI/TERBUKA
 // ----------------------------------------------------
 async function loadKatalogModulPeserta() {
   const container = document.getElementById('containerFolderModul');
@@ -1528,13 +1722,15 @@ async function loadKatalogModulPeserta() {
 
     const listHistoriUser = Array.from(setHistoriTraining);
 
-    container.innerHTML = '';
+    const listKemnaker = KATALOG_MODUL_MASTER.filter(m => m.kategori === 'KEMNAKER');
+    const listBNSP = KATALOG_MODUL_MASTER.filter(m => m.kategori === 'BNSP');
 
-    KATALOG_MODUL_MASTER.forEach(modul => {
+    function renderCardHTML(modul) {
       const isUnlocked = listHistoriUser.some(tId => {
         const cleanTId = cleanStringForMatch(tId);
         const cleanMId = cleanStringForMatch(modul.master_id);
-        return cleanTId.includes(cleanMId);
+        const cleanProgramName = cleanStringForMatch(modul.nama_program);
+        return cleanTId.includes(cleanMId) || cleanTId.includes(cleanProgramName);
       });
 
       if (isUnlocked) {
@@ -1547,7 +1743,7 @@ async function loadKatalogModulPeserta() {
           </div>
         `).join('');
 
-        container.innerHTML += `
+        return `
           <div class="bg-white border-2 border-emerald-500/40 rounded-2xl p-4 shadow-sm relative overflow-hidden">
             <div class="flex items-start justify-between">
               <div class="flex items-center gap-3">
@@ -1568,9 +1764,8 @@ async function loadKatalogModulPeserta() {
             </div>
           </div>
         `;
-
       } else {
-        container.innerHTML += `
+        return `
           <div onclick="peringatanModulTerkunci('${modul.nama_program}')" class="bg-slate-50 border border-slate-200 rounded-2xl p-4 cursor-pointer hover:border-slate-300 transition relative overflow-hidden group">
             <div class="flex items-start justify-between">
               <div class="flex items-center gap-3">
@@ -1594,7 +1789,25 @@ async function loadKatalogModulPeserta() {
           </div>
         `;
       }
-    });
+    }
+
+    container.innerHTML = `
+      <!-- KELOMPOK 1: KEMNAKER RI -->
+      <div class="col-span-full border-b border-slate-200 pb-2 mb-2">
+        <h3 class="text-xs font-bold text-emerald-900 uppercase tracking-wide flex items-center gap-2">
+          <i class="fa-solid fa-building-columns text-emerald-700"></i> Modul Pembinaan K3 Kemnaker RI (${listKemnaker.length} Program)
+        </h3>
+      </div>
+      ${listKemnaker.map(m => renderCardHTML(m)).join('')}
+
+      <!-- KELOMPOK 2: BNSP -->
+      <div class="col-span-full border-b border-slate-200 pb-2 mb-2 mt-6">
+        <h3 class="text-xs font-bold text-emerald-900 uppercase tracking-wide flex items-center gap-2">
+          <i class="fa-solid fa-award text-emerald-700"></i> Modul Sertifikasi BNSP (${listBNSP.length} Program)
+        </h3>
+      </div>
+      ${listBNSP.map(m => renderCardHTML(m)).join('')}
+    `;
 
   } catch (err) {
     container.innerHTML = '<p class="text-xs text-red-500 text-center col-span-full py-4">Gagal memuat modul pelatihan.</p>';
@@ -1602,7 +1815,7 @@ async function loadKatalogModulPeserta() {
 }
 
 function peringatanModulTerkunci(namaProgram) {
-  alert(`🔒 AKSES MODUL TERKUNCI!\n\nModul "${namaProgram}" hanya terbuka jika akun kamu terdaftar pada pelatihan ini di PT Mandiri Maha Daya.`);
+  alert(`🔒 AKSES MODUL TERKUNCI!\n\nModul "${namaProgram}" hanya dapat diakses oleh peserta yang pernah mengikuti/terdaftar pada pelatihan ini di PT Mandiri Maha Daya.`);
 }
 
 // ----------------------------------------------------
