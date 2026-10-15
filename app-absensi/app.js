@@ -876,7 +876,7 @@ async function uploadSertifikatMasal() {
 }
 
 // ----------------------------------------------------
-// 9. EXPORT REKAP ABSENSI PDF A4 (RAPI PER HARI & LOKASI GPS)
+// 9. EXPORT REKAP ABSENSI PDF A4 (FORMAT TANGGAL DD-MM-YYYY)
 // ----------------------------------------------------
 async function downloadRekapBatchPDF() {
   const selectedBatchId = document.getElementById('adminSelectBatchRekap').value;
@@ -921,6 +921,19 @@ async function downloadRekapBatchPDF() {
         listTanggal.push(d.toISOString().split('T')[0]);
       }
     }
+
+    // Helper untuk mengubah YYYY-MM-DD menjadi DD-MM-YYYY
+    const formatTanggalIndo = (dateStr) => {
+      if (!dateStr) return '-';
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`; // DD-MM-YYYY
+      }
+      return dateStr;
+    };
+
+    const tglAwalIndo = formatTanggalIndo(listTanggal[0]);
+    const tglAkhirIndo = formatTanggalIndo(listTanggal[listTanggal.length - 1]);
 
     const pdfContainer = document.getElementById('pdfExportContainer');
     pdfContainer.innerHTML = '';
@@ -982,6 +995,8 @@ async function downloadRekapBatchPDF() {
     `;
 
     listTanggal.forEach((dateStr, hIdx) => {
+      const dateFormattedDDMMYYYY = formatTanggalIndo(dateStr);
+
       fullHtml += `
         <div class="pdf-page-wrapper">
           <!-- KOP REKAPITULASI HEADER -->
@@ -989,13 +1004,13 @@ async function downloadRekapBatchPDF() {
             <h2 style="font-size: 14px; font-weight: bold; color: #065f46; margin: 0;">PT MANDIRI MAHA DAYA</h2>
             <h3 style="font-size: 11px; font-weight: bold; margin: 2px 0; color: #1e293b;">LAPORAN REKAPITULASI KEHADIRAN PESERTA K3</h3>
             <p style="font-size: 10px; font-weight: bold; color: #047857; margin: 1px 0;">PROGRAM: ${trainingData.judul.toUpperCase()}</p>
-            <p style="font-size: 8.5px; color: #64748b; margin: 0;">Jadwal Pelatihan: ${listTanggal[0] || '-'} s/d ${listTanggal[listTanggal.length-1] || '-'} (${listTanggal.length} Hari Sesi)</p>
+            <p style="font-size: 8.5px; color: #64748b; margin: 0;">Jadwal Pelatihan: ${tglAwalIndo} s/d ${tglAkhirIndo} (${listTanggal.length} Hari Sesi)</p>
           </div>
 
           <!-- BANNER HARI SESI -->
           <div style="margin-bottom: 8px;">
             <h4 style="font-size: 9.5px; font-weight: bold; color: #065f46; background-color: #ecfdf5; padding: 5px 8px; border-left: 4px solid #047857; margin: 0; border-radius: 4px;">
-              HARI KE-${hIdx + 1} : TANGGAL ${dateStr}
+              HARI KE-${hIdx + 1} : TANGGAL ${dateFormattedDDMMYYYY}
             </h4>
           </div>
 
@@ -1018,7 +1033,7 @@ async function downloadRekapBatchPDF() {
         const absS1 = (logList || []).find(l => l.username === p.username && l.tanggal === dateStr && Number(l.sesi) === 1);
         const absS2 = (logList || []).find(l => l.username === p.username && l.tanggal === dateStr && Number(l.sesi) === 2);
 
-        // Format Tampilan Sesi 1 (Foto, Jam, Lokasi GPS)
+        // Format Tampilan Sesi 1
         let displayS1 = `<span style="color: #dc2626; font-size: 8.5px; display: block; text-align: center; font-weight: 600;">Belum Absen</span>`;
         if (absS1) {
           const jamTxt = formatJamLokalPerangkat(absS1.waktu_absen);
@@ -1036,7 +1051,7 @@ async function downloadRekapBatchPDF() {
           `;
         }
 
-        // Format Tampilan Sesi 2 (Foto, Jam, Lokasi GPS)
+        // Format Tampilan Sesi 2
         let displayS2 = `<span style="color: #dc2626; font-size: 8.5px; display: block; text-align: center; font-weight: 600;">Belum Absen</span>`;
         if (absS2) {
           const jamTxt = formatJamLokalPerangkat(absS2.waktu_absen);
