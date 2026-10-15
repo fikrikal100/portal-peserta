@@ -366,14 +366,22 @@ async function ambilAbsen() {
     let sesiNum = 1;
     if (jam >= 12) sesiNum = 2;
 
-    const tglHariIni = now.toISOString().split('T')[0];
+    // Buat ISO String Lokal WIB (UTC+7)
+    const tglHariIni = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const jamLokal = String(now.getHours()).padStart(2, '0');
+    const menitLokal = String(now.getMinutes()).padStart(2, '0');
+    const detikLokal = String(now.getSeconds()).padStart(2, '0');
+    const msLokal = String(now.getMilliseconds()).padStart(3, '0');
+    
+    // Format yang disimpan ke Supabase: YYYY-MM-DDTHH:mm:ss.sss+07:00 (WIB)
+    const waktuAbsenWIB = `${tglHariIni}T${jamLokal}:${menitLokal}:${detikLokal}.${msLokal}+07:00`;
 
     const { error } = await supabaseClient.from('log_absensi').insert([{
       username: currentSessionUser.username,
       training_id: currentSessionUser.training_id,
       tanggal: tglHariIni,
       sesi: sesiNum,
-      waktu_absen: now.toISOString(),
+      waktu_absen: waktuAbsenWIB,
       foto: fotoBase64,
       latitude: lat,
       longitude: lng
@@ -393,7 +401,6 @@ async function ambilAbsen() {
     btn.disabled = false;
   }
 }
-
 // ----------------------------------------------------
 // FETCH API LIBUR NASIONAL OTOMATIS
 // ----------------------------------------------------
