@@ -1124,56 +1124,17 @@ async function downloadRekapBatchPDF() {
 }
 
 // ----------------------------------------------------
-// 10. LOGIKA DATABASE PESERTA & FILTER (URUT DESCENDING BATCH)
+// 10. FITUR EDIT PESERTA & DATABASE
 // ----------------------------------------------------
-function switchTabAdmin(tabName) {
-  document.querySelectorAll('.tab-admin-content').forEach(el => el.classList.add('hidden'));
-  document.querySelectorAll('.tab-admin-btn').forEach(el => {
-    el.classList.remove('bg-emerald-800', 'text-white');
-    el.classList.add('hover:bg-slate-100');
-  });
 
-  if (tabName === 'kelola') {
-    document.getElementById('tabAdminKelola').classList.remove('hidden');
-    document.getElementById('tabBtnAdminKelola').classList.add('bg-emerald-800', 'text-white');
-  } else if (tabName === 'database') {
-    document.getElementById('tabAdminDatabase').classList.remove('hidden');
-    document.getElementById('tabBtnAdminDatabase').classList.add('bg-emerald-800', 'text-white');
-    onSKPFilterChange();
-  }
-}
-
-async function onSKPFilterChange() {
-  const selectedSKP = document.getElementById('dbFilterSKP').value;
-  const selectBatch = document.getElementById('dbFilterBatch');
-  
-  if (!selectBatch) return;
-  selectBatch.innerHTML = '<option value="">-- Semua Batch --</option>';
-
-  const { data } = await supabaseClient.from('trainings').select('*');
-  if (!data) return;
-
-  let filteredBatches = selectedSKP 
-    ? data.filter(b => b.master_training_id === selectedSKP || b.id.startsWith(selectedSKP))
-    : data;
-
-  // Urutkan Descending (terbaru / nomor terbesar di atas)
-  filteredBatches = sortBatchesDescending(filteredBatches);
-
-  filteredBatches.forEach(b => {
-    selectBatch.innerHTML += `<option value="${b.id}">${b.judul}</option>`;
-  });
-
-  loadDatabasePeserta();
-}
-
+// Render Tabel Database Peserta dengan Aksi Edit
 async function loadDatabasePeserta() {
   const selectedSKP = document.getElementById('dbFilterSKP').value;
   const selectedBatch = document.getElementById('dbFilterBatch').value;
   const tbody = document.getElementById('tbodyDatabasePeserta');
 
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400">Memuat data peserta...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-slate-400">Memuat data peserta...</td></tr>';
 
   let query = supabaseClient.from('users').select('*, trainings(*)').eq('role', 'peserta');
 
@@ -1184,7 +1145,7 @@ async function loadDatabasePeserta() {
   const { data: pesertaList, error } = await query;
 
   if (error || !pesertaList || pesertaList.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400 italic">Tidak ada data peserta ditemukan.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-slate-400 italic">Tidak ada data peserta ditemukan.</td></tr>';
     return;
   }
 
@@ -1198,7 +1159,7 @@ async function loadDatabasePeserta() {
   }
 
   if (resultList.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400 italic">Tidak ada peserta untuk program ini.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-slate-400 italic">Tidak ada peserta untuk program ini.</td></tr>';
     return;
   }
 
@@ -1227,6 +1188,9 @@ async function loadDatabasePeserta() {
       badgeProgres = `<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold text-[10px]">${persenProgres}% (${totalAbsenHadir}/${totalSesiWajib} Sesi)</span>`;
     }
 
+    // Escape String JSON untuk dipassing aman ke fungsi JS
+    const userDataJson = JSON.stringify(p).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+
     tbody.innerHTML += `
       <tr class="hover:bg-slate-50 transition border-b border-slate-100">
         <td class="p-3 text-center font-bold text-slate-400">${idx + 1}</td>
@@ -1245,7 +1209,125 @@ async function loadDatabasePeserta() {
           </span>
         </td>
         <td class="p-3 text-center">${badgeProgres}</td>
+        <td class="p-3 text-center">
+          <button onclick='bukaModalEditPeserta(${userDataJson})' class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-[10px] px-2.5 py-1.5 rounded-lg font-bold border border-amber-300 transition flex items-center gap-1 mx-auto">
+            <i class="fa-solid fa-pen-to-square"></i> Edit
+          </button>
+        </td>
       </tr>
     `;
   });
+}
+
+// Buka Modal & Isi Form Data Peserta
+async function bukaModalEditPeserta(user) {
+  document.getElementById('editOriginalUsername').value = user.username;
+  document.getElementById('editNama').value = user.nama || '';
+  document.getElementById('editNIK').value = user.nik || '';
+  
+  // Format Tanggal Lahir ke DD-MM-YYYY
+  let tglLahirFormatted = '';
+  if (user.tgl_lahir) {
+    const parts = user.tgl_lahir.split('-');
+    if (parts.length === 3) tglLahirFormatted = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    else tglLahirFormatted = user.tgl_lahir;
+  }
+  document.getElementById('editTglLahir').value = tglLahirFormatted;
+  
+  document.getElementById('editUsername').value = user.username || '';
+  document.getElementById('editPassword').value = user.password || '';
+  document.getElementById('editPerusahaan').value = user.perusahaan || '';
+
+  // Populasikan Dropdown Batch Pelatihan
+  const selectBatch = document.getElementById('editSelectBatch');
+  selectBatch.innerHTML = '<option value="">-- Pilih Batch Pelatihan --</option>';
+
+  const { data: batches } = await supabaseClient.from('trainings').select('*');
+  if (batches) {
+    const sorted = sortBatchesDescending([...batches]);
+    sorted.forEach(b => {
+      selectBatch.innerHTML += `<option value="${b.id}">${b.judul}</option>`;
+    });
+  }
+  selectBatch.value = user.training_id || '';
+
+  document.getElementById('modalEditPeserta').classList.remove('hidden');
+}
+
+// Tutup Modal
+function tutupModalEditPeserta() {
+  document.getElementById('modalEditPeserta').classList.add('hidden');
+}
+
+// Simpan Perubahan Edit Peserta ke Supabase
+async function simpanPerubahanPeserta() {
+  const originalUsername = document.getElementById('editOriginalUsername').value;
+  const nama = document.getElementById('editNama').value.trim();
+  const nik = document.getElementById('editNIK').value.trim();
+  const tglLahirRaw = document.getElementById('editTglLahir').value.trim();
+  const username = document.getElementById('editUsername').value.trim().toLowerCase();
+  const password = document.getElementById('editPassword').value.trim();
+  const perusahaan = document.getElementById('editPerusahaan').value.trim();
+  const trainingId = document.getElementById('editSelectBatch').value;
+
+  if (!nama || !username || !password || !trainingId) {
+    return alert("Harap lengkapi Nama, Username, Password, dan Batch Pelatihan!");
+  }
+
+  // Format Tanggal Lahir ke YYYY-MM-DD untuk Database
+  let formattedDateForDb = '';
+  const digits = tglLahirRaw.replace(/[^0-9]/g, '');
+  if (digits.length === 8) {
+    const d = digits.substring(0, 2);
+    const m = digits.substring(2, 4);
+    const y = digits.substring(4, 8);
+    formattedDateForDb = `${y}-${m}-${d}`;
+  } else if (tglLahirRaw.includes('-')) {
+    const parts = tglLahirRaw.split('-');
+    if (parts.length === 3 && parts[0].length === 2) {
+      formattedDateForDb = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    } else {
+      formattedDateForDb = tglLahirRaw;
+    }
+  } else {
+    formattedDateForDb = tglLahirRaw;
+  }
+
+  const idSertifikat = `${username}_${password}`;
+
+  const btn = document.getElementById('btnSimpanEditPeserta');
+  const originalText = btn.innerHTML;
+  btn.innerText = "Menyimpan...";
+  btn.disabled = true;
+
+  try {
+    const updatedUser = {
+      username: username,
+      password: password,
+      nama: nama,
+      nik: nik || '-',
+      tgl_lahir: formattedDateForDb,
+      perusahaan: perusahaan || 'PT Mandiri Maha Daya',
+      training_id: trainingId,
+      id_sertifikat: idSertifikat
+    };
+
+    const { error } = await supabaseClient
+      .from('users')
+      .update(updatedUser)
+      .eq('username', originalUsername);
+
+    if (error) {
+      alert("Gagal memperbarui data peserta: " + error.message);
+    } else {
+      alert("✅ Data peserta berhasil diperbarui!");
+      tutupModalEditPeserta();
+      loadDatabasePeserta();
+    }
+  } catch (err) {
+    alert("Terjadi kesalahan sistem: " + err.message);
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
 }
