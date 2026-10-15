@@ -373,14 +373,13 @@ async function ambilAbsen() {
     
     // Teks format waktu lokal rapi yang akan langsung disimpan di Supabase (Tipe: text)
     const waktuAbsenTeks = now.toLocaleString('id-ID', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    }); // Hasil di Supabase: "15/10/2026, 08.10.37"
+     const now = new Date();
+const jamLokal = String(now.getHours()).padStart(2, '0');
+const menitLokal = String(now.getMinutes()).padStart(2, '0');
+const detikLokal = String(now.getSeconds()).padStart(2, '0');
+
+// Hasil di Supabase: "08:39:19"
+const waktuAbsenTeks = `${jamLokal}:${menitLokal}:${detikLokal}`;
 
     const { error } = await supabaseClient.from('log_absensi').insert([{
       username: currentSessionUser.username,
