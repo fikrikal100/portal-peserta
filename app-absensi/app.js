@@ -925,58 +925,61 @@ async function downloadRekapBatchPDF() {
     const pdfContainer = document.getElementById('pdfExportContainer');
     pdfContainer.innerHTML = '';
 
-    let fullHtml = `<style>
-      .pdf-page-wrapper {
-        width: 190mm;
-        padding: 10mm;
-        background: #ffffff;
-        box-sizing: border-box;
-        page-break-after: always;
-      }
-      .pdf-header-kop {
-        text-align: center;
-        border-bottom: 2px solid #065f46;
-        padding-bottom: 8px;
-        margin-bottom: 12px;
-      }
-      .pdf-table-rekap {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 10px;
-      }
-      .pdf-table-rekap th {
-        background-color: #065f46;
-        color: #ffffff;
-        padding: 6px 4px;
-        font-size: 9px;
-        text-align: center;
-        border: 1px solid #047857;
-      }
-      .pdf-table-rekap td {
-        border: 1px solid #cbd5e1;
-        padding: 6px 4px;
-        vertical-align: middle;
-      }
-      .tr-peserta-row {
-        page-break-inside: avoid !important;
-      }
-      .img-thumb-pdf {
-        width: 42px;
-        height: 42px;
-        object-fit: cover;
-        border-radius: 6px;
-        display: block;
-        margin: 0 auto 2px auto;
-        border: 1px solid #cbd5e1;
-      }
-      .gps-text-pdf {
-        font-size: 7.5px;
-        color: #475569;
-        text-align: center;
-        margin-top: 1px;
-        line-height: 1.1;
-      }
-    </style>`;
+    let fullHtml = `
+      <style>
+        .pdf-page-wrapper {
+          width: 100%;
+          padding: 8mm;
+          background: #ffffff;
+          box-sizing: border-box;
+          page-break-after: always;
+        }
+        .pdf-header-kop {
+          text-align: center;
+          border-bottom: 2px solid #065f46;
+          padding-bottom: 6px;
+          margin-bottom: 10px;
+        }
+        .pdf-table-rekap {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 10px;
+        }
+        .pdf-table-rekap th {
+          background-color: #065f46;
+          color: #ffffff;
+          padding: 6px 4px;
+          font-size: 9px;
+          text-align: center;
+          border: 1px solid #047857;
+        }
+        .pdf-table-rekap td {
+          border: 1px solid #cbd5e1;
+          padding: 6px 4px;
+          vertical-align: middle;
+        }
+        .tr-peserta-row {
+          page-break-inside: avoid !important;
+        }
+        .img-thumb-pdf {
+          width: 40px;
+          height: 40px;
+          object-fit: cover;
+          border-radius: 6px;
+          display: block;
+          margin: 0 auto 2px auto;
+          border: 1px solid #cbd5e1;
+        }
+        .gps-text-pdf {
+          font-size: 7.5px;
+          color: #475569;
+          text-align: center;
+          margin-top: 1px;
+          line-height: 1.1;
+        }
+      </style>
+      <div id="pdfExportWrapper">
+    `;
 
     listTanggal.forEach((dateStr, hIdx) => {
       fullHtml += `
@@ -1081,11 +1084,12 @@ async function downloadRekapBatchPDF() {
       `;
     });
 
+    fullHtml += `</div>`;
     pdfContainer.innerHTML = fullHtml;
 
-    const element = pdfContainer;
+    const element = document.getElementById('pdfExportWrapper');
     const opt = {
-      margin:       [5, 5, 5, 5],
+      margin:       5,
       filename:     `Laporan_Kehadiran_${selectedBatchId}_A4.pdf`,
       image:        { type: 'jpeg', quality: 0.98 },
       html2canvas:  { scale: 2, useCORS: true, scrollY: 0, scrollX: 0 },
