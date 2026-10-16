@@ -1626,10 +1626,16 @@ async function uploadMateriTrainingAdmin() {
   if (!masterId) return alert("Harap pilih Judul Training terlebih dahulu!");
   if (!file) return alert("Harap pilih file PDF, PPT, RAR, atau ZIP!");
 
+  // Cek batas ukuran file di frontend (50 MB)
+  const MAX_SIZE_MB = 50;
+  if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+    return alert(`⛔ Ukuran file terlalu besar! Maksimal file yang diizinkan adalah ${MAX_SIZE_MB} MB.`);
+  }
+
   const btn = document.getElementById('btnUploadMateri');
   const originalText = btn ? btn.innerHTML : '';
   if (btn) {
-    btn.innerText = "Mengunggah File...";
+    btn.innerText = "Mengunggah File (Mohon Tunggu)...";
     btn.disabled = true;
   }
 
@@ -1637,24 +1643,34 @@ async function uploadMateriTrainingAdmin() {
     const fileExt = file.name.split('.').pop();
     const storagePath = `modul_${masterId}_${Date.now()}.${fileExt}`;
 
+    // Upload mengarah ke bucket 'modul-materi'
     const { error: uploadErr } = await supabaseClient.storage
-      .from('sertifikat')
-      .upload(storagePath, file, { upsert: true });
+      .from('modul-materi')
+      .upload(storagePath, file, { 
+        upsert: true,
+        cacheControl: '3600'
+      });
 
     if (uploadErr) throw uploadErr;
 
-    const { data: urlData } = supabaseClient.storage.from('sertifikat').getPublicUrl(storagePath);
+    // Ambil Public URL dari bucket 'modul-materi'
+    const { data: urlData } = supabaseClient.storage
+      .from('modul-materi')
+      .getPublicUrl(storagePath);
 
-    const { error: insertErr } = await supabaseClient.from('training_modules').insert([{
-      master_id: masterId,
-      file_name: file.name,
-      file_url: urlData.publicUrl,
-      file_type: fileExt.toLowerCase()
-    }]);
+    // Catat data file ke tabel database
+    const { error: insertErr } = await supabaseClient
+      .from('training_modules')
+      .insert([{
+        master_id: masterId,
+        file_name: file.name,
+        file_url: urlData.publicUrl,
+        file_type: fileExt.toLowerCase()
+      }]);
 
     if (insertErr) throw insertErr;
 
-    alert(`✅ File "${file.name}" berhasil diunggah!`);
+    alert(`✅ File "${file.name}" (${(file.size / (1024 * 1024)).toFixed(2)} MB) berhasil diunggah ke Storage Modul!`);
     if (fileInput) fileInput.value = '';
     document.getElementById('adminSelectMasterModul').value = '';
 
