@@ -3,7 +3,34 @@
 // ====================================================
 const GDRIVE_CONFIG = {
   client_email: "portal-mmd-uploader@portal-sertifikat-mmd.iam.gserviceaccount.com",
-  private_key: `-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDUdqFtrjK/I1YK\ncPHng0wrGm3d0ZuCyicxm8OX/rZV69h2mZDgXbugEnfAYNNzk2DpFoYUXI0C5IAt\nyile+sZEqdHsJRBOHeyJIf3f7E5fNjPY7dA1CqH/zGR5GKK5PpgXsX5GFj5iW2cz\nBJghg4yu2G+jo94aIZyDsCf7WrIRd4LSh7xKPxm5tzf5qVrg/ozHOGUdleWJsSNT\n3D/hwQp7uEw0zQn30KejzDPDIW/2a+IY3F7oTvgGUBYvcF4Lj+YyomkwfdJKtFAB\nX+o1SGw2WcBSRHwBEFGvjuApTrQctoIVlYcvFSD3HUy8QV3bqrF0yGyoA2V7HTi+\n0UWQyI0DAgMBAAECggEAInsOP8qhmbuWXyNtXvFED0q+wd0eq9869SYeXDCOTutz\nueu6Q29y38ufe607I+qrM6jgIbXTfMCwvL2ucSepvcMBup1ZRBQ/KxJFLW4gWftl\n9rLBs5oCKI13UN/aqM2ryUyY/a7mePf0i6cXOXkr/8RIefpCNWN3DzgrhPN3KrY6\nwhE5AhGZnm681/4C10nUEa5z/0szQN4tK7SxzefTRKSaYzvnOgUehoFzHIqqijb/\nKXhzxTVFOOupbR2urq4SIXxls21LLqiqo4lkaDQ3PN3KCFL1C8fTCvhNEP5GFB4R\nnJnWhYM3kRNK3wLH+FqVXO5aV6UKwXwWS0aPZeqpgQKBgQD33/a/K+e0+nmRiIpA\nkjVRx3xWhIg1I2xdk+L0ayZw+4H5pMxF5sTKKQjaJ8SFTDuhc04UrQsMZaph3S8x\ugADi5yhiNJGw6tLJScmqe7tLuEZKHsIOPVKm9wv/o+LeTLmjy9IIAgkFWwvmX5e\nj710aCu1nWJyBd1NCC5lb4qEUwKBgQDbbYMlqwkIIMK43H9oW2HYOxOg5YQ9osrW\nQ6K0oZm0cnKdeEOF01MYy4o4Dfxfhgw2PNDiNm0qJ5snWnWmGZtrR6XPvxbtWImE\nbA77J2Y32sYuq4tSHXtt1VOQ2IrOd1HKcZ3qWdDil0we6NwNwkkkOLa6K6qd/+qH\nT+Npsqq+kQKBgQCNgfh1rvT6prvcT5zNvCpgY4giREsWOwDUc2bvrnQlsA/Fm0Va\n6qGR39dD48wXZSvtwcvjld5m12trr0AQHWWAoKVsupWA/Je/sJgnRIA4O7kaCbgj\nO5EdZNlRNPxx3WEnqrqNbGv5XZmDmxc/mMPJvualKhJXke2C2pbSJdloLQKBgQC0\nDNhgQEfY84jUR5oD93gCBffFPo+UQ9BMoJMRxMhq2L5TmCtP1GeLIPj5pgBAIa5D\nkwOTmzVYMceOMxv2f2yYSuIz5YjamJu+nSxtyZaGnm2gPgLEDo0JQtKfOBAt+pqS\nk0gQ1EIirCM5+bkXUSTTI/ZMLSiDHUtEXLkuMf0JAQKBgBMQ/QxkpDS7IB+/0Mrl\ne12G9N7UgFLgqp38vPAJZ7xfpLiiXiOwojqF262QsRGgiNI6/L32FMsAA3o3TEyX\nZVd6XBIhlRNWXwtVZQYcm/gxYkxdyw6iV6+arT1qq7lv3WzHSrtJdpzkcKsRxH9T\nfCLZEu8DeVbwS7Pno0eUsW2c\n-----END PRIVATE KEY-----\n",
+  private_key: "-----BEGIN PRIVATE KEY-----\n" +
+    "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDUdqFtrjK/I1YK\n" +
+    "cPHng0wrGm3d0ZuCyicxm8OX/rZV69h2mZDgXbugEnfAYNNzk2DpFoYUXI0C5IAt\n" +
+    "yile+sZEqdHsJRBOHeyJIf3f7E5fNjPY7dA1CqH/zGR5GKK5PpgXsX5GFj5iW2cz\n" +
+    "BJghg4yu2G+jo94aIZyDsCf7WrIRd4LSh7xKPxm5tzf5qVrg/ozHOGUdleWJsSNT\n" +
+    "3D/hwQp7uEw0zQn30KejzDPDIW/2a+IY3F7oTvgGUBYvcF4Lj+YyomkwfdJKtFAB\n" +
+    "X+o1SGw2WcBSRHwBEFGvjuApTrQctoIVlYcvFSD3HUy8QV3bqrF0yGyoA2V7HTi+\n" +
+    "0UWQyI0DAgMBAAECggEAInsOP8qhmbuWXyNtXvFED0q+wd0eq9869SYeXDCOTutz\n" +
+    "ueu6Q29y38ufe607I+qrM6jgIbXTfMCwvL2ucSepvcMBup1ZRBQ/KxJFLW4gWftl\n" +
+    "9rLBs5oCKI13UN/aqM2ryUyY/a7mePf0i6cXOXkr/8RIefpCNWN3DzgrhPN3KrY6\n" +
+    "whE5AhGZnm681/4C10nUEa5z/0szQN4tK7SxzefTRKSaYzvnOgUehoFzHIqqijb/\n" +
+    "KXhzxTVFOOupbR2urq4SIXxls21LLqiqo4lkaDQ3PN3KCFL1C8fTCvhNEP5GFB4R\n" +
+    "nJnWhYM3kRNK3wLH+FqVXO5aV6UKwXwWS0aPZeqpgQKBgQD33/a/K+e0+nmRiIpA\n" +
+    "kjVRx3xWhIg1I2xdk+L0ayZw+4H5pMxF5sTKKQjaJ8SFTDuhc04UrQsMZaph3S8x\n" +
+    "ugADi5yhiNJGw6tLJScmqe7tLuEZKHsIOPVKm9wv/o+LeTLmjy9IIAgkFWwvmX5e\n" +
+    "j710aCu1nWJyBd1NCC5lb4qEUwKBgQDbbYMlqwkIIMK43H9oW2HYOxOg5YQ9osrW\n" +
+    "Q6K0oZm0cnKdeEOF01MYy4o4Dfxfhgw2PNDiNm0qJ5snWnWmGZtrR6XPvxbtWImE\n" +
+    "bA77J2Y32sYuq4tSHXtt1VOQ2IrOd1HKcZ3qWdDil0we6NwNwkkkOLa6K6qd/+qH\n" +
+    "T+Npsqq+kQKBgQCNgfh1rvT6prvcT5zNvCpgY4giREsWOwDUc2bvrnQlsA/Fm0Va\n" +
+    "6qGR39dD48wXZSvtwcvjld5m12trr0AQHWWAoKVsupWA/Je/sJgnRIA4O7kaCbgj\n" +
+    "O5EdZNlRNPxx3WEnqrqNbGv5XZmDmxc/mMPJvualKhJXke2C2pbSJdloLQKBgQC0\n" +
+    "DNhgQEfY84jUR5oD93gCBffFPo+UQ9BMoJMRxMhq2L5TmCtP1GeLIPj5pgBAIa5D\n" +
+    "kwOTmzVYMceOMxv2f2yYSuIz5YjamJu+nSxtyZaGnm2gPgLEDo0JQtKfOBAt+pqS\n" +
+    "k0gQ1EIirCM5+bkXUSTTI/ZMLSiDHUtEXLkuMf0JAQKBgBMQ/QxkpDS7IB+/0Mrl\n" +
+    "e12G9N7UgFLgqp38vPAJZ7xfpLiiXiOwojqF262QsRGgiNI6/L32FMsAA3o3TEyX\n" +
+    "ZVd6XBIhlRNWXwtVZQYcm/gxYkxdyw6iV6+arT1qq7lv3WzHSrtJdpzkcKsRxH9T\n" +
+    "fCLZEu8DeVbwS7Pno0eUsW2c\n" +
+    "-----END PRIVATE KEY-----\n",
   folder_id_sertifikat: "1RFyhPurZf3G1JEo4xkUEKxuyqcNQfA3Q"
 };
 
