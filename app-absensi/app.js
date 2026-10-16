@@ -1458,97 +1458,97 @@ const KATALOG_MODUL_MASTER = [
     deskripsi: "Tenaga Kerja Pada Ketinggian Tingkat 3 Kemnaker RI"
   },
   {
-    master_id: "GONDOLA",
+    master_id: "PAA_GONDOLA",
     kategori: "KEMNAKER",
     nama_program: "Operator Gondola - Kemnaker RI",
     deskripsi: "Pengoperasian & Keselamatan Operator Gondola Kemnaker RI"
   },
   {
-    master_id: "TEKNISI-LISTRIK",
+    master_id: "LST_TEKNISI",
     kategori: "KEMNAKER",
     nama_program: "Teknisi K3 Listrik - Kemnaker RI",
     deskripsi: "Pembinaan Teknisi Keselamatan Listrik Kemnaker RI"
   },
   {
-    master_id: "AHLI-LISTRIK",
+    master_id: "LST_AHLI",
     kategori: "KEMNAKER",
     nama_program: "Ahli K3 Listrik - Kemnaker RI",
     deskripsi: "Pembinaan & Lisensi Ahli K3 Listrik Kemnaker RI"
   },
   {
-    master_id: "TEKNISI-PERANCAH",
+    master_id: "KST_TEKNISI_PERANCAH",
     kategori: "KEMNAKER",
     nama_program: "Teknisi Perancah - Kemnaker RI",
     deskripsi: "Pemasangan & Pembongkaran Perancah Kemnaker RI"
   },
   {
-    master_id: "SUPERVISI-PERANCAH",
+    master_id: "KST_SUPERVISI_PERANCAH",
     kategori: "KEMNAKER",
     nama_program: "Supervisi Perancah - Kemnaker RI",
     deskripsi: "Pengawasan & Inspeksi Keselamatan Perancah Kemnaker RI"
   },
   {
-    master_id: "AHLI-UTAMA-KONSTRUKSI",
+    master_id: "KST_AHLI_UTAMA",
     kategori: "KEMNAKER",
     nama_program: "Ahli Utama K3 Konstruksi - Kemnaker RI",
     deskripsi: "Manajemen K3 Konstruksi Tingkat Utama Kemnaker RI"
   },
   {
-    master_id: "AHLI-MADYA-KONSTRUKSI",
+    master_id: "KST_AHLI_MADYA",
     kategori: "KEMNAKER",
     nama_program: "Ahli Madya K3 Konstruksi - Kemnaker RI",
     deskripsi: "Manajemen K3 Konstruksi Tingkat Madya Kemnaker RI"
   },
   {
-    master_id: "AHLI-MUDA-KONSTRUKSI",
+    master_id: "KST_AHLI_MUDA",
     kategori: "KEMNAKER",
     nama_program: "Ahli Muda K3 Konstruksi - Kemnaker RI",
     deskripsi: "Pelaksanaan K3 Proyek Konstruksi Kemnaker RI"
   },
   {
-    master_id: "OPERATOR-ELEVATOR",
+    master_id: "ELV_OPERATOR",
     kategori: "KEMNAKER",
     nama_program: "Operator Elevator - Kemnaker RI",
     deskripsi: "Pengoperasian & Keselamatan Lift Kemnaker RI"
   },
   {
-    master_id: "TEKNISI-ELEVATOR",
+    master_id: "ELV_TEKNISI",
     kategori: "KEMNAKER",
     nama_program: "Teknisi Elevator - Kemnaker RI",
     deskripsi: "Pemeliharaan & Perbaikan Elevator Kemnaker RI"
   },
   {
-    master_id: "TEKNISI-CONFINED-SPACE",
+    master_id: "B3_TEKNISI_RT",
     kategori: "KEMNAKER",
     nama_program: "Teknisi Ruang Terbatas - Kemnaker RI",
     deskripsi: "Teknisi K3 Pekerjaan Ruang Terbatas Kemnaker RI"
   },
   {
-    master_id: "RESCUE-CONFINED-SPACE",
+    master_id: "B3_RESCUE_RT",
     kategori: "KEMNAKER",
     nama_program: "Petugas Rescue Ruang Terbatas - Kemnaker RI",
     deskripsi: "Evakuasi & Penyelamatan Ruang Terbatas Kemnaker RI"
   },
   {
-    master_id: "GAS-DETECTOR",
+    master_id: "B3_GAS_DETECTOR",
     kategori: "KEMNAKER",
     nama_program: "Petugas Gas Detector - Kemnaker RI",
     deskripsi: "Pengukuran Gas Berbahaya di Tempat Kerja Kemnaker RI"
   },
   {
-    master_id: "FORKLIFT",
+    master_id: "PAA_FORKLIFT",
     kategori: "KEMNAKER",
     nama_program: "Operator Forklift - Kemnaker RI",
     deskripsi: "Pengoperasian & Keselamatan Forklift Kemnaker RI"
   },
   {
-    master_id: "ESKAVATOR",
+    master_id: "PAA_ESKAVATOR",
     kategori: "KEMNAKER",
     nama_program: "Operator Eskavator - Kemnaker RI",
     deskripsi: "Pengoperasian Alat Berat Eskavator Kemnaker RI"
   },
   {
-    master_id: "GRIDER",
+    master_id: "PAA_GRIDER",
     kategori: "KEMNAKER",
     nama_program: "Operator Grider - Kemnaker RI",
     deskripsi: "Pengoperasian Motor Grader Alat Berat Kemnaker RI"
