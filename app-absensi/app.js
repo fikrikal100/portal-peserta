@@ -665,7 +665,7 @@ async function loadBatchOptions() {
 function importExcelPeserta() {
   const selectedBatchId = document.getElementById('importSelectBatch').value;
   const fileInput = document.getElementById('fileExcelPeserta');
-  const file = fileInput.files[0];
+  const file = fileInput ? fileInput.files[0] : null;
 
   if (!selectedBatchId) return alert("Harap pilih Batch Pelatihan Tujuan terlebih dahulu!");
   if (!file) return alert("Pilih file Excel/CSV lebih dulu!");
@@ -682,24 +682,25 @@ function importExcelPeserta() {
         return alert("File Excel kosong atau tidak terbaca!");
       }
 
-      const usersToInsert = rows.map(r => {
+      const usersToInsert = rows.map((r, idx) => {
         const rawNama = String(r.Nama || r.nama || r["Nama Lengkap"] || "").trim();
-        let rawTglLahir = r.TanggalLahir || r.tanggallahir || r["Tanggal Lahir"] || "";
+        let rawTglLahir = r.TanggalLahir || r.tanggallahir || r["Tanggal Lahir"] || r["TanggalLahir"] || "";
         const rawNIK = String(r.NIK || r.nik || "-").trim();
         const rawPerusahaan = String(r.Perusahaan || r.perusahaan || r["Nama Perusahaan"] || "PT Mandiri Maha Daya").trim();
 
-        let formattedDateForDb = "";
-        let cleanDDMMYYYY = "";
+        if (!rawNama) return null; // Lewati baris kosong
 
-        if (rawTglLahir instanceof Date) {
+        let formattedDateForDb = null;
+        let cleanDDMMYYYY = "01011990"; // default password jika tanggal lahir kosong
+
+        if (rawTglLahir instanceof Date && !isNaN(rawTglLahir.getTime())) {
           const d = rawTglLahir.getDate().toString().padStart(2, '0');
           const m = (rawTglLahir.getMonth() + 1).toString().padStart(2, '0');
           const y = rawTglLahir.getFullYear();
           formattedDateForDb = `${y}-${m}-${d}`;
           cleanDDMMYYYY = `${d}${m}${y}`;
-        } else {
+        } else if (rawTglLahir) {
           const strTgl = String(rawTglLahir).trim();
-          
           if (strTgl.includes('-') || strTgl.includes('/')) {
             const parts = strTgl.split(/[-/]/);
             if (parts.length === 3) {
@@ -725,11 +726,13 @@ function importExcelPeserta() {
               const year = digits.substring(4, 8);
               formattedDateForDb = `${year}-${month}-${day}`;
               cleanDDMMYYYY = digits;
-            } else {
-              formattedDateForDb = strTgl;
-              cleanDDMMYYYY = digits;
             }
           }
+        }
+
+        // Jika tanggal lahir kosong/tidak valid, set default agar tidak crash di Supabase
+        if (!formattedDateForDb) {
+          formattedDateForDb = "1990-01-01";
         }
 
         const formattedUsername = rawNama.replace(/\s+/g, '').toLowerCase();
@@ -746,7 +749,11 @@ function importExcelPeserta() {
           id_sertifikat: idSertifikat,
           role: 'peserta'
         };
-      });
+      }).filter(u => u !== null);
+
+      if (usersToInsert.length === 0) {
+        return alert("Tidak ada data peserta yang valid untuk diimpor!");
+      }
 
       const { error } = await supabaseClient.from('users').upsert(usersToInsert);
       if (error) {
