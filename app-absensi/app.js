@@ -1,3 +1,12 @@
+// ====================================================
+// KONFIGURASI GOOGLE DRIVE API (SERVICE ACCOUNT)
+// ====================================================
+const GDRIVE_CONFIG = {
+  client_email: "portal-mmd-uploader@portal-sertifikat-mmd.iam.gserviceaccount.com",
+  private_key: `-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDUdqFtrjK/I1YK\ncPHng0wrGm3d0ZuCyicxm8OX/rZV69h2mZDgXbugEnfAYNNzk2DpFoYUXI0C5IAt\nyile+sZEqdHsJRBOHeyJIf3f7E5fNjPY7dA1CqH/zGR5GKK5PpgXsX5GFj5iW2cz\nBJghg4yu2G+jo94aIZyDsCf7WrIRd4LSh7xKPxm5tzf5qVrg/ozHOGUdleWJsSNT\n3D/hwQp7uEw0zQn30KejzDPDIW/2a+IY3F7oTvgGUBYvcF4Lj+YyomkwfdJKtFAB\nX+o1SGw2WcBSRHwBEFGvjuApTrQctoIVlYcvFSD3HUy8QV3bqrF0yGyoA2V7HTi+\n0UWQyI0DAgMBAAECggEAInsOP8qhmbuWXyNtXvFED0q+wd0eq9869SYeXDCOTutz\nueu6Q29y38ufe607I+qrM6jgIbXTfMCwvL2ucSepvcMBup1ZRBQ/KxJFLW4gWftl\n9rLBs5oCKI13UN/aqM2ryUyY/a7mePf0i6cXOXkr/8RIefpCNWN3DzgrhPN3KrY6\nwhE5AhGZnm681/4C10nUEa5z/0szQN4tK7SxzefTRKSaYzvnOgUehoFzHIqqijb/\nKXhzxTVFOOupbR2urq4SIXxls21LLqiqo4lkaDQ3PN3KCFL1C8fTCvhNEP5GFB4R\nnJnWhYM3kRNK3wLH+FqVXO5aV6UKwXwWS0aPZeqpgQKBgQD33/a/K+e0+nmRiIpA\nkjVRx3xWhIg1I2xdk+L0ayZw+4H5pMxF5sTKKQjaJ8SFTDuhc04UrQsMZaph3S8x\ugADi5yhiNJGw6tLJScmqe7tLuEZKHsIOPVKm9wv/o+LeTLmjy9IIAgkFWwvmX5e\nj710aCu1nWJyBd1NCC5lb4qEUwKBgQDbbYMlqwkIIMK43H9oW2HYOxOg5YQ9osrW\nQ6K0oZm0cnKdeEOF01MYy4o4Dfxfhgw2PNDiNm0qJ5snWnWmGZtrR6XPvxbtWImE\nbA77J2Y32sYuq4tSHXtt1VOQ2IrOd1HKcZ3qWdDil0we6NwNwkkkOLa6K6qd/+qH\nT+Npsqq+kQKBgQCNgfh1rvT6prvcT5zNvCpgY4giREsWOwDUc2bvrnQlsA/Fm0Va\n6qGR39dD48wXZSvtwcvjld5m12trr0AQHWWAoKVsupWA/Je/sJgnRIA4O7kaCbgj\nO5EdZNlRNPxx3WEnqrqNbGv5XZmDmxc/mMPJvualKhJXke2C2pbSJdloLQKBgQC0\nDNhgQEfY84jUR5oD93gCBffFPo+UQ9BMoJMRxMhq2L5TmCtP1GeLIPj5pgBAIa5D\nkwOTmzVYMceOMxv2f2yYSuIz5YjamJu+nSxtyZaGnm2gPgLEDo0JQtKfOBAt+pqS\nk0gQ1EIirCM5+bkXUSTTI/ZMLSiDHUtEXLkuMf0JAQKBgBMQ/QxkpDS7IB+/0Mrl\ne12G9N7UgFLgqp38vPAJZ7xfpLiiXiOwojqF262QsRGgiNI6/L32FMsAA3o3TEyX\nZVd6XBIhlRNWXwtVZQYcm/gxYkxdyw6iV6+arT1qq7lv3WzHSrtJdpzkcKsRxH9T\nfCLZEu8DeVbwS7Pno0eUsW2c\n-----END PRIVATE KEY-----\n",
+  folder_id_sertifikat: "1RFyhPurZf3G1JEo4xkUEKxuyqcNQfA3Q"
+};
+
 // ----------------------------------------------------
 // 1. INISIALISASI SUPABASE
 // ----------------------------------------------------
@@ -16,7 +25,7 @@ let currentExamQuestions = [];
 let activeExamCode = "";
 let activeExamMasterId = "";
 
-// Data awal libur nasional (Lokal agar instan tanpa loading)
+// Data awal libur nasional
 let loadedNationalHolidays = {
   // 2024
   "2024-01-01": "Tahun Baru 2024 Masehi",
@@ -205,7 +214,6 @@ function switchTabPeserta(tabName) {
   }
 }
 
-// RENDER DATA PESERTA & RIWAYAT MULTI-TRAINING
 async function renderPesertaData(user) {
   document.getElementById('pesertaNama').innerText = user.nama || '-';
   document.getElementById('pesertaPerusahaan').innerHTML = `<i class="fa-solid fa-building mr-1"></i> Perusahaan: ${user.perusahaan || '-'}`;
@@ -243,9 +251,6 @@ async function renderPesertaData(user) {
   loadRiwayatTryOutProfil();
 }
 
-// ----------------------------------------------------
-// RENDER DAFTAR SERTIFIKAT
-// ----------------------------------------------------
 async function loadSertifikatPeserta(username) {
   const container = document.getElementById('containerListSertifikatPeserta');
   if (!container) return;
@@ -275,7 +280,7 @@ async function loadSertifikatPeserta(username) {
           <p class="text-xs font-bold text-emerald-900">${c.nama_sertifikat}</p>
           <p class="text-[10px] text-emerald-700 mt-0.5">Kode/File: ${c.training_id || '-'}</p>
         </div>
-        <a href="${c.url_sertifikat}" target="_blank" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-4 py-2 rounded-lg font-bold shadow transition flex items-center gap-1.5 whitespace-nowrap">
+        <a href="${c.url_sertifikat}" target="_blank" rel="noopener noreferrer" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-4 py-2 rounded-lg font-bold shadow transition flex items-center gap-1.5 whitespace-nowrap">
           <i class="fa-solid fa-file-arrow-down"></i> Unduh PDF
         </a>
       </div>
@@ -464,9 +469,6 @@ async function ambilAbsen() {
   }
 }
 
-// ----------------------------------------------------
-// FETCH API LIBUR NASIONAL OTOMATIS
-// ----------------------------------------------------
 async function fetchHolidays(year) {
   try {
     const response = await fetch(`https://dayoffapi.vercel.app/api?year=${year}`);
@@ -630,9 +632,6 @@ async function simpanBatchTraining() {
   }
 }
 
-// ----------------------------------------------------
-// LOAD PILIHAN BATCH UNTUK DROPDOWN
-// ----------------------------------------------------
 async function loadBatchOptions() {
   const { data, error } = await supabaseClient
     .from('trainings')
@@ -688,10 +687,10 @@ function importExcelPeserta() {
         const rawNIK = String(r.NIK || r.nik || "-").trim();
         const rawPerusahaan = String(r.Perusahaan || r.perusahaan || r["Nama Perusahaan"] || "PT Mandiri Maha Daya").trim();
 
-        if (!rawNama) return null; // Lewati baris kosong
+        if (!rawNama) return null;
 
         let formattedDateForDb = null;
-        let cleanDDMMYYYY = "01011990"; // default password jika tanggal lahir kosong
+        let cleanDDMMYYYY = "01011990";
 
         if (rawTglLahir instanceof Date && !isNaN(rawTglLahir.getTime())) {
           const d = rawTglLahir.getDate().toString().padStart(2, '0');
@@ -730,7 +729,6 @@ function importExcelPeserta() {
           }
         }
 
-        // Jika tanggal lahir kosong/tidak valid, set default agar tidak crash di Supabase
         if (!formattedDateForDb) {
           formattedDateForDb = "1990-01-01";
         }
@@ -1301,7 +1299,6 @@ async function loadDatabasePeserta() {
   });
 }
 
-// Buka Modal Edit Peserta
 async function bukaModalEditPeserta(user) {
   document.getElementById('editOriginalUsername').value = user.username;
   document.getElementById('editNama').value = user.nama || '';
@@ -1334,12 +1331,10 @@ async function bukaModalEditPeserta(user) {
   document.getElementById('modalEditPeserta').classList.remove('hidden');
 }
 
-// Tutup Modal
 function tutupModalEditPeserta() {
   document.getElementById('modalEditPeserta').classList.add('hidden');
 }
 
-// Simpan Perubahan Edit Peserta
 async function simpanPerubahanPeserta() {
   const originalUsername = document.getElementById('editOriginalUsername').value;
   const nama = document.getElementById('editNama').value.trim();
@@ -1419,190 +1414,40 @@ async function simpanPerubahanPeserta() {
 // 11. DAFTAR MASTER KATALOG MODUL LENGKAP (29 PROGRAM)
 // ----------------------------------------------------
 const KATALOG_MODUL_MASTER = [
-  // ====================================================
   // KELOMPOK 1: PEMBINAAN K3 KEMNAKER RI (23 PROGRAM)
-  // ====================================================
-  {
-    master_id: "AK3U",
-    kategori: "KEMNAKER",
-    nama_program: "AK3U - Kemnaker RI",
-    deskripsi: "Pembinaan & Lisensi Ahli K3 Umum Kemnaker RI"
-  },
-  {
-    master_id: "P3K",
-    kategori: "KEMNAKER",
-    nama_program: "P3K - Kemnaker RI",
-    deskripsi: "Pertolongan Pertama Pada Kecelakaan Kerja Kemnaker RI"
-  },
-  {
-    master_id: "TKBT1",
-    kategori: "KEMNAKER",
-    nama_program: "TKBT 1 - Kemnaker RI",
-    deskripsi: "Tenaga Kerja Bangunan Tinggi Tingkat 1 Kemnaker RI"
-  },
-  {
-    master_id: "TKBT2",
-    kategori: "KEMNAKER",
-    nama_program: "TKBT 2 - Kemnaker RI",
-    deskripsi: "Tenaga Kerja Bangunan Tinggi Tingkat 2 Kemnaker RI"
-  },
-  {
-    master_id: "TKPK1",
-    kategori: "KEMNAKER",
-    nama_program: "TKPK 1 - Kemnaker RI",
-    deskripsi: "Tenaga Kerja Pada Ketinggian Tingkat 1 Kemnaker RI"
-  },
-  {
-    master_id: "TKPK2",
-    kategori: "KEMNAKER",
-    nama_program: "TKPK 2 - Kemnaker RI",
-    deskripsi: "Tenaga Kerja Pada Ketinggian Tingkat 2 Kemnaker RI"
-  },
-  {
-    master_id: "TKPK3",
-    kategori: "KEMNAKER",
-    nama_program: "TKPK 3 - Kemnaker RI",
-    deskripsi: "Tenaga Kerja Pada Ketinggian Tingkat 3 Kemnaker RI"
-  },
-  {
-    master_id: "PAA_GONDOLA",
-    kategori: "KEMNAKER",
-    nama_program: "Operator Gondola - Kemnaker RI",
-    deskripsi: "Pengoperasian & Keselamatan Operator Gondola Kemnaker RI"
-  },
-  {
-    master_id: "LST_TEKNISI",
-    kategori: "KEMNAKER",
-    nama_program: "Teknisi K3 Listrik - Kemnaker RI",
-    deskripsi: "Pembinaan Teknisi Keselamatan Listrik Kemnaker RI"
-  },
-  {
-    master_id: "LST_AHLI",
-    kategori: "KEMNAKER",
-    nama_program: "Ahli K3 Listrik - Kemnaker RI",
-    deskripsi: "Pembinaan & Lisensi Ahli K3 Listrik Kemnaker RI"
-  },
-  {
-    master_id: "KST_TEKNISI_PERANCAH",
-    kategori: "KEMNAKER",
-    nama_program: "Teknisi Perancah - Kemnaker RI",
-    deskripsi: "Pemasangan & Pembongkaran Perancah Kemnaker RI"
-  },
-  {
-    master_id: "KST_SUPERVISI_PERANCAH",
-    kategori: "KEMNAKER",
-    nama_program: "Supervisi Perancah - Kemnaker RI",
-    deskripsi: "Pengawasan & Inspeksi Keselamatan Perancah Kemnaker RI"
-  },
-  {
-    master_id: "KST_AHLI_UTAMA",
-    kategori: "KEMNAKER",
-    nama_program: "Ahli Utama K3 Konstruksi - Kemnaker RI",
-    deskripsi: "Manajemen K3 Konstruksi Tingkat Utama Kemnaker RI"
-  },
-  {
-    master_id: "KST_AHLI_MADYA",
-    kategori: "KEMNAKER",
-    nama_program: "Ahli Madya K3 Konstruksi - Kemnaker RI",
-    deskripsi: "Manajemen K3 Konstruksi Tingkat Madya Kemnaker RI"
-  },
-  {
-    master_id: "KST_AHLI_MUDA",
-    kategori: "KEMNAKER",
-    nama_program: "Ahli Muda K3 Konstruksi - Kemnaker RI",
-    deskripsi: "Pelaksanaan K3 Proyek Konstruksi Kemnaker RI"
-  },
-  {
-    master_id: "ELV_OPERATOR",
-    kategori: "KEMNAKER",
-    nama_program: "Operator Elevator - Kemnaker RI",
-    deskripsi: "Pengoperasian & Keselamatan Lift Kemnaker RI"
-  },
-  {
-    master_id: "ELV_TEKNISI",
-    kategori: "KEMNAKER",
-    nama_program: "Teknisi Elevator - Kemnaker RI",
-    deskripsi: "Pemeliharaan & Perbaikan Elevator Kemnaker RI"
-  },
-  {
-    master_id: "B3_TEKNISI_RT",
-    kategori: "KEMNAKER",
-    nama_program: "Teknisi Ruang Terbatas - Kemnaker RI",
-    deskripsi: "Teknisi K3 Pekerjaan Ruang Terbatas Kemnaker RI"
-  },
-  {
-    master_id: "B3_RESCUE_RT",
-    kategori: "KEMNAKER",
-    nama_program: "Petugas Rescue Ruang Terbatas - Kemnaker RI",
-    deskripsi: "Evakuasi & Penyelamatan Ruang Terbatas Kemnaker RI"
-  },
-  {
-    master_id: "B3_GAS_DETECTOR",
-    kategori: "KEMNAKER",
-    nama_program: "Petugas Gas Detector - Kemnaker RI",
-    deskripsi: "Pengukuran Gas Berbahaya di Tempat Kerja Kemnaker RI"
-  },
-  {
-    master_id: "PAA_FORKLIFT",
-    kategori: "KEMNAKER",
-    nama_program: "Operator Forklift - Kemnaker RI",
-    deskripsi: "Pengoperasian & Keselamatan Forklift Kemnaker RI"
-  },
-  {
-    master_id: "PAA_ESKAVATOR",
-    kategori: "KEMNAKER",
-    nama_program: "Operator Eskavator - Kemnaker RI",
-    deskripsi: "Pengoperasian Alat Berat Eskavator Kemnaker RI"
-  },
-  {
-    master_id: "PAA_GRIDER",
-    kategori: "KEMNAKER",
-    nama_program: "Operator Grider - Kemnaker RI",
-    deskripsi: "Pengoperasian Motor Grader Alat Berat Kemnaker RI"
-  },
+  { master_id: "AK3U", kategori: "KEMNAKER", nama_program: "AK3U - Kemnaker RI", deskripsi: "Pembinaan & Lisensi Ahli K3 Umum Kemnaker RI" },
+  { master_id: "P3K", kategori: "KEMNAKER", nama_program: "P3K - Kemnaker RI", deskripsi: "Pertolongan Pertama Pada Kecelakaan Kerja Kemnaker RI" },
+  { master_id: "TKBT1", kategori: "KEMNAKER", nama_program: "TKBT 1 - Kemnaker RI", deskripsi: "Tenaga Kerja Bangunan Tinggi Tingkat 1 Kemnaker RI" },
+  { master_id: "TKBT2", kategori: "KEMNAKER", nama_program: "TKBT 2 - Kemnaker RI", deskripsi: "Tenaga Kerja Bangunan Tinggi Tingkat 2 Kemnaker RI" },
+  { master_id: "TKPK1", kategori: "KEMNAKER", nama_program: "TKPK 1 - Kemnaker RI", deskripsi: "Tenaga Kerja Pada Ketinggian Tingkat 1 Kemnaker RI" },
+  { master_id: "TKPK2", kategori: "KEMNAKER", nama_program: "TKPK 2 - Kemnaker RI", deskripsi: "Tenaga Kerja Pada Ketinggian Tingkat 2 Kemnaker RI" },
+  { master_id: "TKPK3", kategori: "KEMNAKER", nama_program: "TKPK 3 - Kemnaker RI", deskripsi: "Tenaga Kerja Pada Ketinggian Tingkat 3 Kemnaker RI" },
+  { master_id: "PAA_GONDOLA", kategori: "KEMNAKER", nama_program: "Operator Gondola - Kemnaker RI", deskripsi: "Pengoperasian & Keselamatan Operator Gondola Kemnaker RI" },
+  { master_id: "LST_TEKNISI", kategori: "KEMNAKER", nama_program: "Teknisi K3 Listrik - Kemnaker RI", deskripsi: "Pembinaan Teknisi Keselamatan Listrik Kemnaker RI" },
+  { master_id: "LST_AHLI", kategori: "KEMNAKER", nama_program: "Ahli K3 Listrik - Kemnaker RI", deskripsi: "Pembinaan & Lisensi Ahli K3 Listrik Kemnaker RI" },
+  { master_id: "KST_TEKNISI_PERANCAH", kategori: "KEMNAKER", nama_program: "Teknisi Perancah - Kemnaker RI", deskripsi: "Pemasangan & Pembongkaran Perancah Kemnaker RI" },
+  { master_id: "KST_SUPERVISI_PERANCAH", kategori: "KEMNAKER", nama_program: "Supervisi Perancah - Kemnaker RI", deskripsi: "Pengawasan & Inspeksi Keselamatan Perancah Kemnaker RI" },
+  { master_id: "KST_AHLI_UTAMA", kategori: "KEMNAKER", nama_program: "Ahli Utama K3 Konstruksi - Kemnaker RI", deskripsi: "Manajemen K3 Konstruksi Tingkat Utama Kemnaker RI" },
+  { master_id: "KST_AHLI_MADYA", kategori: "KEMNAKER", nama_program: "Ahli Madya K3 Konstruksi - Kemnaker RI", deskripsi: "Manajemen K3 Konstruksi Tingkat Madya Kemnaker RI" },
+  { master_id: "KST_AHLI_MUDA", kategori: "KEMNAKER", nama_program: "Ahli Muda K3 Konstruksi - Kemnaker RI", deskripsi: "Pelaksanaan K3 Proyek Konstruksi Kemnaker RI" },
+  { master_id: "ELV_OPERATOR", kategori: "KEMNAKER", nama_program: "Operator Elevator - Kemnaker RI", deskripsi: "Pengoperasian & Keselamatan Lift Kemnaker RI" },
+  { master_id: "ELV_TEKNISI", kategori: "KEMNAKER", nama_program: "Teknisi Elevator - Kemnaker RI", deskripsi: "Pemeliharaan & Perbaikan Elevator Kemnaker RI" },
+  { master_id: "B3_TEKNISI_RT", kategori: "KEMNAKER", nama_program: "Teknisi Ruang Terbatas - Kemnaker RI", deskripsi: "Teknisi K3 Pekerjaan Ruang Terbatas Kemnaker RI" },
+  { master_id: "B3_RESCUE_RT", kategori: "KEMNAKER", nama_program: "Petugas Rescue Ruang Terbatas - Kemnaker RI", deskripsi: "Evakuasi & Penyelamatan Ruang Terbatas Kemnaker RI" },
+  { master_id: "B3_GAS_DETECTOR", kategori: "KEMNAKER", nama_program: "Petugas Gas Detector - Kemnaker RI", deskripsi: "Pengukuran Gas Berbahaya di Tempat Kerja Kemnaker RI" },
+  { master_id: "PAA_FORKLIFT", kategori: "KEMNAKER", nama_program: "Operator Forklift - Kemnaker RI", deskripsi: "Pengoperasian & Keselamatan Forklift Kemnaker RI" },
+  { master_id: "PAA_ESKAVATOR", kategori: "KEMNAKER", nama_program: "Operator Eskavator - Kemnaker RI", deskripsi: "Pengoperasian Alat Berat Eskavator Kemnaker RI" },
+  { master_id: "PAA_GRIDER", kategori: "KEMNAKER", nama_program: "Operator Grider - Kemnaker RI", deskripsi: "Pengoperasian Motor Grader Alat Berat Kemnaker RI" },
 
-  // ====================================================
   // KELOMPOK 2: SERTIFIKASI KOMPETENSI BNSP (6 PROGRAM)
-  // ====================================================
-  {
-    master_id: "BNSP-AK3U",
-    kategori: "BNSP",
-    nama_program: "AK3U - BNSP",
-    deskripsi: "Sertifikasi Kompetensi Ahli K3 Umum BNSP"
-  },
-  {
-    master_id: "BNSP-TKPK1",
-    kategori: "BNSP",
-    nama_program: "TKPK 1 - BNSP",
-    deskripsi: "Sertifikasi BNSP Tenaga Kerja Pada Ketinggian 1"
-  },
-  {
-    master_id: "BNSP-TKPK2",
-    kategori: "BNSP",
-    nama_program: "TKPK 2 - BNSP",
-    deskripsi: "Sertifikasi BNSP Tenaga Kerja Pada Ketinggian 2"
-  },
-  {
-    master_id: "BNSP-TKPK3",
-    kategori: "BNSP",
-    nama_program: "TKPK 3 - BNSP",
-    deskripsi: "Sertifikasi BNSP Tenaga Kerja Pada Ketinggian 3"
-  },
-  {
-    master_id: "BNSP-TKBT1",
-    kategori: "BNSP",
-    nama_program: "TKBT 1 - BNSP",
-    deskripsi: "Sertifikasi BNSP Tenaga Kerja Bangunan Tinggi 1"
-  },
-  {
-    master_id: "BNSP-TKBT2",
-    kategori: "BNSP",
-    nama_program: "TKBT 2 - BNSP",
-    deskripsi: "Sertifikasi BNSP Tenaga Kerja Bangunan Tinggi 2"
-  }
+  { master_id: "BNSP-AK3U", kategori: "BNSP", nama_program: "AK3U - BNSP", deskripsi: "Sertifikasi Kompetensi Ahli K3 Umum BNSP" },
+  { master_id: "BNSP-TKPK1", kategori: "BNSP", nama_program: "TKPK 1 - BNSP", deskripsi: "Sertifikasi BNSP Tenaga Kerja Pada Ketinggian 1" },
+  { master_id: "BNSP-TKPK2", kategori: "BNSP", nama_program: "TKPK 2 - BNSP", deskripsi: "Sertifikasi BNSP Tenaga Kerja Pada Ketinggian 2" },
+  { master_id: "BNSP-TKPK3", kategori: "BNSP", nama_program: "TKPK 3 - BNSP", deskripsi: "Sertifikasi BNSP Tenaga Kerja Pada Ketinggian 3" },
+  { master_id: "BNSP-TKBT1", kategori: "BNSP", nama_program: "TKBT 1 - BNSP", deskripsi: "Sertifikasi BNSP Tenaga Kerja Bangunan Tinggi 1" },
+  { master_id: "BNSP-TKBT2", kategori: "BNSP", nama_program: "TKBT 2 - BNSP", deskripsi: "Sertifikasi BNSP Tenaga Kerja Bangunan Tinggi 2" }
 ];
 
-// Populate Dropdown Admin untuk Upload Materi Training
 function loadDropdownMasterModulAdmin() {
   const selectUpload = document.getElementById('adminSelectMasterModul');
   const selectFilter = document.getElementById('adminFilterModulMaster');
@@ -1617,67 +1462,43 @@ function loadDropdownMasterModulAdmin() {
   });
 }
 
-// Upload File Materi ke Supabase Storage & Database (Admin)
-async function uploadMateriTrainingAdmin() {
+// SIMPAN LINK MODUL/MATERI GOOGLE DRIVE (ADMIN)
+async function simpanLinkMateriAdmin() {
   const masterId = document.getElementById('adminSelectMasterModul').value;
-  const fileInput = document.getElementById('fileMateriTraining');
-  const file = fileInput ? fileInput.files[0] : null;
+  const namaMateri = document.getElementById('adminInputNamaMateri').value.trim();
+  const linkDrive = document.getElementById('adminInputLinkDrive').value.trim();
+  const tipeFile = document.getElementById('adminSelectTipeFile').value;
 
-  if (!masterId) return alert("Harap pilih Judul Training terlebih dahulu!");
-  if (!file) return alert("Harap pilih file PDF, PPT, RAR, atau ZIP!");
-
-  // Cek batas ukuran file di frontend (50 MB)
-  const MAX_SIZE_MB = 50;
-  if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-    return alert(`⛔ Ukuran file terlalu besar! Maksimal file yang diizinkan adalah ${MAX_SIZE_MB} MB.`);
+  if (!masterId || !namaMateri || !linkDrive) {
+    return alert("Harap isi Judul Training, Nama Materi, dan Link Google Drive!");
   }
 
-  const btn = document.getElementById('btnUploadMateri');
+  const payload = {
+    master_id: masterId,
+    file_name: namaMateri,
+    file_url: linkDrive,
+    file_type: tipeFile.toLowerCase()
+  };
+
+  const btn = document.getElementById('btnSimpanLinkMateri');
   const originalText = btn ? btn.innerHTML : '';
   if (btn) {
-    btn.innerText = "Mengunggah File (Mohon Tunggu)...";
+    btn.innerText = "Menyimpan...";
     btn.disabled = true;
   }
 
   try {
-    const fileExt = file.name.split('.').pop();
-    const storagePath = `modul_${masterId}_${Date.now()}.${fileExt}`;
+    const { error } = await supabaseClient.from('training_modules').insert([payload]);
+    if (error) throw error;
 
-    // Upload mengarah ke bucket 'modul-materi'
-    const { error: uploadErr } = await supabaseClient.storage
-      .from('modul-materi')
-      .upload(storagePath, file, { 
-        upsert: true,
-        cacheControl: '3600'
-      });
-
-    if (uploadErr) throw uploadErr;
-
-    // Ambil Public URL dari bucket 'modul-materi'
-    const { data: urlData } = supabaseClient.storage
-      .from('modul-materi')
-      .getPublicUrl(storagePath);
-
-    // Catat data file ke tabel database
-    const { error: insertErr } = await supabaseClient
-      .from('training_modules')
-      .insert([{
-        master_id: masterId,
-        file_name: file.name,
-        file_url: urlData.publicUrl,
-        file_type: fileExt.toLowerCase()
-      }]);
-
-    if (insertErr) throw insertErr;
-
-    alert(`✅ File "${file.name}" (${(file.size / (1024 * 1024)).toFixed(2)} MB) berhasil diunggah ke Storage Modul!`);
-    if (fileInput) fileInput.value = '';
-    document.getElementById('adminSelectMasterModul').value = '';
-
+    alert(`✅ Link Materi "${namaMateri}" berhasil ditambahkan!`);
+    document.getElementById('adminInputNamaMateri').value = '';
+    document.getElementById('adminInputLinkDrive').value = '';
+    
     loadDatabaseModulAdmin();
 
   } catch (err) {
-    alert("Gagal mengunggah file materi: " + err.message);
+    alert("Gagal menyimpan link materi: " + err.message);
   } finally {
     if (btn) {
       btn.innerHTML = originalText;
@@ -1790,7 +1611,7 @@ async function loadKatalogModulPeserta() {
   }
 }
 
-// BUKA MODAL POP-UP ISI FOLDER MODUL (SISI PESERTA)
+// BUKA MODAL POP-UP ISI FOLDER MODUL (SISI PESERTA DENGAN LINK GOOGLE DRIVE)
 async function bukaModalFolderModul(masterId, namaProgram) {
   const modalJudul = document.getElementById('modalJudulFolder');
   if (modalJudul) modalJudul.innerText = namaProgram;
@@ -1826,10 +1647,11 @@ async function bukaModalFolderModul(masterId, namaProgram) {
     if (container) {
       container.innerHTML = '';
       files.forEach(f => {
-        let iconClass = "fa-file-pdf text-red-600";
+        let iconClass = "fa-folder-closed text-amber-600";
         const fileTypeLower = (f.file_type || '').toLowerCase();
-        if (fileTypeLower === 'ppt' || fileTypeLower === 'pptx') iconClass = "fa-file-powerpoint text-amber-600";
-        else if (fileTypeLower === 'rar' || fileTypeLower === 'zip') iconClass = "fa-file-zipper text-indigo-600";
+        if (fileTypeLower === 'pdf') iconClass = "fa-file-pdf text-red-600";
+        else if (fileTypeLower === 'ppt' || fileTypeLower === 'pptx') iconClass = "fa-file-powerpoint text-amber-600";
+        else if (fileTypeLower === 'zip' || fileTypeLower === 'rar') iconClass = "fa-file-zipper text-indigo-600";
 
         container.innerHTML += `
           <div class="flex items-center justify-between p-3 bg-slate-50 hover:bg-emerald-50 rounded-xl text-xs transition border border-slate-200">
@@ -1837,11 +1659,11 @@ async function bukaModalFolderModul(masterId, namaProgram) {
               <i class="fa-solid ${iconClass} text-xl"></i>
               <div class="truncate">
                 <p class="font-bold text-slate-800 truncate">${f.file_name}</p>
-                <span class="text-[9px] text-slate-400 uppercase font-semibold">Tipe File: ${f.file_type || 'PDF'}</span>
+                <span class="text-[9px] text-slate-400 uppercase font-semibold">Tipe: ${f.file_type || 'DRIVE'}</span>
               </div>
             </div>
-            <a href="${f.file_url}" target="_blank" download class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition flex items-center gap-1.5 shadow-sm">
-              <i class="fa-solid fa-download"></i> Unduh
+            <a href="${f.file_url}" target="_blank" rel="noopener noreferrer" class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition flex items-center gap-1.5 shadow-sm">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka / Unduh
             </a>
           </div>
         `;
@@ -1899,17 +1721,17 @@ async function loadDatabaseModulAdmin() {
           <td class="p-3 font-semibold text-slate-700">${namaProgram}</td>
           <td class="p-3 font-medium text-slate-800">${f.file_name}</td>
           <td class="p-3 text-center font-bold uppercase text-[10px] text-emerald-800">
-            <span class="bg-emerald-100 px-2 py-0.5 rounded-full">${f.file_type || 'PDF'}</span>
+            <span class="bg-emerald-100 px-2 py-0.5 rounded-full">${f.file_type || 'DRIVE'}</span>
           </td>
           <td class="p-3 text-center">
             <div class="flex items-center justify-center gap-1.5">
-              <a href="${f.file_url}" target="_blank" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10px] px-2 py-1 rounded-lg font-bold transition" title="Buka / Preview File">
-                <i class="fa-solid fa-eye"></i>
+              <a href="${f.file_url}" target="_blank" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10px] px-2 py-1 rounded-lg font-bold transition" title="Buka Link Drive">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
               </a>
-              <button onclick="editNamaModulAdmin(${f.id}, '${f.file_name.replace(/'/g, "\\'")}')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-[10px] px-2 py-1 rounded-lg font-bold border border-amber-300 transition" title="Ganti Nama File">
+              <button onclick="editNamaModulAdmin(${f.id}, '${f.file_name.replace(/'/g, "\\'")}')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-[10px] px-2 py-1 rounded-lg font-bold border border-amber-300 transition" title="Ganti Nama Materi">
                 <i class="fa-solid fa-pen-to-square"></i> Edit
               </button>
-              <button onclick="hapusModulAdmin(${f.id}, '${f.file_name.replace(/'/g, "\\'")}')" class="bg-red-100 hover:bg-red-200 text-red-800 text-[10px] px-2 py-1 rounded-lg font-bold border border-red-300 transition" title="Hapus File Modul">
+              <button onclick="hapusModulAdmin(${f.id}, '${f.file_name.replace(/'/g, "\\'")}')" class="bg-red-100 hover:bg-red-200 text-red-800 text-[10px] px-2 py-1 rounded-lg font-bold border border-red-300 transition" title="Hapus Modul">
                 <i class="fa-solid fa-trash"></i> Hapus
               </button>
             </div>
@@ -2222,7 +2044,6 @@ async function mulaiTryOutPeserta(masterId, tryoutCode) {
     return alert("Soal Try Out belum tersedia!");
   }
 
-  // ACAK URUTAN SOAL
   currentExamQuestions = [...questions].sort(() => Math.random() - 0.5);
   activeExamCode = tryoutCode;
   activeExamMasterId = masterId;
@@ -2252,7 +2073,7 @@ async function mulaiTryOutPeserta(masterId, tryoutCode) {
   `).join('');
 
   document.getElementById('modalPengerjaanTryOut').classList.remove('hidden');
-  startExamTimer(60 * 60); // 60 menit
+  startExamTimer(60 * 60);
 }
 
 function startExamTimer(seconds) {
@@ -2416,7 +2237,7 @@ window.tutupModalEditPeserta = tutupModalEditPeserta;
 window.simpanPerubahanPeserta = simpanPerubahanPeserta;
 window.loadKatalogModulPeserta = loadKatalogModulPeserta;
 window.peringatanModulTerkunci = peringatanModulTerkunci;
-window.uploadMateriTrainingAdmin = uploadMateriTrainingAdmin;
+window.simpanLinkMateriAdmin = simpanLinkMateriAdmin;
 window.bukaModalFolderModul = bukaModalFolderModul;
 window.tutupModalFolderModul = tutupModalFolderModul;
 window.loadDatabaseModulAdmin = loadDatabaseModulAdmin;
