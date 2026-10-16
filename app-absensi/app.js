@@ -182,6 +182,10 @@ async function prosesLogin() {
     }
 
     currentSessionUser = data;
+    
+    // SIMPAN SESI KE LOCALSTORAGE
+    localStorage.setItem('mmd_user_session', JSON.stringify(data));
+
     document.getElementById('sectionLogin').classList.add('hidden');
     document.getElementById('btnLogout').classList.remove('hidden');
 
@@ -207,7 +211,37 @@ async function prosesLogin() {
 }
 
 function logout() {
+  localStorage.removeItem('mmd_user_session'); // Hapus sesi tersimpan
   location.reload();
+}
+
+function checkAutoLogin() {
+  const savedSession = localStorage.getItem('mmd_user_session');
+  if (!savedSession) return;
+
+  try {
+    const user = JSON.parse(savedSession);
+    currentSessionUser = user;
+
+    document.getElementById('sectionLogin').classList.add('hidden');
+    document.getElementById('btnLogout').classList.remove('hidden');
+
+    if (user.role === 'admin') {
+      document.getElementById('sectionAdmin').classList.remove('hidden');
+      loadBatchOptions();
+      renderCalendar();
+      onSKPFilterChange();
+      loadDropdownMasterModulAdmin();
+      loadDropdownMasterSoalAdmin();
+    } else {
+      document.getElementById('sectionPeserta').classList.remove('hidden');
+      renderPesertaData(user);
+      startCamera();
+    }
+  } catch (e) {
+    console.error("Gagal memuat sesi tersimpan:", e);
+    localStorage.removeItem('mmd_user_session');
+  }
 }
 
 function switchTabPeserta(tabName) {
@@ -2216,6 +2250,13 @@ async function loadRekapTryOutAdmin() {
     </tr>
   `).join('');
 }
+
+// ----------------------------------------------------
+// EVENT LISTENER LOAD PAGE (AUTO LOGIN)
+// ----------------------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+  checkAutoLogin();
+});
 
 // ----------------------------------------------------
 // EKSPOR FUNGSI KE SCOPE GLOBAL
