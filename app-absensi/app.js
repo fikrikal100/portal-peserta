@@ -1848,16 +1848,19 @@ function loadDropdownMasterSoalAdmin() {
   const selectForm = document.getElementById('adminSelectSoalMaster');
   const selectFilter = document.getElementById('adminFilterSoalMaster');
   const selectJadwal = document.getElementById('adminSelectMasterJadwal');
+  const selectImportMaster = document.getElementById('importSelectSoalMaster');
 
   if (selectForm) selectForm.innerHTML = '<option value="">-- Pilih Program Training --</option>';
   if (selectFilter) selectFilter.innerHTML = '<option value="">-- Semua Program Training --</option>';
   if (selectJadwal) selectJadwal.innerHTML = '<option value="">-- Pilih Program Training --</option>';
+  if (selectImportMaster) selectImportMaster.innerHTML = '<option value="">-- Pilih Program Training --</option>';
 
   KATALOG_MODUL_MASTER.forEach(m => {
     const optHtml = `<option value="${m.master_id}">${m.nama_program}</option>`;
     if (selectForm) selectForm.innerHTML += optHtml;
     if (selectFilter) selectFilter.innerHTML += optHtml;
     if (selectJadwal) selectJadwal.innerHTML += optHtml;
+    if (selectImportMaster) selectImportMaster.innerHTML += optHtml;
   });
 }
 
@@ -1918,8 +1921,10 @@ async function simpanSoalTryOutAdmin() {
   }
 }
 
-// IMPORT EXCEL SOAL MASSAL (DENGAN KOLOM IMAGE_URL)
+// 1. IMPORT EXCEL SOAL MASSAL (DENGAN DROPDOWN PROGRAM & KODE TRYOUT OK)
 async function importExcelSoalTryOut() {
+  const masterId = document.getElementById('importSelectSoalMaster')?.value || '';
+  const tryoutCode = document.getElementById('importInputSoalTryoutCode')?.value.trim().toUpperCase() || '';
   const fileInput = document.getElementById('fileExcelSoalAdmin');
   const file = fileInput ? fileInput.files[0] : null;
 
@@ -1935,19 +1940,26 @@ async function importExcelSoalTryOut() {
 
       if (!rows || rows.length === 0) return alert("File Excel kosong!");
 
-      const questionsToInsert = rows.map(r => ({
-        master_id: String(r.master_id || r.MasterID || "").trim(),
-        tryout_code: String(r.tryout_code || r.KodeTryOut || "").trim().toUpperCase(),
-        soal: String(r.soal || r.Pertanyaan || "").trim(),
-        image_url: r.image_url || r.GambarURL || null,
-        opsi_a: String(r.opsi_a || r.OpsiA || "").trim(),
-        opsi_b: String(r.opsi_b || r.OpsiB || "").trim(),
-        opsi_c: String(r.opsi_c || r.OpsiC || "").trim(),
-        opsi_d: String(r.opsi_d || r.OpsiD || "").trim(),
-        kunci: String(r.kunci || r.KunciJawaban || "").trim().toLowerCase()
-      })).filter(q => q.master_id && q.tryout_code && q.soal);
+      const questionsToInsert = rows.map(r => {
+        const rowMasterId = masterId || String(r.master_id || r.MasterID || "").trim();
+        const rowTryoutCode = tryoutCode || String(r.tryout_code || r.KodeTryOut || "").trim().toUpperCase();
 
-      if (questionsToInsert.length === 0) return alert("Format kolom Excel tidak sesuai!");
+        return {
+          master_id: rowMasterId,
+          tryout_code: rowTryoutCode,
+          soal: String(r.soal || r.Pertanyaan || "").trim(),
+          image_url: r.image_url || r.GambarURL || null,
+          opsi_a: String(r.opsi_a || r.OpsiA || "").trim(),
+          opsi_b: String(r.opsi_b || r.OpsiB || "").trim(),
+          opsi_c: String(r.opsi_c || r.OpsiC || "").trim(),
+          opsi_d: String(r.opsi_d || r.OpsiD || "").trim(),
+          kunci: String(r.kunci || r.KunciJawaban || "").trim().toLowerCase()
+        };
+      }).filter(q => q.master_id && q.tryout_code && q.soal);
+
+      if (questionsToInsert.length === 0) {
+        return alert("Data soal tidak valid! Pastikan Program Training & Kode Tryout sudah dipilih atau diisi pada kolom Excel.");
+      }
 
       const { error } = await supabaseClient.from('tryout_questions').insert(questionsToInsert);
       if (error) throw error;
@@ -2346,34 +2358,113 @@ async function loadRiwayatTryOutProfil() {
   `).join('');
 }
 
+// 2. REKAPITULASI NILAI TRY OUT ADMIN (DENGAN TRIPLE FILTER OK)
 async function loadRekapTryOutAdmin() {
   const tbody = document.getElementById('tbodyRekapTryOutAdmin');
   if (!tbody) return;
 
-  const { data: results } = await supabaseClient
-    .from('tryout_results')
-    .select('*')
-    .order('created_at', { ascending: false });
+  const filterMaster = document.getElementById('rekapFilterMaster')?.value || '';
+  const filterBatch = document.getElementById('rekapFilterBatch')?.value || '';
+  const filterCode = document.getElementById('rekapFilterCode')?.value || '';
 
-  if (!results || results.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400">Belum ada peserta yang menyelesaikan Try Out.</td></tr>';
-    return;
+  tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400">Memuat rekapitulasi nilai peserta...</td></tr>';
+
+  try {
+    // Ambil data hasil tryout gabung dengan profil pengguna
+    let { data: results, error } = await supabaseClient
+      .from('tryout_results')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error || !results || results.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400">Belum ada peserta yang menyelesaikan Try Out.</td></tr>';
+      return;
+    }
+
+    // Isikan Opsi Dropdown Filter jika belum terisi
+    populateRekapFilters(results);
+
+    // Filter secara Dinamis di Sisi JS
+    const { data: usersData } = await supabaseClient.from('users').select('username, nama, perusahaan, training_id');
+
+    let filteredResults = results.filter(r => {
+      const matchMaster = !filterMaster || r.master_id === filterMaster;
+      const matchCode = !filterCode || r.tryout_code === filterCode;
+
+      let matchBatch = true;
+      if (filterBatch) {
+        const uInfo = (usersData || []).find(u => u.username === r.username);
+        matchBatch = uInfo && uInfo.training_id === filterBatch;
+      }
+
+      return matchMaster && matchCode && matchBatch;
+    });
+
+    if (filteredResults.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400 italic">Tidak ada rekap nilai yang sesuai dengan filter.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filteredResults.map((r, idx) => {
+      const uInfo = (usersData || []).find(u => u.username === r.username);
+      const namaPeserta = uInfo ? uInfo.nama : r.username;
+      const perusahaan = uInfo ? uInfo.perusahaan : '-';
+
+      return `
+        <tr class="border-b border-slate-100 text-xs hover:bg-slate-50 transition">
+          <td class="p-3 text-center font-bold text-slate-400">${idx + 1}</td>
+          <td class="p-3">
+            <p class="font-bold text-slate-800">${namaPeserta}</p>
+            <p class="text-[10px] text-slate-400">${perusahaan}</p>
+          </td>
+          <td class="p-3">
+            <span class="font-bold text-emerald-800">[${r.master_id}]</span> ${r.tryout_code}
+          </td>
+          <td class="p-3 text-center font-semibold text-slate-700">${r.total_benar} / ${r.total_soal}</td>
+          <td class="p-3 text-center font-extrabold text-sm ${r.score >= 65 ? 'text-emerald-700' : 'text-red-600'}">${r.score}</td>
+          <td class="p-3 text-center">
+            <span class="${r.status === 'Lulus' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'} px-2 py-0.5 rounded-full text-[10px] font-bold">
+              ${r.status}
+            </span>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-red-500">Gagal memuat rekapitulasi nilai.</td></tr>';
+  }
+}
+
+// FUNGSI POPULATE AUTO UNTUK DROPDOWN FILTER REKAP
+async function populateRekapFilters(results) {
+  const selectMaster = document.getElementById('rekapFilterMaster');
+  const selectBatch = document.getElementById('rekapFilterBatch');
+  const selectCode = document.getElementById('rekapFilterCode');
+
+  if (selectMaster && selectMaster.options.length <= 1) {
+    const masters = [...new Set(results.map(r => r.master_id))];
+    masters.forEach(m => {
+      const progObj = KATALOG_MODUL_MASTER.find(k => k.master_id === m);
+      selectMaster.innerHTML += `<option value="${m}">${progObj ? progObj.nama_program : m}</option>`;
+    });
   }
 
-  tbody.innerHTML = results.map((r, idx) => `
-    <tr class="border-b border-slate-100 text-xs">
-      <td class="p-3 text-center font-bold text-slate-400">${idx + 1}</td>
-      <td class="p-3 font-bold text-slate-800">${r.username}</td>
-      <td class="p-3">${r.master_id} - ${r.tryout_code}</td>
-      <td class="p-3 text-center">${r.total_benar} / ${r.total_soal}</td>
-      <td class="p-3 text-center font-bold text-emerald-800 text-sm">${r.score}</td>
-      <td class="p-3 text-center">
-        <span class="${r.status === 'Lulus' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'} px-2 py-0.5 rounded-full text-[10px] font-bold">
-          ${r.status}
-        </span>
-      </td>
-    </tr>
-  `).join('');
+  if (selectCode && selectCode.options.length <= 1) {
+    const codes = [...new Set(results.map(r => r.tryout_code))];
+    codes.forEach(c => {
+      selectCode.innerHTML += `<option value="${c}">${c}</option>`;
+    });
+  }
+
+  if (selectBatch && selectBatch.options.length <= 1) {
+    const { data: batches } = await supabaseClient.from('trainings').select('*');
+    if (batches) {
+      sortBatchesDescending([...batches]).forEach(b => {
+        selectBatch.innerHTML += `<option value="${b.id}">${b.judul}</option>`;
+      });
+    }
+  }
 }
 
 // ----------------------------------------------------
@@ -2450,3 +2541,4 @@ window.bukaModalListPaketTryOut = bukaModalListPaketTryOut;
 window.tutupModalListPaketTryOut = tutupModalListPaketTryOut;
 window.mulaiTryOutPeserta = mulaiTryOutPeserta;
 window.submitJawabanTryOutPeserta = submitJawabanTryOutPeserta;
+window.loadRekapTryOutAdmin = loadRekapTryOutAdmin;
