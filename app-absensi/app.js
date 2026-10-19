@@ -2518,15 +2518,18 @@ async function loadRekapTryOutAdmin() {
       .select('*')
       .order('created_at', { ascending: false });
 
+    // 1. ISI DROPDOWN FILTER LEBIH DULU (Tetap jalan meski data hasil tes masih kosong)
+    await populateRekapFilters(results || []);
+
+    // 2. CEK JIKA BELUM ADA DATA HASIL TES
     if (error || !results || results.length === 0) {
       tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400">Belum ada peserta yang menyelesaikan Try Out.</td></tr>';
       return;
     }
 
-    populateRekapFilters(results);
-
     const { data: usersData } = await supabaseClient.from('users').select('username, nama, perusahaan, training_id');
 
+    // 3. FILTER DATA BERDASARKAN SELEKSI ADMIN
     let filteredResults = results.filter(r => {
       const matchMaster = !filterMaster || r.master_id === filterMaster;
       const matchCode = !filterCode || r.tryout_code === filterCode;
@@ -2545,6 +2548,7 @@ async function loadRekapTryOutAdmin() {
       return;
     }
 
+    // 4. RENDER BARIS TABEL
     tbody.innerHTML = filteredResults.map((r, idx) => {
       const uInfo = (usersData || []).find(u => u.username === r.username);
       const namaPeserta = uInfo ? uInfo.nama : r.username;
@@ -2577,26 +2581,27 @@ async function loadRekapTryOutAdmin() {
 }
 
 // FUNGSI POPULATE AUTO UNTUK DROPDOWN FILTER REKAP
-async function populateRekapFilters(results) {
+async function populateRekapFilters(results = []) {
   const selectMaster = document.getElementById('rekapFilterMaster');
   const selectBatch = document.getElementById('rekapFilterBatch');
   const selectCode = document.getElementById('rekapFilterCode');
 
+  // 1. Opsi Program Training selalu diisi dari KATALOG_MODUL_MASTER
   if (selectMaster && selectMaster.options.length <= 1) {
-    const masters = [...new Set(results.map(r => r.master_id))];
-    masters.forEach(m => {
-      const progObj = KATALOG_MODUL_MASTER.find(k => k.master_id === m);
-      selectMaster.innerHTML += `<option value="${m}">${progObj ? progObj.nama_program : m}</option>`;
+    KATALOG_MODUL_MASTER.forEach(m => {
+      selectMaster.innerHTML += `<option value="${m.master_id}">${m.nama_program}</option>`;
     });
   }
 
-  if (selectCode && selectCode.options.length <= 1) {
+  // 2. Opsi Kode Try Out diisi dari hasil yang ada
+  if (selectCode && selectCode.options.length <= 1 && results.length > 0) {
     const codes = [...new Set(results.map(r => r.tryout_code))];
     codes.forEach(c => {
       selectCode.innerHTML += `<option value="${c}">${c}</option>`;
     });
   }
 
+  // 3. Opsi Batch Peserta diisi dari tabel trainings
   if (selectBatch && selectBatch.options.length <= 1) {
     const { data: batches } = await supabaseClient.from('trainings').select('*');
     if (batches) {
