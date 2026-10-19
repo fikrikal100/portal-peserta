@@ -115,6 +115,18 @@ let loadedNationalHolidays = {
 // ----------------------------------------------------
 // HELPER FUNCTIONS
 // ----------------------------------------------------
+function fixImageUrl(url) {
+  if (!url) return null;
+  let cleanUrl = url.trim();
+  if (cleanUrl.includes('drive.google.com') && cleanUrl.includes('/file/d/')) {
+    const matches = cleanUrl.match(/\/file\/d\/([^\/]+)/);
+    if (matches && matches[1]) {
+      return `https://drive.google.com/uc?export=view&id=${matches[1]}`;
+    }
+  }
+  return cleanUrl;
+}
+
 function cleanStringForMatch(str) {
   if (!str) return '';
   return str.toString().toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -1864,27 +1876,34 @@ function loadDropdownMasterSoalAdmin() {
   });
 }
 
+// SIMPAN SOAL ADMIN (KUNCI DIKONVERSI KE HURUF "a", "b", "c", atau "d")
 async function simpanSoalTryOutAdmin() {
   const editId = document.getElementById('adminSoalEditId').value;
   const masterId = document.getElementById('adminSelectSoalMaster').value;
   const tryoutCode = document.getElementById('adminInputSoalTryOutCode').value.trim();
   const soal = document.getElementById('adminTextareaSoal').value.trim();
-  const imageUrl = document.getElementById('adminInputSoalImageUrl')?.value.trim() || null;
+  const imageUrlRaw = document.getElementById('adminInputSoalImageUrl')?.value.trim() || null;
   const opsiA = document.getElementById('adminInputOpsiA').value.trim();
   const opsiB = document.getElementById('adminInputOpsiB').value.trim();
   const opsiC = document.getElementById('adminInputOpsiC').value.trim();
   const opsiD = document.getElementById('adminInputOpsiD').value.trim();
-  const kunci = document.getElementById('adminSelectKunciSoal').value;
+  let kunci = document.getElementById('adminSelectKunciSoal').value.trim().toLowerCase();
 
-  if (!masterId || !tryoutCode || !soal || !opsiA || !opsiB || !opsiC || !opsiD) {
-    return alert("Harap lengkapi semua bidang isian soal dan opsi jawaban!");
+  if (!masterId || !tryoutCode || !soal || !opsiA || !opsiB || !opsiC || !opsiD || !kunci) {
+    return alert("Harap lengkapi semua bidang isian soal, opsi jawaban, dan kunci jawaban!");
   }
+
+  // Konversi otomatis jika admin mengisi teks jawaban penuh
+  if (kunci === opsiA.toLowerCase()) kunci = 'a';
+  else if (kunci === opsiB.toLowerCase()) kunci = 'b';
+  else if (kunci === opsiC.toLowerCase()) kunci = 'c';
+  else if (kunci === opsiD.toLowerCase()) kunci = 'd';
 
   const payload = {
     master_id: masterId,
     tryout_code: tryoutCode.toUpperCase(),
     soal: soal,
-    image_url: imageUrl,
+    image_url: fixImageUrl(imageUrlRaw),
     opsi_a: opsiA,
     opsi_b: opsiB,
     opsi_c: opsiC,
@@ -1944,16 +1963,27 @@ async function importExcelSoalTryOut() {
         const rowMasterId = masterId || String(r.master_id || r.MasterID || "").trim();
         const rowTryoutCode = tryoutCode || String(r.tryout_code || r.KodeTryOut || "").trim().toUpperCase();
 
+        let rowKunci = String(r.kunci || r.KunciJawaban || "").trim().toLowerCase();
+        const oA = String(r.opsi_a || r.OpsiA || "").trim();
+        const oB = String(r.opsi_b || r.OpsiB || "").trim();
+        const oC = String(r.opsi_c || r.OpsiC || "").trim();
+        const oD = String(r.opsi_d || r.OpsiD || "").trim();
+
+        if (rowKunci === oA.toLowerCase()) rowKunci = 'a';
+        else if (rowKunci === oB.toLowerCase()) rowKunci = 'b';
+        else if (rowKunci === oC.toLowerCase()) rowKunci = 'c';
+        else if (rowKunci === oD.toLowerCase()) rowKunci = 'd';
+
         return {
           master_id: rowMasterId,
           tryout_code: rowTryoutCode,
           soal: String(r.soal || r.Pertanyaan || "").trim(),
-          image_url: r.image_url || r.GambarURL || null,
-          opsi_a: String(r.opsi_a || r.OpsiA || "").trim(),
-          opsi_b: String(r.opsi_b || r.OpsiB || "").trim(),
-          opsi_c: String(r.opsi_c || r.OpsiC || "").trim(),
-          opsi_d: String(r.opsi_d || r.OpsiD || "").trim(),
-          kunci: String(r.kunci || r.KunciJawaban || "").trim().toLowerCase()
+          image_url: fixImageUrl(r.image_url || r.GambarURL || null),
+          opsi_a: oA,
+          opsi_b: oB,
+          opsi_c: oC,
+          opsi_d: oD,
+          kunci: rowKunci
         };
       }).filter(q => q.master_id && q.tryout_code && q.soal);
 
@@ -2016,12 +2046,13 @@ function batalEditSoalAdmin() {
   document.getElementById('btnBatalEditSoal').classList.add('hidden');
 }
 
+// DISPLAY BANK SOAL ADMIN (GROUPING PER PAKET / FOLDER)
 async function loadDatabaseSoalAdmin() {
-  const tbody = document.getElementById('tbodyDatabaseSoalAdmin');
+  const container = document.getElementById('tbodyDatabaseSoalAdmin');
   const filterMaster = document.getElementById('adminFilterSoalMaster')?.value;
 
-  if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-slate-400">Memuat bank soal...</td></tr>';
+  if (!container) return;
+  container.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-slate-400">Memuat bank soal...</td></tr>';
 
   try {
     let query = supabaseClient.from('tryout_questions').select('*').order('created_at', { ascending: false });
@@ -2029,41 +2060,65 @@ async function loadDatabaseSoalAdmin() {
 
     const { data: listSoal, error } = await query;
     if (error || !listSoal || listSoal.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-slate-400 italic">Belum ada soal terdaftar.</td></tr>';
+      container.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-slate-400 italic">Belum ada paket soal terdaftar.</td></tr>';
       return;
     }
 
-    tbody.innerHTML = '';
-    listSoal.forEach((s, idx) => {
-      const progObj = KATALOG_MODUL_MASTER.find(m => m.master_id === s.master_id);
-      const namaProg = progObj ? progObj.nama_program : s.master_id;
-      const soalJson = JSON.stringify(s).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+    // Kelompokkan Soal Berdasarkan Paket (master_id + tryout_code)
+    const groupedPackages = {};
+    listSoal.forEach(s => {
+      const pkgKey = `${s.master_id}___${s.tryout_code}`;
+      if (!groupedPackages[pkgKey]) {
+        groupedPackages[pkgKey] = {
+          master_id: s.master_id,
+          tryout_code: s.tryout_code,
+          questions: []
+        };
+      }
+      groupedPackages[pkgKey].questions.push(s);
+    });
 
-      tbody.innerHTML += `
-        <tr class="hover:bg-slate-50 border-b border-slate-100 text-xs">
-          <td class="p-3 text-center font-bold text-slate-400">${idx + 1}</td>
+    container.innerHTML = '';
+    let pIdx = 1;
+
+    for (const key in groupedPackages) {
+      const pkg = groupedPackages[key];
+      const progObj = KATALOG_MODUL_MASTER.find(m => m.master_id === pkg.master_id);
+      const namaProg = progObj ? progObj.nama_program : pkg.master_id;
+
+      container.innerHTML += `
+        <tr class="hover:bg-emerald-50/50 border-b border-slate-200 transition">
+          <td class="p-3 text-center font-bold text-slate-400">${pIdx++}</td>
           <td class="p-3">
-            <span class="font-bold text-slate-800">${namaProg}</span><br>
-            <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${s.tryout_code}</span>
+            <span class="font-bold text-slate-800">${namaProg}</span>
           </td>
-          <td class="p-3 text-slate-700 max-w-xs truncate">${s.soal}</td>
-          <td class="p-3 text-center font-bold uppercase text-emerald-700">${s.kunci}</td>
+          <td class="p-3">
+            <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-lg border border-emerald-300">
+              <i class="fa-solid fa-folder-closed mr-1"></i> Paket ${pkg.tryout_code}
+            </span>
+          </td>
+          <td class="p-3 text-center font-bold text-slate-700">
+            ${pkg.questions.length} Soal
+          </td>
           <td class="p-3 text-center">
-            <div class="flex items-center justify-center gap-1">
-              <button onclick='persiapkanEditSoalAdmin(${soalJson})' class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-[10px] px-2 py-1 rounded-lg font-bold transition">
-                <i class="fa-solid fa-pen"></i> Edit
-              </button>
-              <button onclick="hapusSoalAdmin(${s.id})" class="bg-red-100 hover:bg-red-200 text-red-800 text-[10px] px-2 py-1 rounded-lg font-bold transition">
-                <i class="fa-solid fa-trash"></i> Hapus
-              </button>
-            </div>
+            <button onclick="bukaModalDetailPaketSoalAdmin('${pkg.master_id}', '${pkg.tryout_code}')" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition shadow flex items-center gap-1 mx-auto">
+              <i class="fa-solid fa-folder-open"></i> Kelola ${pkg.questions.length} Soal
+            </button>
           </td>
         </tr>
       `;
-    });
+    }
+
   } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500">Gagal memuat bank soal.</td></tr>';
+    container.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500">Gagal memuat bank soal.</td></tr>';
   }
+}
+
+// FUNGSI PENDUKUNG UNTUK MEMBUKA DETAIL SOAL DI DALAM PAKET ADMIN
+async function bukaModalDetailPaketSoalAdmin(masterId, tryoutCode) {
+  const filterMaster = document.getElementById('adminFilterSoalMaster');
+  if (filterMaster) filterMaster.value = masterId;
+  alert(`📂 Membuka Paket Soal: ${masterId} - ${tryoutCode}`);
 }
 
 function persiapkanEditSoalAdmin(s) {
@@ -2109,7 +2164,6 @@ async function loadFolderTryOutPeserta() {
 
     const listHistoriUser = Array.from(setHistoriTraining);
 
-    // Filter KATALOG_MODUL_MASTER: Hanya ambil modul yang COCOK dengan pelatihan peserta
     const modulPeserta = KATALOG_MODUL_MASTER.filter(m => {
       return listHistoriUser.some(tId => {
         const cleanTId = cleanStringForMatch(tId);
@@ -2242,8 +2296,9 @@ async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
   
   const container = document.getElementById('containerSoalTryOutBody');
   container.innerHTML = currentExamQuestions.map((q, idx) => {
-    const imgHtml = q.image_url 
-      ? `<img src="${q.image_url}" class="max-h-60 rounded-xl border border-slate-200 my-2 object-contain">` 
+    const fixedImg = fixImageUrl(q.image_url);
+    const imgHtml = fixedImg 
+      ? `<div class="my-2"><img src="${fixedImg}" alt="Gambar Soal ${idx+1}" class="max-h-64 rounded-xl border border-slate-200 object-contain shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x200?text=Gambar+Gagal+Dimuat';"></div>` 
       : '';
 
     return `
@@ -2300,8 +2355,20 @@ async function submitJawabanTryOutPeserta() {
 
   currentExamQuestions.forEach(q => {
     const selected = document.querySelector(`input[name="soal_${q.id}"]:checked`);
-    if (selected && selected.value === q.kunci) {
-      totalBenar++;
+    if (selected) {
+      const userAns = selected.value.toLowerCase().trim();
+      const kunciLower = (q.kunci || '').toLowerCase().trim();
+
+      const textAnsMap = {
+        'a': (q.opsi_a || '').toLowerCase().trim(),
+        'b': (q.opsi_b || '').toLowerCase().trim(),
+        'c': (q.opsi_c || '').toLowerCase().trim(),
+        'd': (q.opsi_d || '').toLowerCase().trim()
+      };
+
+      if (userAns === kunciLower || textAnsMap[userAns] === kunciLower) {
+        totalBenar++;
+      }
     }
   });
 
@@ -2320,11 +2387,15 @@ async function submitJawabanTryOutPeserta() {
     status: status
   };
 
-  await supabaseClient.from('tryout_results').insert([payload]);
+  const { error } = await supabaseClient.from('tryout_results').insert([payload]);
 
-  alert(`📊 HASIL TRY OUT BERHASIL DICATAT!\n\nJumlah Benar: ${totalBenar} dari ${totalSoal} Soal\nNilai Akhir: ${score}\nStatus: ${status.toUpperCase()}`);
+  if (error) {
+    alert("⚠️ Gagal menyimpan rekap hasil ke database: " + error.message + "\n(Pastikan RLS pada tabel tryout_results sudah diizinkan).");
+  } else {
+    alert(`📊 HASIL TRY OUT BERHASIL DICATAT!\n\nJumlah Benar: ${totalBenar} dari ${totalSoal} Soal\nNilai Akhir: ${score}\nStatus: ${status.toUpperCase()}`);
+  }
+
   document.getElementById('modalPengerjaanTryOut').classList.add('hidden');
-  
   loadRiwayatTryOutProfil();
 }
 
@@ -2370,7 +2441,6 @@ async function loadRekapTryOutAdmin() {
   tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400">Memuat rekapitulasi nilai peserta...</td></tr>';
 
   try {
-    // Ambil data hasil tryout gabung dengan profil pengguna
     let { data: results, error } = await supabaseClient
       .from('tryout_results')
       .select('*')
@@ -2381,10 +2451,8 @@ async function loadRekapTryOutAdmin() {
       return;
     }
 
-    // Isikan Opsi Dropdown Filter jika belum terisi
     populateRekapFilters(results);
 
-    // Filter secara Dinamis di Sisi JS
     const { data: usersData } = await supabaseClient.from('users').select('username, nama, perusahaan, training_id');
 
     let filteredResults = results.filter(r => {
@@ -2534,6 +2602,7 @@ window.importExcelSoalTryOut = importExcelSoalTryOut;
 window.simpanJadwalTryOutAdmin = simpanJadwalTryOutAdmin;
 window.batalEditSoalAdmin = batalEditSoalAdmin;
 window.loadDatabaseSoalAdmin = loadDatabaseSoalAdmin;
+window.bukaModalDetailPaketSoalAdmin = bukaModalDetailPaketSoalAdmin;
 window.persiapkanEditSoalAdmin = persiapkanEditSoalAdmin;
 window.hapusSoalAdmin = hapusSoalAdmin;
 window.loadFolderTryOutPeserta = loadFolderTryOutPeserta;
