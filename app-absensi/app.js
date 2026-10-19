@@ -1285,6 +1285,7 @@ async function onSKPFilterChange() {
 async function loadDatabasePeserta() {
   const selectSKP = document.getElementById('dbFilterSKP');
   const selectBatch = document.getElementById('dbFilterBatch');
+  const searchQuery = document.getElementById('dbSearchPeserta')?.value.trim().toLowerCase() || '';
   
   const selectedSKP = selectSKP ? selectSKP.value : '';
   const selectedBatch = selectBatch ? selectBatch.value : '';
@@ -1307,38 +1308,49 @@ async function loadDatabasePeserta() {
   }
 
   let resultList = pesertaList;
+
+  // Filter berdasarkan SKP/Master Training jika batch tidak dipilih
   if (selectedSKP && !selectedBatch) {
-    resultList = pesertaList.filter(p => {
+    resultList = resultList.filter(p => {
       const masterId = p.trainings?.master_training_id || '';
       const tId = p.training_id || '';
       return masterId === selectedSKP || tId.startsWith(selectedSKP);
     });
   }
 
+  // Filter berdasarkan Input Search (Nama, NIK, Perusahaan, Username)
+  if (searchQuery) {
+    resultList = resultList.filter(p => {
+      const nama = (p.nama || '').toLowerCase();
+      const nik = (p.nik || '').toLowerCase();
+      const perusahaan = (p.perusahaan || '').toLowerCase();
+      const user = (p.username || '').toLowerCase();
+      return nama.includes(searchQuery) || nik.includes(searchQuery) || perusahaan.includes(searchQuery) || user.includes(searchQuery);
+    });
+  }
+
   if (resultList.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-slate-400 italic">Tidak ada peserta untuk program ini.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-slate-400 italic">Peserta tidak ditemukan.</td></tr>';
     return;
   }
 
-  // Ambil data log absensi
-  const { data: allLogs } = await supabaseClient.from('log_absensi').select('*');
+  // Ambil data log absensi & sertifikat untuk kompilasi histori training
+  const { data: allLogs } = await supabaseClient.from('log_absensi').select('username, training_id, tanggal, sesi');
+  const { data: allCerts } = await supabaseClient.from('certificates').select('username, training_id');
 
   tbody.innerHTML = '';
   resultList.forEach((p, idx) => {
     const training = p.trainings;
     let listTanggal = training?.jadwal_tanggal || [];
-    const totalSesiWajib = listTanggal.length * 2; // Misal 5 hari x 2 = 10 sesi
+    const totalSesiWajib = listTanggal.length * 2;
 
-    // =========================================================
-    // PERBAIKAN LOGIKA HITUNG SESI UNIK SESUAI BATCH AKTIFF
-    // =========================================================
+    // 1. Hitung Sesi Unik Absensi
     const userLogs = (allLogs || []).filter(l => 
       l.username === p.username && 
       (l.training_id === p.training_id || !l.training_id) &&
-      listTanggal.includes(l.tanggal) // Hanya hitung log yang masuk tanggal jadwal pelatihan
+      listTanggal.includes(l.tanggal)
     );
 
-    // Gunakan Set untuk memastikan 1 tanggal + 1 sesi hanya dihitung 1x (mencegah duplikat)
     const uniqueSessions = new Set();
     userLogs.forEach(l => {
       uniqueSessions.add(`${l.tanggal}_sesi${l.sesi}`);
@@ -1360,6 +1372,23 @@ async function loadDatabasePeserta() {
       badgeProgres = `<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold text-[10px]">${persenProgres}% (${totalAbsenHadir}/${totalSesiWajib} Sesi)</span>`;
     }
 
+    // 2. Kompilasi Histori Training Peserta
+    const userTrainingSet = new Set();
+    if (p.training_id) userTrainingSet.add(p.training_id);
+
+    (allLogs || []).forEach(l => {
+      if (l.username === p.username && l.training_id) userTrainingSet.add(l.training_id);
+    });
+
+    (allCerts || []).forEach(c => {
+      if (c.username === p.username && c.training_id) userTrainingSet.add(c.training_id);
+    });
+
+    const listHistori = Array.from(userTrainingSet);
+    const historiBadgesHtml = listHistori.map(t => 
+      `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 text-[9px] font-bold px-1.5 py-0.5 rounded-md inline-block mr-1 mb-1">${t}</span>`
+    ).join('');
+
     const userDataJson = JSON.stringify(p).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
 
     tbody.innerHTML += `
@@ -1375,9 +1404,11 @@ async function loadDatabasePeserta() {
         </td>
         <td class="p-3 font-medium text-slate-700">${p.perusahaan || '-'}</td>
         <td class="p-3">
-          <span class="bg-slate-100 text-slate-700 font-bold text-[10px] px-2 py-1 rounded-md border border-slate-200">
-            ${training?.judul || p.training_id || '-'}
-          </span>
+          <p class="font-bold text-slate-700 text-xs mb-1">${training?.judul || p.training_id || '-'}</p>
+          <div class="mt-1">
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight mb-0.5">Histori Training:</p>
+            ${historiBadgesHtml}
+          </div>
         </td>
         <td class="p-3 text-center">${badgeProgres}</td>
         <td class="p-3 text-center">
