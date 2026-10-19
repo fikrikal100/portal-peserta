@@ -2114,11 +2114,83 @@ async function loadDatabaseSoalAdmin() {
   }
 }
 
-// FUNGSI PENDUKUNG UNTUK MEMBUKA DETAIL SOAL DI DALAM PAKET ADMIN
+// FUNGSI UNTUK MEMBUKA & MERENDER DETAIL SOAL DI DALAM PAKET
 async function bukaModalDetailPaketSoalAdmin(masterId, tryoutCode) {
-  const filterMaster = document.getElementById('adminFilterSoalMaster');
-  if (filterMaster) filterMaster.value = masterId;
-  alert(`📂 Membuka Paket Soal: ${masterId} - ${tryoutCode}`);
+  const container = document.getElementById('tbodyDatabaseSoalAdmin');
+  if (!container) return;
+
+  container.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-slate-400">Memuat butir soal paket ' + tryoutCode + '...</td></tr>';
+
+  try {
+    // Ambil data butir soal spesifik berdasarkan master_id dan tryout_code
+    const { data: listSoal, error } = await supabaseClient
+      .from('tryout_questions')
+      .select('*')
+      .eq('master_id', masterId)
+      .eq('tryout_code', tryoutCode)
+      .order('created_at', { ascending: false });
+
+    if (error || !listSoal || listSoal.length === 0) {
+      container.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center py-4 text-slate-400 italic">
+            Tidak ada soal ditemukan untuk paket ${tryoutCode}. 
+            <button onclick="loadDatabaseSoalAdmin()" class="text-emerald-700 underline font-bold ml-2">Kembali ke Daftar Paket</button>
+          </td>
+        </tr>`;
+      return;
+    }
+
+    // Render header navigasi kembali & baris butir soal
+    const progObj = KATALOG_MODUL_MASTER.find(m => m.master_id === masterId);
+    const namaProg = progObj ? progObj.nama_program : masterId;
+
+    let html = `
+      <tr class="bg-emerald-100/60 border-b border-emerald-200">
+        <td colspan="5" class="p-3">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs text-emerald-900">
+              <i class="fa-solid fa-folder-open mr-1"></i> Detail Soal: ${namaProg} (${tryoutCode})
+            </span>
+            <button onclick="loadDatabaseSoalAdmin()" class="bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] px-3 py-1 rounded-lg font-bold transition shadow">
+              <i class="fa-solid fa-arrow-left mr-1"></i> Kembali ke Daftar Paket
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+
+    listSoal.forEach((s, idx) => {
+      const soalJson = JSON.stringify(s).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+
+      html += `
+        <tr class="hover:bg-slate-50 border-b border-slate-100 text-xs">
+          <td class="p-3 text-center font-bold text-slate-400">${idx + 1}</td>
+          <td class="p-3">
+            <span class="font-bold text-slate-800">${namaProg}</span><br>
+            <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${s.tryout_code}</span>
+          </td>
+          <td class="p-3 text-slate-700 max-w-xs truncate">${s.soal}</td>
+          <td class="p-3 text-center font-bold uppercase text-emerald-700">${s.kunci}</td>
+          <td class="p-3 text-center">
+            <div class="flex items-center justify-center gap-1">
+              <button onclick='persiapkanEditSoalAdmin(${soalJson})' class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-[10px] px-2 py-1 rounded-lg font-bold transition">
+                <i class="fa-solid fa-pen"></i> Edit
+              </button>
+              <button onclick="hapusSoalAdmin(${s.id})" class="bg-red-100 hover:bg-red-200 text-red-800 text-[10px] px-2 py-1 rounded-lg font-bold transition">
+                <i class="fa-solid fa-trash"></i> Hapus
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+
+    container.innerHTML = html;
+
+  } catch (err) {
+    container.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500">Gagal memuat rincian soal.</td></tr>';
+  }
 }
 
 function persiapkanEditSoalAdmin(s) {
