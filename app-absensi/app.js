@@ -1320,16 +1320,31 @@ async function loadDatabasePeserta() {
     return;
   }
 
+  // Ambil data log absensi
   const { data: allLogs } = await supabaseClient.from('log_absensi').select('*');
 
   tbody.innerHTML = '';
   resultList.forEach((p, idx) => {
     const training = p.trainings;
     let listTanggal = training?.jadwal_tanggal || [];
-    const totalSesiWajib = listTanggal.length * 2;
+    const totalSesiWajib = listTanggal.length * 2; // Misal 5 hari x 2 = 10 sesi
 
-    const userLogs = (allLogs || []).filter(l => l.username === p.username);
-    const totalAbsenHadir = userLogs.length;
+    // =========================================================
+    // PERBAIKAN LOGIKA HITUNG SESI UNIK SESUAI BATCH AKTIFF
+    // =========================================================
+    const userLogs = (allLogs || []).filter(l => 
+      l.username === p.username && 
+      (l.training_id === p.training_id || !l.training_id) &&
+      listTanggal.includes(l.tanggal) // Hanya hitung log yang masuk tanggal jadwal pelatihan
+    );
+
+    // Gunakan Set untuk memastikan 1 tanggal + 1 sesi hanya dihitung 1x (mencegah duplikat)
+    const uniqueSessions = new Set();
+    userLogs.forEach(l => {
+      uniqueSessions.add(`${l.tanggal}_sesi${l.sesi}`);
+    });
+
+    const totalAbsenHadir = uniqueSessions.size;
 
     let persenProgres = 0;
     if (totalSesiWajib > 0) {
