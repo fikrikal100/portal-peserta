@@ -512,105 +512,101 @@
 
       </div>
 
-      <!-- CONTAINER TAB 2: DATABASE PESERTA PELATIHAN -->
-      <div id="tabAdminDatabase" class="tab-admin-content hidden space-y-4">
-        <div class="border border-slate-200 p-5 rounded-2xl bg-white space-y-4 shadow-sm">
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3 border-slate-100">
-            <div>
-              <h3 class="font-bold text-sm text-emerald-900 flex items-center gap-2">
-                <i class="fa-solid fa-users-gear text-emerald-700"></i>
-                <span>Database Peserta Pelatihan</span>
-              </h3>
-              <p class="text-[11px] text-slate-500 mt-0.5">Filter peserta berdasarkan Master Training dan Batch Training untuk melihat akun login & progress absensi.</p>
-            </div>
-          </div>
+     <!-- CONTAINER TAB 2: DATABASE PESERTA PELATIHAN -->
+<div id="tabAdminDatabase" class="tab-admin-content hidden space-y-4">
+  <div class="border border-slate-200 p-5 rounded-2xl bg-white space-y-4 shadow-sm">
+    
+    <!-- HEADER TITLE -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3 border-slate-100">
+      <div>
+        <h3 class="font-bold text-sm text-emerald-900 flex items-center gap-2">
+          <i class="fa-solid fa-users-gear text-emerald-700"></i>
+          <span>Database Peserta Pelatihan</span>
+        </h3>
+        <p class="text-[11px] text-slate-500 mt-0.5">Filter & cari peserta berdasarkan Master Training, Batch, atau Nama untuk melihat akun login & progress absensi.</p>
+      </div>
+    </div>
 
-       <!-- FILTER DROPDOWN & SEARCH (3 KOLOM) -->
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
-  <!-- 1. Dropdown Master Training -->
-  <div>
-    <label class="font-bold text-[11px] text-slate-700 block mb-1">Pilih Master Training (SKP & Non SKP)</label>
-    <select id="dbFilterSKP" onchange="onSKPFilterChange()" class="w-full p-2 border rounded-lg bg-white text-xs outline-none focus:ring-1 focus:ring-emerald-500 font-medium text-slate-700">
-      <option value="">-- Semua Master Training --</option>
-      <option value="AK3U">[SKP] Ahli K3 Umum</option>
-      <option value="P3K">[SKP] Petugas P3K</option>
-      <option value="TKBT1">[SKP] TKBT 1</option>
-      <option value="TKBT2">[SKP] TKBT 2</option>
-      <option value="TKPK1">[SKP] TKPK 1</option>
-      <option value="TKPK2">[SKP] TKPK 2</option>
-      <option value="TKPK3">[SKP] TKPK 3</option>
-      <option value="PAA_GONDOLA">[SKP] Gondola</option>
-      <option value="PAA_FORKLIFT">[SKP] Forklift</option>
-      <option value="PAA_ESKAVATOR">[SKP] Eskavator</option>
-      <option value="PAA_GRIDER">[SKP] Grider</option>
-      <option value="LST_TEKNISI">[SKP] Teknisi K3 Listrik</option>
-      <option value="LST_AHLI">[SKP] Ahli K3 Listrik</option>
-      <option value="KST_TEKNISI">[SKP] Teknisi Perancah</option>
-      <option value="KST_SUPERVISI">[SKP] Supervisi Perancah</option>
-      <option value="KST_AHLI_UTAMA">[SKP] Ahli Utama K3 Konstruksi</option>
-      <option value="KST_AHLI_MADYA">[SKP] Ahli Madya K3 Konstruksi</option>
-      <option value="KST_AHLI_MUDA">[SKP] Ahli Muda K3 Konstruksi</option>
-      <option value="ELV_OPERATOR">[SKP] Operator Elevator</option>
-      <option value="ELV_TEKNISI">[SKP] Teknisi Elevator</option>
-      <option value="B3_TEKNISI">[SKP] Teknisi Ruang Terbatas</option>
-      <option value="B3_RESCUE">[SKP] Petugas Rescue Ruang Terbatas</option>
-      <option value="B3_GAS_DETECTOR">[SKP] Petugas Gas Detector</option>
-      <option value="BNSP-AK3U">(Non SKP) AK3U - BNSP</option>
-      <option value="BNSP-TKPK1">(Non SKP) TKPK 1 BNSP</option>
-      <option value="BNSP-TKPK2">(Non SKP) TKPK 2 BNSP</option>
-      <option value="BNSP-TKBT1">(Non SKP) TKBT 1 BNSP</option>
-      <option value="BNSP-TKBT2">(Non SKP) TKBT 2 BNSP</option>
-    </select>
-  </div>
+    <!-- FILTER DROPDOWN & SEARCH (3 KOLOM SEJAJAR) -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+      <!-- 1. Dropdown Master Training -->
+      <div>
+        <label class="font-bold text-[11px] text-slate-700 block mb-1">Pilih Master Training (SKP & Non SKP)</label>
+        <select id="dbFilterSKP" onchange="onSKPFilterChange()" class="w-full p-2 border rounded-lg bg-white text-xs outline-none focus:ring-1 focus:ring-emerald-500 font-medium text-slate-700">
+          <option value="">-- Semua Master Training --</option>
+          <option value="AK3U">[SKP] Ahli K3 Umum</option>
+          <option value="P3K">[SKP] Petugas P3K</option>
+          <option value="TKBT1">[SKP] TKBT 1</option>
+          <option value="TKBT2">[SKP] TKBT 2</option>
+          <option value="TKPK1">[SKP] TKPK 1</option>
+          <option value="TKPK2">[SKP] TKPK 2</option>
+          <option value="TKPK3">[SKP] TKPK 3</option>
+          <option value="PAA_GONDOLA">[SKP] Gondola</option>
+          <option value="PAA_FORKLIFT">[SKP] Forklift</option>
+          <option value="PAA_ESKAVATOR">[SKP] Eskavator</option>
+          <option value="PAA_GRIDER">[SKP] Grider</option>
+          <option value="LST_TEKNISI">[SKP] Teknisi K3 Listrik</option>
+          <option value="LST_AHLI">[SKP] Ahli K3 Listrik</option>
+          <option value="KST_TEKNISI">[SKP] Teknisi Perancah</option>
+          <option value="KST_SUPERVISI">[SKP] Supervisi Perancah</option>
+          <option value="KST_AHLI_UTAMA">[SKP] Ahli Utama K3 Konstruksi</option>
+          <option value="KST_AHLI_MADYA">[SKP] Ahli Madya K3 Konstruksi</option>
+          <option value="KST_AHLI_MUDA">[SKP] Ahli Muda K3 Konstruksi</option>
+          <option value="ELV_OPERATOR">[SKP] Operator Elevator</option>
+          <option value="ELV_TEKNISI">[SKP] Teknisi Elevator</option>
+          <option value="B3_TEKNISI">[SKP] Teknisi Ruang Terbatas</option>
+          <option value="B3_RESCUE">[SKP] Petugas Rescue Ruang Terbatas</option>
+          <option value="B3_GAS_DETECTOR">[SKP] Petugas Gas Detector</option>
+          <option value="BNSP-AK3U">(Non SKP) AK3U - BNSP</option>
+          <option value="BNSP-TKPK1">(Non SKP) TKPK 1 BNSP</option>
+          <option value="BNSP-TKPK2">(Non SKP) TKPK 2 BNSP</option>
+          <option value="BNSP-TKBT1">(Non SKP) TKBT 1 BNSP</option>
+          <option value="BNSP-TKBT2">(Non SKP) TKBT 2 BNSP</option>
+        </select>
+      </div>
 
-  <!-- 2. Dropdown Batch Training -->
-  <div>
-    <label class="font-bold text-[11px] text-slate-700 block mb-1">Pilih Batch Training</label>
-    <select id="dbFilterBatch" onchange="loadDatabasePeserta()" class="w-full p-2 border rounded-lg bg-white text-xs outline-none focus:ring-1 focus:ring-emerald-500 font-medium text-slate-700">
-      <option value="">-- Semua Batch --</option>
-    </select>
-  </div>
+      <!-- 2. Dropdown Batch Training -->
+      <div>
+        <label class="font-bold text-[11px] text-slate-700 block mb-1">Pilih Batch Training</label>
+        <select id="dbFilterBatch" onchange="loadDatabasePeserta()" class="w-full p-2 border rounded-lg bg-white text-xs outline-none focus:ring-1 focus:ring-emerald-500 font-medium text-slate-700">
+          <option value="">-- Semua Batch --</option>
+        </select>
+      </div>
 
-  <!-- 3. Input Search Peserta -->
-  <div>
-    <label class="font-bold text-[11px] text-slate-700 block mb-1">Cari Nama / NIK / Perusahaan</label>
-    <div class="relative">
-      <input type="text" id="dbSearchPeserta" oninput="loadDatabasePeserta()" placeholder="Ketik nama / NIK..." class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-emerald-500 outline-none pl-8">
-      <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
-    </div>
-  </div>
-</div> 
-          <div>
-              <label class="font-bold text-[11px] text-slate-700 block mb-1">Pilih Batch Training</label>
-              <select id="dbFilterBatch" onchange="loadDatabasePeserta()" class="w-full p-2 border rounded-lg bg-white text-xs outline-none focus:ring-1 focus:ring-emerald-500 font-medium text-slate-700">
-                <option value="">-- Semua Batch --</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- TABEL DATABASE PESERTA -->
-          <div class="overflow-x-auto rounded-xl border border-slate-200">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 font-bold text-[11px]">
-                  <th class="p-3 w-10 text-center">NO</th>
-                  <th class="p-3">NAMA PESERTA / NIK</th>
-                  <th class="p-3">AKUN LOGIN (USER & PASS)</th>
-                  <th class="p-3">PERUSAHAAN</th>
-                  <th class="p-3">BATCH TRAINING</th>
-                  <th class="p-3 text-center">PROGRES ABSENSI</th>
-                  <th class="p-3 text-center">AKSI</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyDatabasePeserta" class="divide-y divide-slate-100 text-slate-600">
-                <tr>
-                  <td colspan="7" class="text-center py-4 text-slate-400 italic text-xs">Silakan pilih program atau Batch untuk menampilkan data peserta.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+      <!-- 3. Input Search Peserta Real-Time -->
+      <div>
+        <label class="font-bold text-[11px] text-slate-700 block mb-1">Cari Nama / NIK / Perusahaan</label>
+        <div class="relative">
+          <input type="text" id="dbSearchPeserta" oninput="loadDatabasePeserta()" placeholder="Ketik nama / NIK..." class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-emerald-500 outline-none pl-8">
+          <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
         </div>
       </div>
+    </div>
+
+    <!-- TABEL DATABASE PESERTA -->
+    <div class="overflow-x-auto rounded-xl border border-slate-200">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 font-bold text-[11px]">
+            <th class="p-3 w-10 text-center">NO</th>
+            <th class="p-3">NAMA PESERTA / NIK</th>
+            <th class="p-3">AKUN LOGIN (USER & PASS)</th>
+            <th class="p-3">PERUSAHAAN</th>
+            <th class="p-3">BATCH TRAINING</th>
+            <th class="p-3 text-center">PROGRES ABSENSI</th>
+            <th class="p-3 text-center">AKSI</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyDatabasePeserta" class="divide-y divide-slate-100 text-slate-600">
+          <tr>
+            <td colspan="7" class="text-center py-4 text-slate-400 italic text-xs">Silakan pilih program atau Batch untuk menampilkan data peserta.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
 
       <!-- CONTAINER TAB 3: DATABASE MODUL & UPLOAD MATERI -->
       <div id="tabAdminModul" class="tab-admin-content hidden space-y-6">
