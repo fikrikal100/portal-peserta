@@ -118,10 +118,12 @@ let loadedNationalHolidays = {
 function fixImageUrl(url) {
   if (!url) return null;
   let cleanUrl = url.trim();
-  if (cleanUrl.includes('drive.google.com') && cleanUrl.includes('/file/d/')) {
-    const matches = cleanUrl.match(/\/file\/d\/([^\/]+)/);
+  
+  // Konversi link share Drive (/file/d/ID/view) ke direct link
+  if (cleanUrl.includes('drive.google.com')) {
+    const matches = cleanUrl.match(/\/d\/([^\/]+)/) || cleanUrl.match(/id=([^&]+)/);
     if (matches && matches[1]) {
-      return `https://drive.google.com/uc?export=view&id=${matches[1]}`;
+      return `https://lh3.googleusercontent.com/d/${matches[1]}`;
     }
   }
   return cleanUrl;
