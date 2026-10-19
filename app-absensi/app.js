@@ -1392,7 +1392,7 @@ async function loadDatabasePeserta() {
     const userDataJson = JSON.stringify(p).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
 
     tbody.innerHTML += `
-      <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+      <tr class="bg-white hover:bg-slate-50 transition border-b border-slate-100">
         <td class="p-3 text-center font-bold text-slate-400">${idx + 1}</td>
         <td class="p-3">
           <p class="font-bold text-slate-800">${p.nama || '-'}</p>
