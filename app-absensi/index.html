@@ -718,11 +718,26 @@
             <i class="fa-solid fa-file-excel text-emerald-700"></i> Import Soal Try Out via Excel / CSV
           </h3>
           <p class="text-[11px] text-slate-500">
-            Format Kolom Excel: <code class="bg-slate-100 px-1 py-0.5 rounded text-emerald-800 font-bold">master_id</code>, <code class="bg-slate-100 px-1 py-0.5 rounded text-emerald-800 font-bold">tryout_code</code>, <code class="bg-slate-100 px-1 py-0.5 rounded text-emerald-800 font-bold">soal</code>, <code class="bg-slate-100 px-1 py-0.5 rounded text-emerald-800 font-bold">image_url</code>, <code class="bg-slate-100 px-1 py-0.5 rounded text-emerald-800 font-bold">opsi_a</code>, <code class="bg-slate-100 px-1 py-0.5 rounded text-emerald-800 font-bold">opsi_b</code>, <code class="bg-slate-100 px-1 py-0.5 rounded text-emerald-800 font-bold">opsi_c</code>, <code class="bg-slate-100 px-1 py-0.5 rounded text-emerald-800 font-bold">opsi_d</code>, <code class="bg-slate-100 px-1 py-0.5 rounded text-emerald-800 font-bold">kunci</code>
+            Format Kolom Excel Sederhana: <code class="bg-slate-100 px-1 py-0.5 rounded text-emerald-800 font-bold">soal</code>, <code class="bg-slate-100 px-1 py-0.5 rounded text-emerald-800 font-bold">image_url</code>, <code class="bg-slate-100 px-1 py-0.5 rounded text-emerald-800 font-bold">opsi_a</code>, <code class="bg-slate-100 px-1 py-0.5 rounded text-emerald-800 font-bold">opsi_b</code>, <code class="bg-slate-100 px-1 py-0.5 rounded text-emerald-800 font-bold">opsi_c</code>, <code class="bg-slate-100 px-1 py-0.5 rounded text-emerald-800 font-bold">opsi_d</code>, <code class="bg-slate-100 px-1 py-0.5 rounded text-emerald-800 font-bold">kunci</code>
           </p>
-          <div class="flex flex-col sm:flex-row items-center gap-3">
-            <input type="file" id="fileExcelSoalAdmin" accept=".xlsx, .xls, .csv" class="text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 cursor-pointer">
-            <button onclick="importExcelSoalTryOut()" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-4 py-2.5 rounded-xl font-bold transition shadow whitespace-nowrap">
+
+          <!-- Pilihan Program & Paket Try Out sebelum Upload -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+            <div>
+              <label class="font-bold text-slate-700 block mb-1">Pilih Program Training Tujuan</label>
+              <select id="importSelectSoalMaster" class="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
+                <option value="">-- Pilih Program Training --</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-bold text-slate-700 block mb-1">Kode / Nama Paket Try Out Tujuan</label>
+              <input type="text" id="importInputSoalTryoutCode" placeholder="Contoh: TO-01" class="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none uppercase">
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-center gap-3 pt-2">
+            <input type="file" id="fileExcelSoalAdmin" accept=".xlsx, .xls, .csv" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 cursor-pointer">
+            <button onclick="importExcelSoalTryOut()" class="w-full sm:w-auto bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-5 py-2.5 rounded-xl font-bold transition shadow whitespace-nowrap">
               <i class="fa-solid fa-upload mr-1"></i> Upload & Impor Soal
             </button>
           </div>
@@ -842,14 +857,36 @@
           </div>
         </div>
 
-        <!-- TABEL REKAPITULASI HASIL NILAI PESERTA -->
+        <!-- TABEL REKAPITULASI HASIL NILAI PESERTA (DENGAN TRIPLE FILTER) -->
         <div class="border border-slate-200 p-5 rounded-2xl bg-white space-y-4 shadow-sm">
           <div class="border-b pb-3 border-slate-100">
             <h3 class="font-bold text-sm text-emerald-900 flex items-center gap-2">
               <i class="fa-solid fa-chart-line text-emerald-700"></i>
               <span>Rekapitulasi Nilai Try Out Peserta</span>
             </h3>
-            <p class="text-[11px] text-slate-500 mt-0.5">Hasil pengerjaan try out seluruh peserta yang tersimpan secara real-time.</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">Filter rekap nilai berdasarkan Program Training, Batch Peserta, dan Paket Try Out.</p>
+          </div>
+
+          <!-- FILTER REKAPITULASI TRIPLE DROPDOWN -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
+            <div>
+              <label class="font-bold text-slate-700 block mb-1">Filter Program Training</label>
+              <select id="rekapFilterMaster" onchange="loadRekapTryOutAdmin()" class="w-full p-2 border rounded-lg bg-white outline-none focus:ring-1 focus:ring-emerald-500">
+                <option value="">-- Semua Program --</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-bold text-slate-700 block mb-1">Filter Batch Peserta</label>
+              <select id="rekapFilterBatch" onchange="loadRekapTryOutAdmin()" class="w-full p-2 border rounded-lg bg-white outline-none focus:ring-1 focus:ring-emerald-500">
+                <option value="">-- Semua Batch --</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-bold text-slate-700 block mb-1">Filter Kode / Paket Try Out</label>
+              <select id="rekapFilterCode" onchange="loadRekapTryOutAdmin()" class="w-full p-2 border rounded-lg bg-white outline-none focus:ring-1 focus:ring-emerald-500">
+                <option value="">-- Semua Paket TO --</option>
+              </select>
+            </div>
           </div>
 
           <div class="overflow-x-auto rounded-xl border border-slate-200">
