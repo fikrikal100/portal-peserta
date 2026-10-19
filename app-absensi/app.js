@@ -310,6 +310,7 @@ async function renderPesertaData(user) {
   loadSertifikatPeserta(user.username);
   loadMatriksAbsensiUser();
   loadRiwayatTryOutProfil();
+  loadFolderTryOutPeserta();
 }
 
 async function loadSertifikatPeserta(username) {
@@ -1846,14 +1847,17 @@ async function hapusModulAdmin(id, fileName) {
 function loadDropdownMasterSoalAdmin() {
   const selectForm = document.getElementById('adminSelectSoalMaster');
   const selectFilter = document.getElementById('adminFilterSoalMaster');
+  const selectJadwal = document.getElementById('adminSelectMasterJadwal');
 
   if (selectForm) selectForm.innerHTML = '<option value="">-- Pilih Program Training --</option>';
   if (selectFilter) selectFilter.innerHTML = '<option value="">-- Semua Program Training --</option>';
+  if (selectJadwal) selectJadwal.innerHTML = '<option value="">-- Pilih Program Training --</option>';
 
   KATALOG_MODUL_MASTER.forEach(m => {
     const optHtml = `<option value="${m.master_id}">${m.nama_program}</option>`;
     if (selectForm) selectForm.innerHTML += optHtml;
     if (selectFilter) selectFilter.innerHTML += optHtml;
+    if (selectJadwal) selectJadwal.innerHTML += optHtml;
   });
 }
 
@@ -1862,6 +1866,7 @@ async function simpanSoalTryOutAdmin() {
   const masterId = document.getElementById('adminSelectSoalMaster').value;
   const tryoutCode = document.getElementById('adminInputSoalTryOutCode').value.trim();
   const soal = document.getElementById('adminTextareaSoal').value.trim();
+  const imageUrl = document.getElementById('adminInputSoalImageUrl')?.value.trim() || null;
   const opsiA = document.getElementById('adminInputOpsiA').value.trim();
   const opsiB = document.getElementById('adminInputOpsiB').value.trim();
   const opsiC = document.getElementById('adminInputOpsiC').value.trim();
@@ -1876,6 +1881,7 @@ async function simpanSoalTryOutAdmin() {
     master_id: masterId,
     tryout_code: tryoutCode.toUpperCase(),
     soal: soal,
+    image_url: imageUrl,
     opsi_a: opsiA,
     opsi_b: opsiB,
     opsi_c: opsiC,
@@ -1912,9 +1918,84 @@ async function simpanSoalTryOutAdmin() {
   }
 }
 
+// IMPORT EXCEL SOAL MASSAL (DENGAN KOLOM IMAGE_URL)
+async function importExcelSoalTryOut() {
+  const fileInput = document.getElementById('fileExcelSoalAdmin');
+  const file = fileInput ? fileInput.files[0] : null;
+
+  if (!file) return alert("Pilih file Excel/CSV berisi soal terlebih dahulu!");
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet);
+
+      if (!rows || rows.length === 0) return alert("File Excel kosong!");
+
+      const questionsToInsert = rows.map(r => ({
+        master_id: String(r.master_id || r.MasterID || "").trim(),
+        tryout_code: String(r.tryout_code || r.KodeTryOut || "").trim().toUpperCase(),
+        soal: String(r.soal || r.Pertanyaan || "").trim(),
+        image_url: r.image_url || r.GambarURL || null,
+        opsi_a: String(r.opsi_a || r.OpsiA || "").trim(),
+        opsi_b: String(r.opsi_b || r.OpsiB || "").trim(),
+        opsi_c: String(r.opsi_c || r.OpsiC || "").trim(),
+        opsi_d: String(r.opsi_d || r.OpsiD || "").trim(),
+        kunci: String(r.kunci || r.KunciJawaban || "").trim().toLowerCase()
+      })).filter(q => q.master_id && q.tryout_code && q.soal);
+
+      if (questionsToInsert.length === 0) return alert("Format kolom Excel tidak sesuai!");
+
+      const { error } = await supabaseClient.from('tryout_questions').insert(questionsToInsert);
+      if (error) throw error;
+
+      alert(`✅ Berhasil mengimpor ${questionsToInsert.length} soal Try Out!`);
+      fileInput.value = '';
+      loadDatabaseSoalAdmin();
+
+    } catch (err) {
+      alert("Gagal memproses file Excel: " + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// SETTING JADWAL TRY OUT OLEH ADMIN
+async function simpanJadwalTryOutAdmin() {
+  const masterId = document.getElementById('adminSelectMasterJadwal').value;
+  const tryoutCode = document.getElementById('adminInputCodeJadwal').value.trim().toUpperCase();
+  const tglMulai = document.getElementById('adminInputTglMulaiJadwal').value;
+  const tglSelesai = document.getElementById('adminInputTglSelesaiJadwal').value;
+  const durasi = parseInt(document.getElementById('adminInputDurasiJadwal').value) || 60;
+
+  if (!masterId || !tryoutCode || !tglMulai || !tglSelesai) {
+    return alert("Harap lengkapi semua bidang isian jadwal Try Out!");
+  }
+
+  const payload = {
+    master_id: masterId,
+    tryout_code: tryoutCode,
+    tgl_mulai: new Date(tglMulai).toISOString(),
+    tgl_selesai: new Date(tglSelesai).toISOString(),
+    durasi_menit: durasi
+  };
+
+  const { error } = await supabaseClient.from('tryout_schedules').insert([payload]);
+
+  if (error) {
+    alert("Gagal menyimpan jadwal: " + error.message);
+  } else {
+    alert(`✅ Jadwal Ujian ${tryoutCode} Berhasil Ditentukan!`);
+  }
+}
+
 function batalEditSoalAdmin() {
   document.getElementById('adminSoalEditId').value = '';
   document.getElementById('adminTextareaSoal').value = '';
+  if (document.getElementById('adminInputSoalImageUrl')) document.getElementById('adminInputSoalImageUrl').value = '';
   document.getElementById('adminInputOpsiA').value = '';
   document.getElementById('adminInputOpsiB').value = '';
   document.getElementById('adminInputOpsiC').value = '';
@@ -1978,6 +2059,7 @@ function persiapkanEditSoalAdmin(s) {
   document.getElementById('adminSelectSoalMaster').value = s.master_id;
   document.getElementById('adminInputSoalTryOutCode').value = s.tryout_code;
   document.getElementById('adminTextareaSoal').value = s.soal;
+  if (document.getElementById('adminInputSoalImageUrl')) document.getElementById('adminInputSoalImageUrl').value = s.image_url || '';
   document.getElementById('adminInputOpsiA').value = s.opsi_a;
   document.getElementById('adminInputOpsiB').value = s.opsi_b;
   document.getElementById('adminInputOpsiC').value = s.opsi_c;
@@ -1994,6 +2076,9 @@ async function hapusSoalAdmin(id) {
   else loadDatabaseSoalAdmin();
 }
 
+// ----------------------------------------------------
+// LOAD TRY OUT SISI PESERTA (HANYA UNTUK PROGRAM YANG DIIKUTI)
+// ----------------------------------------------------
 async function loadFolderTryOutPeserta() {
   const container = document.getElementById('containerFolderTryOutPeserta');
   if (!container || !currentSessionUser) return;
@@ -2007,94 +2092,125 @@ async function loadFolderTryOutPeserta() {
     const { data: logs } = await supabaseClient.from('log_absensi').select('training_id').eq('username', currentSessionUser.username);
     if (logs) logs.forEach(l => { if (l.training_id) setHistoriTraining.add(l.training_id.toUpperCase()); });
 
+    const { data: certs } = await supabaseClient.from('certificates').select('training_id').eq('username', currentSessionUser.username);
+    if (certs) certs.forEach(c => { if (c.training_id) setHistoriTraining.add(c.training_id.toUpperCase()); });
+
     const listHistoriUser = Array.from(setHistoriTraining);
 
-    container.innerHTML = KATALOG_MODUL_MASTER.map(m => {
-      const isUnlocked = listHistoriUser.some(tId => {
+    // Filter KATALOG_MODUL_MASTER: Hanya ambil modul yang COCOK dengan pelatihan peserta
+    const modulPeserta = KATALOG_MODUL_MASTER.filter(m => {
+      return listHistoriUser.some(tId => {
         const cleanTId = cleanStringForMatch(tId);
         const cleanMId = cleanStringForMatch(m.master_id);
         const cleanProgramName = cleanStringForMatch(m.nama_program);
         return cleanTId.includes(cleanMId) || cleanTId.includes(cleanProgramName);
       });
+    });
 
-      if (isUnlocked) {
-        return `
-          <div onclick="bukaModalListPaketTryOut('${m.master_id}', '${m.nama_program}')" class="bg-white border-2 border-emerald-500/40 rounded-2xl p-4 shadow-sm hover:shadow-md cursor-pointer transition group">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-lg font-bold group-hover:scale-105 transition">
-                <i class="fa-solid fa-folder-open"></i>
-              </div>
-              <div>
-                <span class="bg-emerald-100 text-emerald-800 text-[9px] font-extrabold px-2 py-0.5 rounded-full">AKSES TERBUKA</span>
-                <h4 class="text-xs font-bold text-slate-800 mt-1">${m.nama_program}</h4>
-              </div>
-            </div>
-            <p class="text-[10px] text-slate-500 mt-2">${m.deskripsi}</p>
-            <div class="mt-4 pt-3 border-t border-slate-100 text-[10px] text-emerald-700 font-bold flex justify-between items-center">
-              <span>Buka Paket Try Out</span>
-              <i class="fa-solid fa-chevron-right"></i>
-            </div>
+    if (modulPeserta.length === 0) {
+      container.innerHTML = `
+        <div class="col-span-full text-center py-8 bg-slate-50 rounded-2xl border border-slate-200 p-6">
+          <i class="fa-solid fa-folder-closed text-slate-300 text-4xl mb-3"></i>
+          <h4 class="text-xs font-bold text-slate-600">Tidak Ada Try Out Tersedia</h4>
+          <p class="text-[10px] text-slate-400 mt-1">Kamu belum terdaftar di paket pelatihan aktif.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = modulPeserta.map(m => `
+      <div onclick="bukaModalListPaketTryOut('${m.master_id}', '${m.nama_program}')" class="bg-white border-2 border-emerald-500/40 rounded-2xl p-4 shadow-sm hover:shadow-md cursor-pointer transition group">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-lg font-bold group-hover:scale-105 transition">
+            <i class="fa-solid fa-file-pen"></i>
           </div>
-        `;
-      } else {
-        return `
-          <div onclick="peringatanModulTerkunci('${m.nama_program}')" class="bg-slate-50 border border-slate-200 rounded-2xl p-4 cursor-pointer opacity-70 group">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-slate-200 text-slate-500 flex items-center justify-center text-lg font-bold">
-                <i class="fa-solid fa-lock"></i>
-              </div>
-              <div>
-                <span class="bg-slate-200 text-slate-600 text-[9px] font-extrabold px-2 py-0.5 rounded-full">TERKUNCI</span>
-                <h4 class="text-xs font-bold text-slate-600 mt-1">${m.nama_program}</h4>
-              </div>
-            </div>
-            <p class="text-[10px] text-slate-400 mt-2">${m.deskripsi}</p>
+          <div>
+            <span class="bg-emerald-100 text-emerald-800 text-[9px] font-extrabold px-2 py-0.5 rounded-full">PROGRAM KAMU</span>
+            <h4 class="text-xs font-bold text-slate-800 mt-1">${m.nama_program}</h4>
           </div>
-        `;
-      }
-    }).join('');
+        </div>
+        <p class="text-[10px] text-slate-500 mt-2">${m.deskripsi}</p>
+        <div class="mt-4 pt-3 border-t border-slate-100 text-[10px] text-emerald-700 font-bold flex justify-between items-center">
+          <span>Buka Paket Try Out</span>
+          <i class="fa-solid fa-chevron-right"></i>
+        </div>
+      </div>
+    `).join('');
+
   } catch (err) {
     container.innerHTML = '<p class="text-xs text-red-500 text-center col-span-full py-4">Gagal memuat Try Out.</p>';
   }
 }
 
+// BUKA PAKET TRY OUT DENGAN VALIDASI JADWAL DAN STATUS
 async function bukaModalListPaketTryOut(masterId, namaProgram) {
   document.getElementById('modalJudulFolderTryOut').innerText = namaProgram;
   const container = document.getElementById('containerListPaketTryOutBody');
-  container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Mengecek paket Try Out...</p>';
+  container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Mengecek jadwal Try Out...</p>';
   document.getElementById('modalListPaketTryOut').classList.remove('hidden');
 
-  const { data: questions } = await supabaseClient.from('tryout_questions').select('tryout_code').eq('master_id', masterId);
+  const { data: schedules } = await supabaseClient
+    .from('tryout_schedules')
+    .select('*')
+    .eq('master_id', masterId);
 
-  if (!questions || questions.length === 0) {
+  if (!schedules || schedules.length === 0) {
     container.innerHTML = `
       <div class="text-center py-6">
-        <i class="fa-solid fa-file-circle-xmark text-slate-300 text-3xl mb-2"></i>
-        <p class="text-xs font-bold text-slate-500">Belum ada soal Try Out untuk program ini.</p>
+        <i class="fa-solid fa-clock-rotate-left text-slate-300 text-3xl mb-2"></i>
+        <p class="text-xs font-bold text-slate-500">Belum ada jadwal Try Out dari Admin.</p>
       </div>
     `;
     return;
   }
 
-  const uniqueCodes = [...new Set(questions.map(q => q.tryout_code))];
-  container.innerHTML = uniqueCodes.map(code => `
-    <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl flex items-center justify-between">
-      <div>
-        <h4 class="text-xs font-bold text-slate-800">${code}</h4>
-        <p class="text-[10px] text-slate-500">Waktu: 60 Menit | KKM: 65</p>
+  const now = new Date();
+
+  container.innerHTML = schedules.map(s => {
+    const start = new Date(s.tgl_mulai);
+    const end = new Date(s.tgl_selesai);
+    const isOpen = now >= start && now <= end;
+    const isEnded = now > end;
+
+    let btnHtml = '';
+    let statusBadge = '';
+
+    if (isOpen) {
+      statusBadge = `<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">SEDANG BERLANGSUNG</span>`;
+      btnHtml = `
+        <button onclick="mulaiTryOutPeserta('${s.master_id}', '${s.tryout_code}', ${s.durasi_menit})" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-4 py-2 rounded-xl font-bold transition shadow">
+          Mulai Ujian <i class="fa-solid fa-play ml-1"></i>
+        </button>
+      `;
+    } else if (isEnded) {
+      statusBadge = `<span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">TELAH BERAKHIR</span>`;
+      btnHtml = `<button disabled class="bg-slate-200 text-slate-400 text-xs px-4 py-2 rounded-xl font-bold cursor-not-allowed">Waktu Habis</button>`;
+    } else {
+      statusBadge = `<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">BELUM DIMULAI</span>`;
+      btnHtml = `<button disabled class="bg-slate-200 text-slate-400 text-xs px-4 py-2 rounded-xl font-bold cursor-not-allowed">Belum Buka</button>`;
+    }
+
+    return `
+      <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-2">
+            <h4 class="text-xs font-bold text-slate-800">${s.tryout_code}</h4>
+            ${statusBadge}
+          </div>
+          <p class="text-[10px] text-slate-500 mt-1">Jadwal: ${start.toLocaleString('id-ID')} s/d ${end.toLocaleString('id-ID')} (${s.durasi_menit} Menit)</p>
+        </div>
+        <div>${btnHtml}</div>
       </div>
-      <button onclick="mulaiTryOutPeserta('${masterId}', '${code}')" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-4 py-2 rounded-xl font-bold transition shadow">
-        Mulai Kerjakan <i class="fa-solid fa-play ml-1"></i>
-      </button>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function tutupModalListPaketTryOut() {
   document.getElementById('modalListPaketTryOut').classList.add('hidden');
 }
 
-async function mulaiTryOutPeserta(masterId, tryoutCode) {
+// MULAI TRY OUT (DUKUNGAN GAMBAR & DURATION TIMER)
+async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
   const { data: questions, error } = await supabaseClient
     .from('tryout_questions')
     .select('*')
@@ -2113,28 +2229,35 @@ async function mulaiTryOutPeserta(masterId, tryoutCode) {
   document.getElementById('tryoutExamTitle').innerText = `${masterId} - ${tryoutCode}`;
   
   const container = document.getElementById('containerSoalTryOutBody');
-  container.innerHTML = currentExamQuestions.map((q, idx) => `
-    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
-      <p class="text-xs font-bold text-slate-800">${idx + 1}. ${q.soal}</p>
-      <div class="space-y-2 text-xs text-slate-700">
-        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
-          <input type="radio" name="soal_${q.id}" value="a" class="accent-emerald-700"> A. ${q.opsi_a}
-        </label>
-        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
-          <input type="radio" name="soal_${q.id}" value="b" class="accent-emerald-700"> B. ${q.opsi_b}
-        </label>
-        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
-          <input type="radio" name="soal_${q.id}" value="c" class="accent-emerald-700"> C. ${q.opsi_c}
-        </label>
-        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
-          <input type="radio" name="soal_${q.id}" value="d" class="accent-emerald-700"> D. ${q.opsi_d}
-        </label>
+  container.innerHTML = currentExamQuestions.map((q, idx) => {
+    const imgHtml = q.image_url 
+      ? `<img src="${q.image_url}" class="max-h-60 rounded-xl border border-slate-200 my-2 object-contain">` 
+      : '';
+
+    return `
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+        <p class="text-xs font-bold text-slate-800">${idx + 1}. ${q.soal}</p>
+        ${imgHtml}
+        <div class="space-y-2 text-xs text-slate-700">
+          <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
+            <input type="radio" name="soal_${q.id}" value="a" class="accent-emerald-700"> A. ${q.opsi_a}
+          </label>
+          <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
+            <input type="radio" name="soal_${q.id}" value="b" class="accent-emerald-700"> B. ${q.opsi_b}
+          </label>
+          <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
+            <input type="radio" name="soal_${q.id}" value="c" class="accent-emerald-700"> C. ${q.opsi_c}
+          </label>
+          <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
+            <input type="radio" name="soal_${q.id}" value="d" class="accent-emerald-700"> D. ${q.opsi_d}
+          </label>
+        </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   document.getElementById('modalPengerjaanTryOut').classList.remove('hidden');
-  startExamTimer(60 * 60);
+  startExamTimer(durasiMenit * 60);
 }
 
 function startExamTimer(seconds) {
@@ -2145,7 +2268,9 @@ function startExamTimer(seconds) {
   activeExamTimer = setInterval(() => {
     const m = Math.floor(timeLeft / 60);
     const s = timeLeft % 60;
-    timerDisplay.innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    if (timerDisplay) {
+      timerDisplay.innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
 
     if (timeLeft <= 0) {
       clearInterval(activeExamTimer);
@@ -2314,6 +2439,8 @@ window.hapusModulAdmin = hapusModulAdmin;
 
 // Ekspor Fungsi Try Out Ke Global Scope
 window.simpanSoalTryOutAdmin = simpanSoalTryOutAdmin;
+window.importExcelSoalTryOut = importExcelSoalTryOut;
+window.simpanJadwalTryOutAdmin = simpanJadwalTryOutAdmin;
 window.batalEditSoalAdmin = batalEditSoalAdmin;
 window.loadDatabaseSoalAdmin = loadDatabaseSoalAdmin;
 window.persiapkanEditSoalAdmin = persiapkanEditSoalAdmin;
