@@ -2282,67 +2282,94 @@ async function loadFolderTryOutPeserta() {
   }
 }
 
-// BUKA PAKET TRY OUT DENGAN VALIDASI JADWAL DAN STATUS
+// BUKA PAKET TRY OUT DENGAN VALIDASI JADWAL DAN STATUS HAK AKSES 1 KALI UJIAN
 async function bukaModalListPaketTryOut(masterId, namaProgram) {
   document.getElementById('modalJudulFolderTryOut').innerText = namaProgram;
   const container = document.getElementById('containerListPaketTryOutBody');
-  container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Mengecek jadwal Try Out...</p>';
+  container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Mengecek jadwal & riwayat ujian...</p>';
   document.getElementById('modalListPaketTryOut').classList.remove('hidden');
 
-  const { data: schedules } = await supabaseClient
-    .from('tryout_schedules')
-    .select('*')
-    .eq('master_id', masterId);
+  try {
+    // 1. Ambil Jadwal Ujian untuk Master ID ini
+    const { data: schedules } = await supabaseClient
+      .from('tryout_schedules')
+      .select('*')
+      .eq('master_id', masterId);
 
-  if (!schedules || schedules.length === 0) {
-    container.innerHTML = `
-      <div class="text-center py-6">
-        <i class="fa-solid fa-clock-rotate-left text-slate-300 text-3xl mb-2"></i>
-        <p class="text-xs font-bold text-slate-500">Belum ada jadwal Try Out dari Admin.</p>
-      </div>
-    `;
-    return;
-  }
-
-  const now = new Date();
-
-  container.innerHTML = schedules.map(s => {
-    const start = new Date(s.tgl_mulai);
-    const end = new Date(s.tgl_selesai);
-    const isOpen = now >= start && now <= end;
-    const isEnded = now > end;
-
-    let btnHtml = '';
-    let statusBadge = '';
-
-    if (isOpen) {
-      statusBadge = `<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">SEDANG BERLANGSUNG</span>`;
-      btnHtml = `
-        <button onclick="mulaiTryOutPeserta('${s.master_id}', '${s.tryout_code}', ${s.durasi_menit})" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-4 py-2 rounded-xl font-bold transition shadow">
-          Mulai Ujian <i class="fa-solid fa-play ml-1"></i>
-        </button>
+    if (!schedules || schedules.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-6">
+          <i class="fa-solid fa-clock-rotate-left text-slate-300 text-3xl mb-2"></i>
+          <p class="text-xs font-bold text-slate-500">Belum ada jadwal Try Out dari Admin.</p>
+        </div>
       `;
-    } else if (isEnded) {
-      statusBadge = `<span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">TELAH BERAKHIR</span>`;
-      btnHtml = `<button disabled class="bg-slate-200 text-slate-400 text-xs px-4 py-2 rounded-xl font-bold cursor-not-allowed">Waktu Habis</button>`;
-    } else {
-      statusBadge = `<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">BELUM DIMULAI</span>`;
-      btnHtml = `<button disabled class="bg-slate-200 text-slate-400 text-xs px-4 py-2 rounded-xl font-bold cursor-not-allowed">Belum Buka</button>`;
+      return;
     }
 
-    return `
-      <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl flex items-center justify-between">
-        <div>
-          <div class="flex items-center gap-2">
-            <h4 class="text-xs font-bold text-slate-800">${s.tryout_code}</h4>
-            ${statusBadge}
+    // 2. Ambil Riwayat Ujian Peserta yang Sedang Login
+    const { data: userResults } = await supabaseClient
+      .from('tryout_results')
+      .select('*')
+      .eq('username', currentSessionUser.username)
+      .eq('master_id', masterId);
+
+    const now = new Date();
+
+    container.innerHTML = schedules.map(s => {
+      const start = new Date(s.tgl_mulai);
+      const end = new Date(s.tgl_selesai);
+      const isOpen = now >= start && now <= end;
+      const isEnded = now > end;
+
+      // Cek apakah peserta sudah pernah mengerjakan paket ini
+      const hasTaken = (userResults || []).find(r => r.tryout_code === s.tryout_code);
+
+      let btnHtml = '';
+      let statusBadge = '';
+
+      if (hasTaken) {
+        // Jika sudah pernah tes
+        statusBadge = `<span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">✓ SUDAH DIKERJAKAN</span>`;
+        btnHtml = `
+          <button disabled class="bg-slate-200 text-slate-500 text-xs px-4 py-2 rounded-xl font-bold cursor-not-allowed flex items-center gap-1">
+            <i class="fa-solid fa-circle-check text-emerald-600"></i> Nilai: ${hasTaken.score}
+          </button>
+        `;
+      } else if (isOpen) {
+        // Jika jadwal buka & belum tes
+        statusBadge = `<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">SEDANG BERLANGSUNG</span>`;
+        btnHtml = `
+          <button onclick="mulaiTryOutPeserta('${s.master_id}', '${s.tryout_code}', ${s.durasi_menit})" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-4 py-2 rounded-xl font-bold transition shadow">
+            Mulai Ujian <i class="fa-solid fa-play ml-1"></i>
+          </button>
+        `;
+      } else if (isEnded) {
+        // Jika waktu selesai
+        statusBadge = `<span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">TELAH BERAKHIR</span>`;
+        btnHtml = `<button disabled class="bg-slate-200 text-slate-400 text-xs px-4 py-2 rounded-xl font-bold cursor-not-allowed">Waktu Habis</button>`;
+      } else {
+        // Jika belum mulai
+        statusBadge = `<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">BELUM DIMULAI</span>`;
+        btnHtml = `<button disabled class="bg-slate-200 text-slate-400 text-xs px-4 py-2 rounded-xl font-bold cursor-not-allowed">Belum Buka</button>`;
+      }
+
+      return `
+        <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2">
+              <h4 class="text-xs font-bold text-slate-800">${s.tryout_code}</h4>
+              ${statusBadge}
+            </div>
+            <p class="text-[10px] text-slate-500 mt-1">Jadwal: ${start.toLocaleString('id-ID')} s/d ${end.toLocaleString('id-ID')} (${s.durasi_menit} Menit)</p>
           </div>
-          <p class="text-[10px] text-slate-500 mt-1">Jadwal: ${start.toLocaleString('id-ID')} s/d ${end.toLocaleString('id-ID')} (${s.durasi_menit} Menit)</p>
+          <div>${btnHtml}</div>
         </div>
-        <div>${btnHtml}</div>
-      </div>
-    `;
-  }).join('');
+      `;
+    }).join('');
+
+  } catch (err) {
+    container.innerHTML = '<p class="text-xs text-red-500 text-center py-4">Gagal memuat daftar ujian.</p>';
+  }
 }
 
 function tutupModalListPaketTryOut() {
@@ -2351,6 +2378,18 @@ function tutupModalListPaketTryOut() {
 
 // MULAI TRY OUT (DUKUNGAN GAMBAR & DURATION TIMER)
 async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
+  const { data: existingResult } = await supabaseClient
+    .from('tryout_results')
+    .select('id')
+    .eq('username', currentSessionUser.username)
+    .eq('master_id', masterId)
+    .eq('tryout_code', tryoutCode)
+    .maybeSingle();
+
+  if (existingResult) {
+    return alert("⛔ Kesempatan Ujian Habis!\nAnda sudah mengerjakan Try Out ini sebelumnya. Akses ujian hanya diizinkan 1 kali.");
+  }
+  
   const { data: questions, error } = await supabaseClient
     .from('tryout_questions')
     .select('*')
