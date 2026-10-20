@@ -37,6 +37,39 @@
     <i class="fa-solid fa-right-from-bracket"></i> Keluar
   </button>
 </nav>
+  
+  <!-- MODAL POP-UP GANTI PASSWORD ADMIN (Taruh sebelum tag </body>) -->
+<div id="modalGantiPassAdmin" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+    <div class="flex justify-between items-center border-b pb-3">
+      <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
+        <i class="fa-solid fa-shield-halved text-emerald-700"></i>
+        <span>Ganti Password Admin</span>
+      </h3>
+      <button onclick="tutupModalPassAdmin()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+    </div>
+
+    <div class="space-y-3 text-xs">
+      <div>
+        <label class="font-semibold text-slate-700 block mb-1">Password Lama</label>
+        <input type="password" id="adminPassLama" placeholder="Masukkan password saat ini" class="w-full p-2.5 border rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+      </div>
+      <div>
+        <label class="font-semibold text-slate-700 block mb-1">Password Baru</label>
+        <input type="password" id="adminPassBaru" placeholder="Masukkan password baru" class="w-full p-2.5 border rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+      </div>
+      <div>
+        <label class="font-semibold text-slate-700 block mb-1">Konfirmasi Password Baru</label>
+        <input type="password" id="adminPassKonfirm" placeholder="Ulangi password baru" class="w-full p-2.5 border rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+      </div>
+    </div>
+
+    <div class="flex gap-2 pt-2">
+      <button onclick="tutupModalPassAdmin()" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-600 py-2.5 rounded-xl font-bold text-xs transition">Batal</button>
+      <button onclick="simpanPasswordAdminBaru()" class="w-1/2 bg-emerald-700 hover:bg-emerald-800 text-white py-2.5 rounded-xl font-bold text-xs shadow transition">Simpan</button>
+    </div>
+  </div>
+</div>
 
   <!-- CONTAINER UTAMA -->
  <div class="max-w-4xl mx-auto p-4">
