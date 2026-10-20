@@ -21,7 +21,8 @@
 <body class="bg-slate-100 min-h-screen text-slate-800 font-sans pb-24">
 
   <!-- NAVBAR UTAMA -->
- <nav class="bg-emerald-800 text-white p-4 shadow-lg sticky top-0 z-50 flex justify-between items-center">
+ <!-- NAVBAR UTAMA -->
+<nav class="bg-emerald-800 text-white p-4 shadow-lg sticky top-0 z-50 flex justify-between items-center">
   <div class="flex items-center space-x-3">
     <!-- LOGO MMD DARI GITHUB -->
     <img src="Logo MMD.png" 
@@ -33,12 +34,20 @@
       <p class="text-[10px] text-emerald-200">Portal Absensi & Sertifikasi K3</p>
     </div>
   </div>
-  <button id="btnLogout" onclick="logout()" class="hidden bg-red-600 hover:bg-red-700 text-xs px-3 py-1.5 rounded-lg font-semibold transition flex items-center gap-1.5">
-    <i class="fa-solid fa-right-from-bracket"></i> Keluar
-  </button>
+
+  <!-- CONTAINER TOMBOL KANAN (SUDAH DITAMBAHKAN TOMBOL GANTI PASS) -->
+  <div class="flex items-center gap-2">
+    <button id="btnGantiPassAdmin" onclick="bukaModalPassAdmin()" class="hidden bg-amber-600 hover:bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition flex items-center gap-1.5 shadow">
+      <i class="fa-solid fa-key"></i> Ganti Password
+    </button>
+    
+    <button id="btnLogout" onclick="logout()" class="hidden bg-red-600 hover:bg-red-700 text-xs px-3 py-1.5 rounded-lg font-semibold transition flex items-center gap-1.5 shadow">
+      <i class="fa-solid fa-right-from-bracket"></i> Keluar
+    </button>
+  </div>
 </nav>
-  
-  <!-- MODAL POP-UP GANTI PASSWORD ADMIN (Taruh sebelum tag </body>) -->
+
+<!-- MODAL POP-UP GANTI PASSWORD ADMIN (Sudah benar, taruh sebelum </body>) -->
 <div id="modalGantiPassAdmin" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
   <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
     <div class="flex justify-between items-center border-b pb-3">
@@ -70,7 +79,7 @@
     </div>
   </div>
 </div>
-
+  
   <!-- CONTAINER UTAMA -->
  <div class="max-w-4xl mx-auto p-4">
 
