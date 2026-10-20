@@ -204,17 +204,19 @@ async function prosesLogin() {
     document.getElementById('btnLogout').classList.remove('hidden');
 
     if (data.role === 'admin') {
-      document.getElementById('sectionAdmin').classList.remove('hidden');
-      loadBatchOptions();
-      renderCalendar();
-      onSKPFilterChange();
-      loadDropdownMasterModulAdmin();
-      loadDropdownMasterSoalAdmin();
-    } else {
-      document.getElementById('sectionPeserta').classList.remove('hidden');
-      renderPesertaData(data);
-      startCamera();
-    }
+  document.getElementById('sectionAdmin').classList.remove('hidden');
+  aturTampilanAdmin(true); // <-- TAMBAHKAN BARIS INI
+  loadBatchOptions();
+  renderCalendar();
+  onSKPFilterChange();
+  loadDropdownMasterModulAdmin();
+  loadDropdownMasterSoalAdmin();
+} else {
+  document.getElementById('sectionPeserta').classList.remove('hidden');
+  aturTampilanAdmin(false); // <-- TAMBAHKAN BARIS INI
+  renderPesertaData(data);
+  startCamera();
+}
 
   } catch (err) {
     alert("Terjadi kesalahan sistem: " + err.message);
@@ -225,7 +227,8 @@ async function prosesLogin() {
 }
 
 function logout() {
-  localStorage.removeItem('mmd_user_session'); // Hapus sesi tersimpan
+  aturTampilanAdmin(false); // <-- TAMBAHKAN BARIS INI
+  localStorage.removeItem('mmd_user_session');
   location.reload();
 }
 
@@ -240,18 +243,21 @@ function checkAutoLogin() {
     document.getElementById('sectionLogin').classList.add('hidden');
     document.getElementById('btnLogout').classList.remove('hidden');
 
-    if (user.role === 'admin') {
-      document.getElementById('sectionAdmin').classList.remove('hidden');
-      loadBatchOptions();
-      renderCalendar();
-      onSKPFilterChange();
-      loadDropdownMasterModulAdmin();
-      loadDropdownMasterSoalAdmin();
-    } else {
-      document.getElementById('sectionPeserta').classList.remove('hidden');
-      renderPesertaData(user);
-      startCamera();
-    }
+  if (user.role === 'admin') {
+  document.getElementById('sectionAdmin').classList.remove('hidden');
+  aturTampilanAdmin(true); // <-- TAMBAHKAN BARIS INI
+  loadBatchOptions();
+  renderCalendar();
+  onSKPFilterChange();
+  loadDropdownMasterModulAdmin();
+  loadDropdownMasterSoalAdmin();
+} else {
+  document.getElementById('sectionPeserta').classList.remove('hidden');
+  aturTampilanAdmin(false); // <-- TAMBAHKAN BARIS INI
+  renderPesertaData(user);
+  startCamera();
+}
+    
   } catch (e) {
     console.error("Gagal memuat sesi tersimpan:", e);
     localStorage.removeItem('mmd_user_session');
@@ -2812,6 +2818,79 @@ window.switchTabAdmin = function(tabName) {
   }
 };
 
+// ----------------------------------------------------
+// FUNGSI GANTI PASSWORD ADMIN
+// ----------------------------------------------------
+function aturTampilanAdmin(isAdmin) {
+  const btnGantiPass = document.getElementById('btnGantiPassAdmin');
+  if (btnGantiPass) {
+    if (isAdmin) {
+      btnGantiPass.classList.remove('hidden');
+    } else {
+      btnGantiPass.classList.add('hidden');
+    }
+  }
+}
+
+function bukaModalPassAdmin() {
+  document.getElementById('adminPassLama').value = '';
+  document.getElementById('adminPassBaru').value = '';
+  document.getElementById('adminPassKonfirm').value = '';
+  document.getElementById('modalGantiPassAdmin').classList.remove('hidden');
+}
+
+function tutupModalPassAdmin() {
+  document.getElementById('modalGantiPassAdmin').classList.add('hidden');
+}
+
+async function simpanPasswordAdminBaru() {
+  const passLama = document.getElementById('adminPassLama').value.trim();
+  const passBaru = document.getElementById('adminPassBaru').value.trim();
+  const passKonfirm = document.getElementById('adminPassKonfirm').value.trim();
+
+  const session = JSON.parse(localStorage.getItem('mmd_user_session') || '{}');
+  if (!session.username || session.role !== 'admin') {
+    alert("Sesi admin tidak valid!");
+    return;
+  }
+
+  if (!passLama || !passBaru || !passKonfirm) {
+    alert("Harap isi semua kolom password!");
+    return;
+  }
+
+  if (passLama !== session.password) {
+    alert("Password lama kamu salah!");
+    return;
+  }
+
+  if (passBaru !== passKonfirm) {
+    alert("Konfirmasi password baru tidak cocok!");
+    return;
+  }
+
+  if (passBaru.length < 5) {
+    alert("Password minimal 5 karakter!");
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from('users')
+    .update({ password: passBaru })
+    .eq('username', session.username);
+
+  if (error) {
+    alert("Gagal memperbarui password: " + error.message);
+    return;
+  }
+
+  session.password = passBaru;
+  localStorage.setItem('mmd_user_session', JSON.stringify(session));
+
+  tutupModalPassAdmin();
+  alert("Password akun admin berhasil diubah!");
+}
+
 window.prosesLogin = prosesLogin;
 window.logout = logout;
 window.switchTabPeserta = switchTabPeserta;
@@ -2850,3 +2929,8 @@ window.tutupModalListPaketTryOut = tutupModalListPaketTryOut;
 window.mulaiTryOutPeserta = mulaiTryOutPeserta;
 window.submitJawabanTryOutPeserta = submitJawabanTryOutPeserta;
 window.loadRekapTryOutAdmin = loadRekapTryOutAdmin;
+
+// Ekspor Fungsi Ganti Password Admin Ke Global Scope
+window.bukaModalPassAdmin = bukaModalPassAdmin;
+window.tutupModalPassAdmin = tutupModalPassAdmin;
+window.simpanPasswordAdminBaru = simpanPasswordAdminBaru;
