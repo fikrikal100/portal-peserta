@@ -290,6 +290,12 @@ function switchTabPeserta(tabName) {
 }
 
 async function renderPesertaData(user) {
+  // --- SET FOTO PROFIL PESERTA DARI SUPABASE / FALLBACK UI-AVATARS ---
+  const imgProfil = document.getElementById('imgFotoProfil');
+  if (imgProfil) {
+    imgProfil.src = user.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nama || 'Peserta')}&background=d1fae5&color=065f46`;
+  }
+
   document.getElementById('pesertaNama').innerText = user.nama || '-';
   document.getElementById('pesertaPerusahaan').innerHTML = `<i class="fa-solid fa-building mr-1"></i> Perusahaan: ${user.perusahaan || '-'}`;
   document.getElementById('pesertaNIK').innerText = user.nik || '-';
@@ -362,6 +368,75 @@ async function loadSertifikatPeserta(username) {
       </div>
     `;
   });
+}
+
+// ----------------------------------------------------
+// FUNGSI UPLOAD FOTO PROFIL PESERTA KE SUPABASE STORAGE
+// ----------------------------------------------------
+async function uploadFotoProfil(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Validasi ukuran maks 2MB
+  if (file.size > 2 * 1024 * 1024) {
+    alert("Ukuran foto maksimal 2MB!");
+    return;
+  }
+
+  // Ambil data user dari LocalStorage
+  const currentUser = JSON.parse(localStorage.getItem('mmd_user_session') || '{}');
+  if (!currentUser.username) {
+    alert("Sesi tidak valid, silakan login ulang.");
+    return;
+  }
+
+  const imgProfil = document.getElementById('imgFotoProfil');
+  if (imgProfil) imgProfil.style.opacity = '0.5';
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${currentUser.username}_${Date.now()}.${fileExt}`;
+  const filePath = `profiles/${fileName}`;
+
+  // 1. Upload foto ke Supabase Storage (bucket: 'avatars')
+  const { data, error: uploadError } = await supabaseClient.storage
+    .from('avatars')
+    .upload(filePath, file, { upsert: true });
+
+  if (uploadError) {
+    alert("Gagal mengunggah foto: " + uploadError.message);
+    if (imgProfil) imgProfil.style.opacity = '1';
+    return;
+  }
+
+  // 2. Dapatkan Public URL
+  const { data: publicUrlData } = supabaseClient.storage
+    .from('avatars')
+    .getPublicUrl(filePath);
+
+  const photoUrl = publicUrlData.publicUrl;
+
+  // 3. Update kolom foto_url di tabel 'users'
+  const { error: dbError } = await supabaseClient
+    .from('users')
+    .update({ foto_url: photoUrl })
+    .eq('username', currentUser.username);
+
+  if (dbError) {
+    alert("Gagal memperbarui profil di database: " + dbError.message);
+    if (imgProfil) imgProfil.style.opacity = '1';
+    return;
+  }
+
+  // 4. Perbarui Tampilan & LocalStorage
+  if (imgProfil) {
+    imgProfil.src = photoUrl;
+    imgProfil.style.opacity = '1';
+  }
+  
+  currentUser.foto_url = photoUrl;
+  localStorage.setItem('mmd_user_session', JSON.stringify(currentUser));
+
+  alert("Foto profil berhasil diperbarui!");
 }
 
 // ----------------------------------------------------
