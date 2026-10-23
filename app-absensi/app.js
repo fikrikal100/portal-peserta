@@ -2137,6 +2137,63 @@ async function importExcelSoalTryOut() {
 // ====================================================
 // LOGIKA JADWAL TRY OUT ADMIN (ALUR BARU PER BATCH)
 // ====================================================
+// 1. FUNGSI ISI DROPDOWN PROGRAM TRAINING DI FORM JADWAL
+function loadDropdownJadwalMasterAdmin() {
+  const selectMaster = document.getElementById('adminSelectJadwalMaster');
+  if (!selectMaster) return;
+
+  selectMaster.innerHTML = '<option value="">-- Pilih Program Training --</option>';
+
+  if (typeof KATALOG_MODUL_MASTER !== 'undefined' && KATALOG_MODUL_MASTER.length > 0) {
+    KATALOG_MODUL_MASTER.forEach(m => {
+      selectMaster.innerHTML += `<option value="${m.master_id}">${m.nama_program}</option>`;
+    });
+  }
+}
+
+// 2. EVENT SAAT PILIH PROGRAM TRAINING (LOAD BATCH & PAKET SOAL AUTOMATIS)
+async function onJadwalMasterChange() {
+  const masterId = document.getElementById('adminSelectJadwalMaster').value;
+  const selectBatch = document.getElementById('adminSelectJadwalBatch');
+  const selectCode = document.getElementById('adminSelectJadwalCode');
+
+  if (!selectBatch || !selectCode) return;
+
+  selectBatch.innerHTML = '<option value="">-- Pilih Batch Aktif --</option>';
+  selectCode.innerHTML = '<option value="">-- Pilih Paket Soal --</option>';
+
+  if (!masterId) return;
+
+  try {
+    // Load Batch Pelatihan
+    const { data: listBatch } = await supabaseClient
+      .from('batches')
+      .select('*')
+      .eq('master_id', masterId)
+      .order('created_at', { ascending: false });
+
+    if (listBatch && listBatch.length > 0) {
+      listBatch.forEach(b => {
+        selectBatch.innerHTML += `<option value="${b.batch_id}">${b.nama_batch || b.batch_id}</option>`;
+      });
+    }
+
+    // Load Paket Soal
+    const { data: listSoal } = await supabaseClient
+      .from('tryout_questions')
+      .select('tryout_code')
+      .eq('master_id', masterId);
+
+    if (listSoal && listSoal.length > 0) {
+      const uniqueCodes = [...new Set(listSoal.map(s => s.tryout_code))];
+      uniqueCodes.forEach(code => {
+        selectCode.innerHTML += `<option value="${code}">Paket ${code}</option>`;
+      });
+    }
+  } catch (err) {
+    console.error("Gagal load filter jadwal:", err);
+  }
+}
 
 // A. EVENT SAAT SELECT MASTER_ID DIUBAH (OTOMATIS FILTER BATCH & PAKET SOAL)
 async function onJadwalMasterChange() {
@@ -3031,3 +3088,4 @@ window.hapusFolderPaketSoalAdmin = hapusFolderPaketSoalAdmin;
 // Input soal perbatch
 window.onJadwalMasterChange = onJadwalMasterChange;
 window.simpanJadwalTryOutAdmin = simpanJadwalTryOutAdmin;
+window.loadDropdownJadwalMasterAdmin = loadDropdownJadwalMasterAdmin;
