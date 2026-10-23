@@ -2528,17 +2528,27 @@ async function bukaModalListPaketTryOut(masterId, namaProgram) {
   document.getElementById('modalListPaketTryOut').classList.remove('hidden');
 
   try {
-    // 1. Ambil Jadwal Ujian untuk Master ID ini
-    const { data: schedules } = await supabaseClient
+    // Ambil training_id peserta yang sedang login
+    const userSession = JSON.parse(localStorage.getItem('mmd_user_session') || '{}');
+    const userTrainingId = userSession.training_id || currentSessionUser?.training_id;[cite: 6]
+
+    // 1. Ambil Jadwal Ujian untuk Master ID & training_id spesifik peserta ini
+    let querySchedule = supabaseClient
       .from('tryout_schedules')
       .select('*')
       .eq('master_id', masterId);
+
+    if (userTrainingId) {
+      querySchedule = querySchedule.eq('training_id', userTrainingId); // Kunci presisi per batch/training_id
+    }
+
+    const { data: schedules } = await querySchedule;
 
     if (!schedules || schedules.length === 0) {
       container.innerHTML = `
         <div class="text-center py-6">
           <i class="fa-solid fa-clock-rotate-left text-slate-300 text-3xl mb-2"></i>
-          <p class="text-xs font-bold text-slate-500">Belum ada jadwal Try Out dari Admin.</p>
+          <p class="text-xs font-bold text-slate-500">Belum ada jadwal Try Out yang dibuka untuk angkatan Anda.</p>
         </div>
       `;
       return;
@@ -2554,11 +2564,11 @@ async function bukaModalListPaketTryOut(masterId, namaProgram) {
     const now = new Date();
 
     container.innerHTML = schedules.map(s => {
-      const start = new Date(s.tgl_mulai);
-      const end = new Date(s.tgl_selesai);
+      const start = new Date(s.tgl_mulai || s.start_time);
+      const end = new Date(s.tgl_selesai || s.end_time);
       const isOpen = now >= start && now <= end;
       const isEnded = now > end;
-
+      
       // Cek apakah peserta sudah pernah mengerjakan paket ini
       const hasTaken = (userResults || []).find(r => r.tryout_code === s.tryout_code);
 
