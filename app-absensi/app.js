@@ -2134,32 +2134,89 @@ async function importExcelSoalTryOut() {
   reader.readAsArrayBuffer(file);
 }
 
-// SETTING JADWAL TRY OUT OLEH ADMIN
-async function simpanJadwalTryOutAdmin() {
-  const masterId = document.getElementById('adminSelectMasterJadwal').value;
-  const tryoutCode = document.getElementById('adminInputCodeJadwal').value.trim().toUpperCase();
-  const tglMulai = document.getElementById('adminInputTglMulaiJadwal').value;
-  const tglSelesai = document.getElementById('adminInputTglSelesaiJadwal').value;
-  const durasi = parseInt(document.getElementById('adminInputDurasiJadwal').value) || 60;
+// ====================================================
+// LOGIKA JADWAL TRY OUT ADMIN (ALUR BARU PER BATCH)
+// ====================================================
 
-  if (!masterId || !tryoutCode || !tglMulai || !tglSelesai) {
-    return alert("Harap lengkapi semua bidang isian jadwal Try Out!");
+// A. EVENT SAAT SELECT MASTER_ID DIUBAH (OTOMATIS FILTER BATCH & PAKET SOAL)
+async function onJadwalMasterChange() {
+  const masterId = document.getElementById('adminSelectJadwalMaster').value;
+  const selectBatch = document.getElementById('adminSelectJadwalBatch');
+  const selectCode = document.getElementById('adminSelectJadwalCode');
+
+  selectBatch.innerHTML = '<option value="">-- Pilih Batch Aktif --</option>';
+  selectCode.innerHTML = '<option value="">-- Pilih Paket Soal --</option>';
+
+  if (!masterId) return;
+
+  try {
+    // 1. Load Batch Pelatihan yang sesuai dengan master_id
+    const { data: listBatch } = await supabaseClient
+      .from('batches') // Sesuaikan jika nama tabel batch kamu berbeda
+      .select('*')
+      .eq('master_id', masterId)
+      .order('created_at', { ascending: false });
+
+    if (listBatch && listBatch.length > 0) {
+      listBatch.forEach(b => {
+        selectBatch.innerHTML += `<option value="${b.batch_id}">${b.nama_batch || b.batch_id}</option>`;
+      });
+    }
+
+    // 2. Load Paket Soal yang sudah ter-upload untuk master_id ini
+    const { data: listSoal } = await supabaseClient
+      .from('tryout_questions')
+      .select('tryout_code')
+      .eq('master_id', masterId);
+
+    if (listSoal && listSoal.length > 0) {
+      const uniqueCodes = [...new Set(listSoal.map(s => s.tryout_code))];
+      uniqueCodes.forEach(code => {
+        selectCode.innerHTML += `<option value="${code}">Paket ${code}</option>`;
+      });
+    }
+  } catch (err) {
+    console.error("Gagal load filter jadwal:", err);
+  }
+}
+
+// B. FUNGSI SIMPAN JADWAL KE SUPABASE
+async function simpanJadwalTryOutAdmin() {
+  const masterId = document.getElementById('adminSelectJadwalMaster').value;
+  const tryoutCode = document.getElementById('adminSelectJadwalCode').value;
+  const batchId = document.getElementById('adminSelectJadwalBatch').value;
+  const durasi = parseInt(document.getElementById('adminInputTryOutDurasi').value) || 60;
+  const startTime = document.getElementById('adminInputTryOutStart').value;
+  const endTime = document.getElementById('adminInputTryOutEnd').value;
+
+  if (!masterId || !tryoutCode || !batchId || !startTime || !endTime) {
+    alert("Harap lengkapi seluruh form jadwal (Program, Paket, Batch, Durasi, dan Waktu)!");
+    return;
   }
 
-  const payload = {
-    master_id: masterId,
-    tryout_code: tryoutCode,
-    tgl_mulai: new Date(tglMulai).toISOString(),
-    tgl_selesai: new Date(tglSelesai).toISOString(),
-    durasi_menit: durasi
-  };
+  try {
+    const { error } = await supabaseClient
+      .from('tryout_schedules')
+      .insert([{
+        master_id: masterId,
+        tryout_code: tryoutCode,
+        batch_id: batchId,
+        durasi_menit: durasi,
+        start_time: startTime,
+        end_time: endTime
+      }]);
 
-  const { error } = await supabaseClient.from('tryout_schedules').insert([payload]);
+    if (error) {
+      alert("Gagal menyimpan jadwal: " + error.message);
+      return;
+    }
 
-  if (error) {
-    alert("Gagal menyimpan jadwal: " + error.message);
-  } else {
-    alert(`✅ Jadwal Ujian ${tryoutCode} Berhasil Ditentukan!`);
+    alert(`Jadwal Try Out Paket ${tryoutCode} berhasil dirilis untuk Batch ${batchId}!`);
+    
+    if (typeof loadRekapTryOutAdmin === 'function') loadRekapTryOutAdmin();
+
+  } catch (err) {
+    alert("Terjadi kesalahan: " + err.message);
   }
 }
 
@@ -2175,7 +2232,6 @@ function batalEditSoalAdmin() {
   document.getElementById('btnBatalEditSoal').classList.add('hidden');
 }
 
-// DISPLAY BANK SOAL ADMIN (GROUPING PER PAKET / FOLDER)
 // DISPLAY BANK SOAL ADMIN (GROUPING PER PAKET / FOLDER)
 async function loadDatabaseSoalAdmin() {
   const container = document.getElementById('tbodyDatabaseSoalAdmin');
@@ -2971,3 +3027,7 @@ window.simpanPasswordAdminBaru = simpanPasswordAdminBaru;
 
 // Hapus Folder Paket Soal
 window.hapusFolderPaketSoalAdmin = hapusFolderPaketSoalAdmin;
+
+// Input soal perbatch
+window.onJadwalMasterChange = onJadwalMasterChange;
+window.simpanJadwalTryOutAdmin = simpanJadwalTryOutAdmin;
