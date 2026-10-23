@@ -2167,17 +2167,20 @@ async function onJadwalMasterChange() {
   if (!masterId) return;
 
   try {
-    // 1. Ambil daftar training_id unik dari Supabase
-    const { data: listTraining, error: errTraining } = await supabaseClient
-      .from('training_id') // Jika tabel tersendiri, atau ganti ke tabel 'users' jika tersimpan di sana
+    // 1. Ambil kolom training_id dari tabel 'users' (sesuaikan nama tabel user kamu)
+    const { data: listUser, error: errUser } = await supabaseClient
+      .from('users') // Ganti dengan nama tabel user/peserta kamu di Supabase
       .select('training_id');
 
-    if (!errTraining && listTraining && listTraining.length > 0) {
-      // Ambil nilai training_id unik dan filter yang sesuai kode program masterId
-      const allTrainings = listTraining
-        .map(t => t.training_id)
-        .filter(t => t && t.toLowerCase().includes(masterId.toLowerCase()));
+    if (errUser) {
+      console.error("Error Fetch Training ID:", errUser.message);
+    } else if (listUser && listUser.length > 0) {
+      // Filter nilai training_id yang ada dan sesuai dengan masterId
+      const allTrainings = listUser
+        .map(u => u.training_id)
+        .filter(t => t && t.trim() !== '' && t.toLowerCase().includes(masterId.toLowerCase()));
 
+      // Hilangkan duplikat agar pilihan batch unik
       const uniqueTrainings = [...new Set(allTrainings)];
 
       uniqueTrainings.forEach(tId => {
