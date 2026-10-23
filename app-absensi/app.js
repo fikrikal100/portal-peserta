@@ -2587,20 +2587,23 @@ async function bukaModalListPaketTryOut(masterId, namaProgram) {
       // Tentukan Tombol Akses
       let actionBtn = '';
    
-    console.log("Data Hasil Tryout Peserta:", userResultData);
-     if (hasTaken) {
-    // Ambil nilai dari berbagai kemungkinan nama kolom di Supabase secara aman
-    const nilaiPeserta = userResultData?.skor ?? 
-                         userResultData?.nilai ?? 
-                         userResultData?.total_benar ?? 
-                         userResultData?.nilai_akhir ?? 
-                         userResultData?.score ?? 0;
+   console.log("Data Hasil Tryout Peserta:", userResultData);
+
+      if (hasTaken) {
+        // Ambil nilai utama dari kolom 'score', lalu fallback ke perhitungan manual
+        const nilaiPeserta = userResultData?.score ?? 
+                             userResultData?.nilai ?? 
+                             userResultData?.skor ?? 
+                             (userResultData?.total_soal 
+                               ? Math.round((userResultData.total_benar / userResultData.total_soal) * 100) 
+                               : 0);
+
         actionBtn = `
           <span class="bg-blue-50 text-blue-600 font-bold px-3 py-1.5 rounded-lg text-[11px] border border-blue-200 flex items-center gap-1">
             <i class="fa-solid fa-circle-check text-blue-500"></i> SUDAH DIKERJAKAN (Nilai: ${nilaiPeserta})
           </span>
         `;
-      } else if (isOpen) {
+      } else if (isOpen) { 
         actionBtn = `
           <button onclick="mulaiTryOutPeserta('${masterId}', '${s.tryout_code}', ${s.durasi_menit || 60})" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow transition flex items-center gap-1">
             <i class="fa-solid fa-pen-to-square"></i> Kerjakan Soal
@@ -2778,10 +2781,15 @@ async function submitJawabanTryOutPeserta() {
     alert("⚠️ Gagal menyimpan rekap hasil ke database: " + error.message + "\n(Pastikan RLS pada tabel tryout_results sudah diizinkan).");
   } else {
     alert(`📊 HASIL TRY OUT BERHASIL DICATAT!\n\nJumlah Benar: ${totalBenar} dari ${totalSoal} Soal\nNilai Akhir: ${score}\nStatus: ${status.toUpperCase()}`);
+    
+    // Refresh riwayat di profil & modal list paket tryout
+    loadRiwayatTryOutProfil();
+    if (typeof bukaModalListPaketTryOut === 'function') {
+      bukaModalListPaketTryOut(activeExamMasterId, document.getElementById('modalJudulFolderTryOut')?.innerText || '');
+    }
   }
 
   document.getElementById('modalPengerjaanTryOut').classList.add('hidden');
-  loadRiwayatTryOutProfil();
 }
 
 async function loadRiwayatTryOutProfil() {
