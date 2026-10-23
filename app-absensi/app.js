@@ -2154,6 +2154,7 @@ function loadDropdownJadwalMasterAdmin() {
 }
 
 // EVENT SAAT PILIH PROGRAM TRAINING (FILTER BATCH & PAKET SOAL SESUAI training_id)
+// EVENT SAAT PILIH PROGRAM TRAINING (FILTER BATCH & PAKET SOAL SESUAI training_id)
 async function onJadwalMasterChange() {
   const masterId = document.getElementById('adminSelectJadwalMaster').value;
   const selectBatch = document.getElementById('adminSelectJadwalBatch');
@@ -2171,21 +2172,21 @@ async function onJadwalMasterChange() {
     const { data: listBatch, error: errBatch } = await supabaseClient
       .from('batches')
       .select('*')
-      .eq('training_id', masterId); // <-- MENGGUNAKAN training_id
+      .eq('training_id', masterId);
 
     if (errBatch) console.error("Error Fetch Batches:", errBatch);
 
     if (listBatch && listBatch.length > 0) {
       listBatch.forEach(b => {
-        // Ambil ID batch dan nama/label batch
-        const bId = b.id || b.batch_id || b.id_batch;
-        const bLabel = b.nama_batch || b.batch_name || b.batch_id || `Batch ${bId}`;
+        // Ambil ID utama tabel batches dan nama tampilannya
+        const bId = b.id || b.id_batch;
+        const bLabel = b.nama_batch || b.batch_name || `Batch ${bId}`;
         
         selectBatch.innerHTML += `<option value="${bId}">${bLabel}</option>`;
       });
     }
 
-    // 2. Load Paket Soal berdasarkan master_id / training_id
+    // 2. Load Paket Soal berdasarkan master_id
     const { data: listSoal, error: errSoal } = await supabaseClient
       .from('tryout_questions')
       .select('tryout_code')
