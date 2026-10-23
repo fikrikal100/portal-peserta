@@ -2154,7 +2154,6 @@ function loadDropdownJadwalMasterAdmin() {
 }
 
 // EVENT SAAT PILIH PROGRAM TRAINING (FILTER BATCH & PAKET SOAL SESUAI training_id)
-// EVENT SAAT PILIH PROGRAM TRAINING (FILTER BATCH & PAKET SOAL SESUAI training_id)
 async function onJadwalMasterChange() {
   const masterId = document.getElementById('adminSelectJadwalMaster').value;
   const selectBatch = document.getElementById('adminSelectJadwalBatch');
@@ -2168,21 +2167,21 @@ async function onJadwalMasterChange() {
   if (!masterId) return;
 
   try {
-    // 1. Load Batch Pelatihan berdasarkan training_id
-    const { data: listBatch, error: errBatch } = await supabaseClient
-      .from('batches')
-      .select('*')
-      .eq('training_id', masterId);
+    // 1. Ambil daftar training_id unik dari Supabase
+    const { data: listTraining, error: errTraining } = await supabaseClient
+      .from('training_id') // Jika tabel tersendiri, atau ganti ke tabel 'users' jika tersimpan di sana
+      .select('training_id');
 
-    if (errBatch) console.error("Error Fetch Batches:", errBatch);
+    if (!errTraining && listTraining && listTraining.length > 0) {
+      // Ambil nilai training_id unik dan filter yang sesuai kode program masterId
+      const allTrainings = listTraining
+        .map(t => t.training_id)
+        .filter(t => t && t.toLowerCase().includes(masterId.toLowerCase()));
 
-    if (listBatch && listBatch.length > 0) {
-      listBatch.forEach(b => {
-        // Ambil ID utama tabel batches dan nama tampilannya
-        const bId = b.id || b.id_batch;
-        const bLabel = b.nama_batch || b.batch_name || `Batch ${bId}`;
-        
-        selectBatch.innerHTML += `<option value="${bId}">${bLabel}</option>`;
+      const uniqueTrainings = [...new Set(allTrainings)];
+
+      uniqueTrainings.forEach(tId => {
+        selectBatch.innerHTML += `<option value="${tId}">${tId}</option>`;
       });
     }
 
@@ -2207,13 +2206,13 @@ async function onJadwalMasterChange() {
 async function simpanJadwalTryOutAdmin() {
   const masterId = document.getElementById('adminSelectJadwalMaster').value;
   const tryoutCode = document.getElementById('adminSelectJadwalCode').value;
-  const batchId = document.getElementById('adminSelectJadwalBatch').value;
+  const trainingId = document.getElementById('adminSelectJadwalBatch').value; // Mengambil kode seperti AK3U-01
   const durasi = parseInt(document.getElementById('adminInputTryOutDurasi').value) || 60;
   const startTime = document.getElementById('adminInputTryOutStart').value;
   const endTime = document.getElementById('adminInputTryOutEnd').value;
 
-  if (!masterId || !tryoutCode || !batchId || !startTime || !endTime) {
-    alert("Harap lengkapi seluruh form jadwal (Program, Paket, Batch, Durasi, dan Waktu)!");
+  if (!masterId || !tryoutCode || !trainingId || !startTime || !endTime) {
+    alert("Harap lengkapi seluruh form jadwal (Program, Paket, Batch Training, Durasi, dan Waktu)!");
     return;
   }
 
@@ -2222,8 +2221,8 @@ async function simpanJadwalTryOutAdmin() {
       .from('tryout_schedules')
       .insert([{
         master_id: masterId,
+        training_id: trainingId, // Menyimpan kode spesifik batch/training
         tryout_code: tryoutCode,
-        batch_id: batchId,
         durasi_menit: durasi,
         start_time: startTime,
         end_time: endTime
@@ -2234,8 +2233,7 @@ async function simpanJadwalTryOutAdmin() {
       return;
     }
 
-    alert(`Jadwal Try Out Paket ${tryoutCode} berhasil dirilis!`);
-    
+    alert(`Jadwal Try Out Paket ${tryoutCode} berhasil dirilis untuk ${trainingId}!`);
     if (typeof loadRekapTryOutAdmin === 'function') loadRekapTryOutAdmin();
 
   } catch (err) {
