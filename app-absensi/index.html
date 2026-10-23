@@ -759,36 +759,60 @@
       <div id="tabAdminTryout" class="tab-admin-content hidden space-y-6">
 
         <!-- FORM SETTING JADWAL TRY OUT -->
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-            <i class="fa-solid fa-clock text-emerald-700"></i> Pengaturan Jadwal & Waktu Try Out
-          </h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
-            <div>
-              <label class="font-bold text-slate-700 block mb-1">Program Training</label>
-              <select id="adminSelectMasterJadwal" class="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
-                <option value="">-- Pilih Program Training --</option>
-              </select>
-            </div>
-            <div>
-              <label class="font-bold text-slate-700 block mb-1">Kode Try Out (misal: TO-01)</label>
-              <input type="text" id="adminInputCodeJadwal" placeholder="Contoh: TO-01" class="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none uppercase">
-            </div>
-            <div>
-              <label class="font-bold text-slate-700 block mb-1">Durasi Ujian (Menit)</label>
-              <input type="number" id="adminInputDurasiJadwal" value="60" class="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
-            </div>
-            <div>
-              <label class="font-bold text-slate-700 block mb-1">Waktu Mulai Buka Ujian</label>
-              <input type="datetime-local" id="adminInputTglMulaiJadwal" class="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
-            </div>
-            <div>
-              <label class="font-bold text-slate-700 block mb-1">Waktu Selesai / Tutup Ujian</label>
-              <input type="datetime-local" id="adminInputTglSelesaiJadwal" class="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none">
-            </div>
-            <div class="flex items-end">
-              <button onclick="simpanJadwalTryOutAdmin()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 px-4 rounded-xl shadow transition">
-                <i class="fa-solid fa-calendar-check mr-1"></i> Simpan Jadwal
+        <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-4">
+          <h3 class="font-bold text-sm text-slate-800 border-b pb-2 flex items-center gap-2">
+            <i class="fa-solid fa-clock text-emerald-700"></i>
+             <span>Pengaturan Jadwal Rilis Try Out</span>
+              </h3>
+            
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <!-- 1. Program Training (master_id) -->
+                <div>
+                  <label class="font-semibold text-slate-700 block mb-1">1. Program Training</label>
+                  <select id="adminSelectJadwalMaster" onchange="onJadwalMasterChange()" class="w-full p-2.5 border rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+                    <option value="">-- Pilih Program Training --</option>
+                  </select>
+                </div>
+            
+                <!-- 2. Kode / Nama Paket Try Out Tujuan -->
+                <div>
+                  <label class="font-semibold text-slate-700 block mb-1">2. Paket Try Out Tujuan</label>
+                  <select id="adminSelectJadwalCode" class="w-full p-2.5 border rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+                    <option value="">-- Pilih Paket Soal --</option>
+                  </select>
+                </div>
+            
+                <!-- 3. Batch Tujuan (Filter Sesuai master_id) -->
+                <div>
+                  <label class="font-semibold text-slate-700 block mb-1">3. Batch Pelatihan Tujuan</label>
+                  <select id="adminSelectJadwalBatch" class="w-full p-2.5 border rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+                    <option value="">-- Pilih Batch Aktif --</option>
+                  </select>
+                </div>
+            
+                <!-- 4. Durasi Pengerjaan (Dalam Menit) -->
+                <div>
+                  <label class="font-semibold text-slate-700 block mb-1">4. Durasi Ujian (Menit)</label>
+                  <input type="number" id="adminInputTryOutDurasi" placeholder="Contoh: 60" value="60" min="1" class="w-full p-2.5 border rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+                </div>
+            
+                <!-- 5a. Tanggal & Waktu Mulai -->
+                <div>
+                  <label class="font-semibold text-slate-700 block mb-1">5. Waktu Mulai Open Soal</label>
+                  <input type="datetime-local" id="adminInputTryOutStart" class="w-full p-2.5 border rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+                </div>
+            
+                <!-- 5b. Tanggal & Waktu Selesai -->
+                <div>
+                  <label class="font-semibold text-slate-700 block mb-1">6. Waktu Selesai / Tutup Soal</label>
+                  <input type="datetime-local" id="adminInputTryOutEnd" class="w-full p-2.5 border rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+                </div>
+              </div>
+            
+              <!-- Tombol Simpan -->
+              <button onclick="simpanJadwalTryOutAdmin()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-2.5 rounded-xl font-bold text-xs shadow transition flex justify-center items-center gap-2">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>Rilis & Simpan Jadwal Try Out</span>
               </button>
             </div>
           </div>
