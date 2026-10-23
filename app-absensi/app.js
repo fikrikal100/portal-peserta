@@ -2592,7 +2592,7 @@ async function bukaModalListPaketTryOut(masterId, namaProgram) {
     // Ambil nilai dari berbagai kemungkinan nama kolom di Supabase secara aman
     const nilaiPeserta = userResultData?.skor ?? 
                          userResultData?.nilai ?? 
-                         userResultData?.skor_akhir ?? 
+                         userResultData?.total_benar ?? 
                          userResultData?.nilai_akhir ?? 
                          userResultData?.score ?? 0;
         actionBtn = `
