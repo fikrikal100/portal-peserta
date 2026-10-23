@@ -2595,7 +2595,7 @@ async function bukaModalListPaketTryOut(masterId, namaProgram) {
         `;
       } else if (isOpen) {
         actionBtn = `
-          <button onclick="mulaiPengerjaanTryOut('${masterId}', '${s.tryout_code}', ${s.durasi_menit || 60})" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow transition flex items-center gap-1">
+          <button onclick="mulaiTryOutPeserta('${masterId}', '${s.tryout_code}', ${s.durasi_menit || 60})" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow transition flex items-center gap-1">
             <i class="fa-solid fa-pen-to-square"></i> Kerjakan Soal
           </button>
         `;
@@ -3081,3 +3081,4 @@ window.hapusFolderPaketSoalAdmin = hapusFolderPaketSoalAdmin;
 window.onJadwalMasterChange = onJadwalMasterChange;
 window.simpanJadwalTryOutAdmin = simpanJadwalTryOutAdmin;
 window.loadDropdownJadwalMasterAdmin = loadDropdownJadwalMasterAdmin;
+
