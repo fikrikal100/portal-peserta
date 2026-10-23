@@ -2528,9 +2528,9 @@ async function bukaModalListPaketTryOut(masterId, namaProgram) {
   document.getElementById('modalListPaketTryOut').classList.remove('hidden');
 
   try {
-    // Ambil training_id peserta yang sedang login
+    // Ambil training_id peserta yang sedang login secara aman
     const userSession = JSON.parse(localStorage.getItem('mmd_user_session') || '{}');
-    const userTrainingId = userSession.training_id || currentSessionUser?.training_id;[cite: 6]
+    const userTrainingId = userSession.training_id || (typeof currentSessionUser !== 'undefined' && currentSessionUser ? currentSessionUser.training_id : '');
 
     // 1. Ambil Jadwal Ujian untuk Master ID & training_id spesifik peserta ini
     let querySchedule = supabaseClient
@@ -2539,7 +2539,7 @@ async function bukaModalListPaketTryOut(masterId, namaProgram) {
       .eq('master_id', masterId);
 
     if (userTrainingId) {
-      querySchedule = querySchedule.eq('training_id', userTrainingId); // Kunci presisi per batch/training_id
+      querySchedule = querySchedule.eq('training_id', userTrainingId);
     }
 
     const { data: schedules } = await querySchedule;
@@ -2555,20 +2555,39 @@ async function bukaModalListPaketTryOut(masterId, namaProgram) {
     }
 
     // 2. Ambil Riwayat Ujian Peserta yang Sedang Login
+    const username = userSession.username || (typeof currentSessionUser !== 'undefined' ? currentSessionUser.username : '');
     const { data: userResults } = await supabaseClient
       .from('tryout_results')
       .select('*')
-      .eq('username', currentSessionUser.username)
+      .eq('username', username)
       .eq('master_id', masterId);
 
     const now = new Date();
 
+    // Render daftar jadwal...
     container.innerHTML = schedules.map(s => {
       const start = new Date(s.tgl_mulai || s.start_time);
       const end = new Date(s.tgl_selesai || s.end_time);
       const isOpen = now >= start && now <= end;
       const isEnded = now > end;
-      
+
+      // Logika pemetaan tampilan (render HTML)...
+      return `
+        <div class="p-3 border rounded-xl mb-2 flex justify-between items-center">
+          <div>
+            <p class="font-bold text-slate-800 text-xs">${s.tryout_code}</p>
+            <p class="text-[10px] text-slate-500">${start.toLocaleString('id-ID')} s/d ${end.toLocaleString('id-ID')}</p>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error("Error buka modal tryout:", err);
+    container.innerHTML = '<p class="text-center py-4 text-red-500 text-xs">Gagal memuat jadwal try out.</p>';
+  }
+}
+
       // Cek apakah peserta sudah pernah mengerjakan paket ini
       const hasTaken = (userResults || []).find(r => r.tryout_code === s.tryout_code);
 
