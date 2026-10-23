@@ -2176,6 +2176,7 @@ function batalEditSoalAdmin() {
 }
 
 // DISPLAY BANK SOAL ADMIN (GROUPING PER PAKET / FOLDER)
+// DISPLAY BANK SOAL ADMIN (GROUPING PER PAKET / FOLDER)
 async function loadDatabaseSoalAdmin() {
   const container = document.getElementById('tbodyDatabaseSoalAdmin');
   const filterMaster = document.getElementById('adminFilterSoalMaster')?.value;
@@ -2230,9 +2231,17 @@ async function loadDatabaseSoalAdmin() {
             ${pkg.questions.length} Soal
           </td>
           <td class="p-3 text-center">
-            <button onclick="bukaModalDetailPaketSoalAdmin('${pkg.master_id}', '${pkg.tryout_code}')" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition shadow flex items-center gap-1 mx-auto">
-              <i class="fa-solid fa-folder-open"></i> Kelola ${pkg.questions.length} Soal
-            </button>
+            <div class="flex items-center justify-center gap-2">
+              <!-- TOMBOL KELOLA SOAL -->
+              <button onclick="bukaModalDetailPaketSoalAdmin('${pkg.master_id}', '${pkg.tryout_code}')" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition shadow flex items-center gap-1">
+                <i class="fa-solid fa-folder-open"></i> Kelola ${pkg.questions.length} Soal
+              </button>
+
+              <!-- TOMBOL HAPUS FOLDER PAKET SOAL -->
+              <button onclick="hapusFolderPaketSoalAdmin('${pkg.master_id}', '${pkg.tryout_code}')" class="bg-rose-600 hover:bg-rose-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition shadow flex items-center gap-1" title="Hapus Seluruh Folder Paket Soal">
+                <i class="fa-solid fa-trash-can"></i> Hapus Folder
+              </button>
+            </div>
           </td>
         </tr>
       `;
@@ -2240,6 +2249,31 @@ async function loadDatabaseSoalAdmin() {
 
   } catch (err) {
     container.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500">Gagal memuat bank soal.</td></tr>';
+  }
+}
+
+// FUNGSI LOGIKA HAPUS SELURUH FOLDER PAKET SOAL
+async function hapusFolderPaketSoalAdmin(masterId, tryoutCode) {
+  const konfirmasi = confirm(`Apakah kamu yakin ingin menghapus SELURUH folder paket "${tryoutCode}"?\nSemua soal di dalam folder ini akan terhapus permanen!`);
+  
+  if (!konfirmasi) return;
+
+  try {
+    const { error } = await supabaseClient
+      .from('tryout_questions')
+      .delete()
+      .eq('master_id', masterId)
+      .eq('tryout_code', tryoutCode);
+
+    if (error) {
+      alert("Gagal menghapus folder paket soal: " + error.message);
+      return;
+    }
+
+    alert(`Folder paket "${tryoutCode}" berhasil dihapus!`);
+    loadDatabaseSoalAdmin(); // Reload tabel bank soal
+  } catch (err) {
+    alert("Terjadi kesalahan sistem: " + err.message);
   }
 }
 
@@ -2934,3 +2968,6 @@ window.loadRekapTryOutAdmin = loadRekapTryOutAdmin;
 window.bukaModalPassAdmin = bukaModalPassAdmin;
 window.tutupModalPassAdmin = tutupModalPassAdmin;
 window.simpanPasswordAdminBaru = simpanPasswordAdminBaru;
+
+// Hapus Folder Paket Soal
+window.hapusFolderPaketSoalAdmin = hapusFolderPaketSoalAdmin;
