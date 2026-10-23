@@ -2167,20 +2167,33 @@ async function onJadwalMasterChange() {
   if (!masterId) return;
 
   try {
-    // Load Batch Pelatihan
-    const { data: listBatch } = await supabaseClient
+    // 1. Load Batch Pelatihan (Tarik semua batch aktif, atau sesuaikan filter kolomnya)
+    const { data: listBatch, error: errBatch } = await supabaseClient
       .from('batches')
       .select('*')
-      .eq('master_id', masterId)
       .order('created_at', { ascending: false });
 
+    if (errBatch) console.error("Error Supabase Fetch Batches:", errBatch);
+
     if (listBatch && listBatch.length > 0) {
-      listBatch.forEach(b => {
-        selectBatch.innerHTML += `<option value="${b.batch_id}">${b.nama_batch || b.batch_id}</option>`;
+      // Filter batch yang sesuai dengan master_id atau program (jika ada)
+      const filteredBatches = listBatch.filter(b => 
+        b.master_id === masterId || 
+        b.program_id === masterId || 
+        b.skp_id === masterId ||
+        !b.master_id // Jika kolom master_id tidak dipakai di tabel batches, tampilkan semua batch aktif
+      );
+
+      filteredBatches.forEach(b => {
+        // Ambil nilai id batch dan nama batch secara dinamis
+        const bId = b.batch_id || b.id || b.nama_batch;
+        const bLabel = b.nama_batch || b.batch_id || b.batch_name || bId;
+        
+        selectBatch.innerHTML += `<option value="${bId}">${bLabel}</option>`;
       });
     }
 
-    // Load Paket Soal
+    // 2. Load Paket Soal
     const { data: listSoal } = await supabaseClient
       .from('tryout_questions')
       .select('tryout_code')
