@@ -2587,12 +2587,20 @@ async function bukaModalListPaketTryOut(masterId, namaProgram) {
       // Tentukan Tombol Akses
       let actionBtn = '';
 
-      if (hasTaken) {
-        actionBtn = `
-          <span class="bg-blue-50 text-blue-600 font-bold px-3 py-1.5 rounded-lg text-[11px] border border-blue-200 flex items-center gap-1">
-            <i class="fa-solid fa-circle-check text-blue-500"></i> SUDAH DIKERJAKAN (Nilai: ${userResultData?.skor_akhir || userResultData?.nilai || 0})
-          </span>
-        `;
+     if (hasTaken) {
+    // Ambil nilai dari berbagai kemungkinan nama kolom di Supabase secara aman
+    const nilaiPeserta = userResultData?.skor ?? 
+                         userResultData?.nilai ?? 
+                         userResultData?.skor_akhir ?? 
+                         userResultData?.nilai_akhir ?? 
+                         userResultData?.score ?? 0;
+
+    actionBtn = `
+      <span class="bg-blue-50 text-blue-600 font-bold px-3 py-1.5 rounded-lg text-[11px] border border-blue-200 flex items-center gap-1">
+        <i class="fa-solid fa-circle-check text-blue-500"></i> SUDAH DIKERJAKAN (Nilai: ${nilaiPeserta})
+      </span>
+    `;
+  }
       } else if (isOpen) {
         actionBtn = `
           <button onclick="mulaiTryOutPeserta('${masterId}', '${s.tryout_code}', ${s.durasi_menit || 60})" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow transition flex items-center gap-1">
