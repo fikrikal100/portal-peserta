@@ -2209,7 +2209,7 @@ async function onJadwalMasterChange() {
 async function simpanJadwalTryOutAdmin() {
   const masterId = document.getElementById('adminSelectJadwalMaster').value;
   const tryoutCode = document.getElementById('adminSelectJadwalCode').value;
-  const trainingId = document.getElementById('adminSelectJadwalBatch').value; // Mengambil kode seperti AK3U-01
+  const trainingId = document.getElementById('adminSelectJadwalBatch').value;
   const durasi = parseInt(document.getElementById('adminInputTryOutDurasi').value) || 60;
   const startTime = document.getElementById('adminInputTryOutStart').value;
   const endTime = document.getElementById('adminInputTryOutEnd').value;
@@ -2220,23 +2220,25 @@ async function simpanJadwalTryOutAdmin() {
   }
 
   try {
+    const payload = {
+      master_id: masterId,
+      training_id: trainingId,
+      tryout_code: tryoutCode,
+      durasi_menit: durasi,
+      tgl_mulai: new Date(startTime).toISOString(),   // <-- Menggunakan tgl_mulai
+      tgl_selesai: new Date(endTime).toISOString()    // <-- Menggunakan tgl_selesai
+    };
+
     const { error } = await supabaseClient
       .from('tryout_schedules')
-      .insert([{
-        master_id: masterId,
-        training_id: trainingId, // Menyimpan kode spesifik batch/training
-        tryout_code: tryoutCode,
-        durasi_menit: durasi,
-        start_time: startTime,
-        end_time: endTime
-      }]);
+      .insert([payload]);
 
     if (error) {
       alert("Gagal menyimpan jadwal: " + error.message);
       return;
     }
 
-    alert(`Jadwal Try Out Paket ${tryoutCode} berhasil dirilis untuk ${trainingId}!`);
+    alert(`✅ Jadwal Try Out Paket ${tryoutCode} berhasil dirilis untuk ${trainingId}!`);
     if (typeof loadRekapTryOutAdmin === 'function') loadRekapTryOutAdmin();
 
   } catch (err) {
