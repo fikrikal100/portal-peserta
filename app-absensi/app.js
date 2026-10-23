@@ -2586,7 +2586,8 @@ async function bukaModalListPaketTryOut(masterId, namaProgram) {
 
       // Tentukan Tombol Akses
       let actionBtn = '';
-
+   
+    console.log("Data Hasil Tryout Peserta:", userResultData);
      if (hasTaken) {
     // Ambil nilai dari berbagai kemungkinan nama kolom di Supabase secara aman
     const nilaiPeserta = userResultData?.skor ?? 
