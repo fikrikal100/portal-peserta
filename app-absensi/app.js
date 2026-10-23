@@ -2683,48 +2683,63 @@ async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
   document.getElementById('tryoutExamTitle').innerText = `${masterId} - ${tryoutCode}`;
   
   const container = document.getElementById('containerSoalTryOutBody');
-  container.innerHTML = currentExamQuestions.map((q, idx) => {
+ container.innerHTML = currentExamQuestions.map((q, idx) => {
     // Gambar Utama Soal
-    const fixedImg = fixImageUrl(q.image_url);
-    const imgHtml = fixedImg 
+    const fixedImg = typeof fixImageUrl === 'function' ? fixImageUrl(q.image_url) : q.image_url;
+    const imgHtml = (fixedImg && fixedImg.trim() !== '') 
       ? `<div class="my-2"><img src="${fixedImg}" alt="Gambar Soal ${idx+1}" class="max-h-64 rounded-xl border border-slate-200 object-contain shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x200?text=Gambar+Gagal+Dimuat';"></div>` 
       : '';
 
-    // Gambar untuk Masing-masing Opsi Jawaban (A, B, C, D)
-    const imgA = fixImageUrl(q.img_opsi_a) ? `<div class="mt-1"><img src="${fixImageUrl(q.img_opsi_a)}" class="max-h-32 rounded-lg border border-slate-200 object-contain"></div>` : '';
-    const imgB = fixImageUrl(q.img_opsi_b) ? `<div class="mt-1"><img src="${fixImageUrl(q.img_opsi_b)}" class="max-h-32 rounded-lg border border-slate-200 object-contain"></div>` : '';
-    const imgC = fixImageUrl(q.img_opsi_c) ? `<div class="mt-1"><img src="${fixImageUrl(q.img_opsi_c)}" class="max-h-32 rounded-lg border border-slate-200 object-contain"></div>` : '';
-    const imgD = fixImageUrl(q.img_opsi_d) ? `<div class="mt-1"><img src="${fixImageUrl(q.img_opsi_d)}" class="max-h-32 rounded-lg border border-slate-200 object-contain"></div>` : '';
+    // Ambil URL Gambar Opsi (Pakai fixImageUrl jika ada, atau fallback langsung ke raw string)
+    const getOptImg = (url) => {
+      if (!url || url.trim() === '') return '';
+      const validUrl = typeof fixImageUrl === 'function' ? fixImageUrl(url) : url;
+      return validUrl ? validUrl : url; // Jika fixImageUrl return empty, pakai url asli
+    };
+
+    const urlA = getOptImg(q.img_opsi_a);
+    const urlB = getOptImg(q.img_opsi_b);
+    const urlC = getOptImg(q.img_opsi_c);
+    const urlD = getOptImg(q.img_opsi_d);
+
+    const imgA = urlA ? `<div class="mt-2"><img src="${urlA}" class="max-h-40 rounded-lg border border-slate-200 object-contain shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/200x100?text=Gambar+Gagal';"></div>` : '';
+    const imgB = urlB ? `<div class="mt-2"><img src="${urlB}" class="max-h-40 rounded-lg border border-slate-200 object-contain shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/200x100?text=Gambar+Gagal';"></div>` : '';
+    const imgC = urlC ? `<div class="mt-2"><img src="${urlC}" class="max-h-40 rounded-lg border border-slate-200 object-contain shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/200x100?text=Gambar+Gagal';"></div>` : '';
+    const imgD = urlD ? `<div class="mt-2"><img src="${urlD}" class="max-h-40 rounded-lg border border-slate-200 object-contain shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/200x100?text=Gambar+Gagal';"></div>` : '';
 
     return `
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
         <p class="text-xs font-bold text-slate-800">${idx + 1}. ${q.soal}</p>
         ${imgHtml}
         <div class="space-y-2 text-xs text-slate-700">
-          <label class="flex flex-col gap-1 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
+          <label class="flex flex-col gap-1 p-2.5 rounded-xl border border-slate-100 hover:bg-emerald-50 cursor-pointer transition">
             <div class="flex items-center gap-2">
-              <input type="radio" name="soal_${q.id}" value="a" class="accent-emerald-700"> A. ${q.opsi_a}
+              <input type="radio" name="soal_${q.id}" value="a" class="accent-emerald-700"> 
+              <span class="font-medium">A. ${q.opsi_a || ''}</span>
             </div>
             ${imgA}
           </label>
 
-          <label class="flex flex-col gap-1 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
+          <label class="flex flex-col gap-1 p-2.5 rounded-xl border border-slate-100 hover:bg-emerald-50 cursor-pointer transition">
             <div class="flex items-center gap-2">
-              <input type="radio" name="soal_${q.id}" value="b" class="accent-emerald-700"> B. ${q.opsi_b}
+              <input type="radio" name="soal_${q.id}" value="b" class="accent-emerald-700"> 
+              <span class="font-medium">B. ${q.opsi_b || ''}</span>
             </div>
             ${imgB}
           </label>
 
-          <label class="flex flex-col gap-1 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
+          <label class="flex flex-col gap-1 p-2.5 rounded-xl border border-slate-100 hover:bg-emerald-50 cursor-pointer transition">
             <div class="flex items-center gap-2">
-              <input type="radio" name="soal_${q.id}" value="c" class="accent-emerald-700"> C. ${q.opsi_c}
+              <input type="radio" name="soal_${q.id}" value="c" class="accent-emerald-700"> 
+              <span class="font-medium">C. ${q.opsi_c || ''}</span>
             </div>
             ${imgC}
           </label>
 
-          <label class="flex flex-col gap-1 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
+          <label class="flex flex-col gap-1 p-2.5 rounded-xl border border-slate-100 hover:bg-emerald-50 cursor-pointer transition">
             <div class="flex items-center gap-2">
-              <input type="radio" name="soal_${q.id}" value="d" class="accent-emerald-700"> D. ${q.opsi_d}
+              <input type="radio" name="soal_${q.id}" value="d" class="accent-emerald-700"> 
+              <span class="font-medium">D. ${q.opsi_d || ''}</span>
             </div>
             ${imgD}
           </label>
