@@ -2651,7 +2651,7 @@ function tutupModalListPaketTryOut() {
   document.getElementById('modalListPaketTryOut').classList.add('hidden');
 }
 
-// MULAI TRY OUT (DUKUNGAN GAMBAR & DURATION TIMER)
+// MULAI TRY OUT (DUKUNGAN GAMBAR SOAL & GAMBAR OPSI JAWABAN)
 async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
   const { data: existingResult } = await supabaseClient
     .from('tryout_results')
@@ -2684,27 +2684,49 @@ async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
   
   const container = document.getElementById('containerSoalTryOutBody');
   container.innerHTML = currentExamQuestions.map((q, idx) => {
+    // Gambar Utama Soal
     const fixedImg = fixImageUrl(q.image_url);
     const imgHtml = fixedImg 
       ? `<div class="my-2"><img src="${fixedImg}" alt="Gambar Soal ${idx+1}" class="max-h-64 rounded-xl border border-slate-200 object-contain shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x200?text=Gambar+Gagal+Dimuat';"></div>` 
       : '';
+
+    // Gambar untuk Masing-masing Opsi Jawaban (A, B, C, D)
+    const imgA = fixImageUrl(q.img_opsi_a) ? `<div class="mt-1"><img src="${fixImageUrl(q.img_opsi_a)}" class="max-h-32 rounded-lg border border-slate-200 object-contain"></div>` : '';
+    const imgB = fixImageUrl(q.img_opsi_b) ? `<div class="mt-1"><img src="${fixImageUrl(q.img_opsi_b)}" class="max-h-32 rounded-lg border border-slate-200 object-contain"></div>` : '';
+    const imgC = fixImageUrl(q.img_opsi_c) ? `<div class="mt-1"><img src="${fixImageUrl(q.img_opsi_c)}" class="max-h-32 rounded-lg border border-slate-200 object-contain"></div>` : '';
+    const imgD = fixImageUrl(q.img_opsi_d) ? `<div class="mt-1"><img src="${fixImageUrl(q.img_opsi_d)}" class="max-h-32 rounded-lg border border-slate-200 object-contain"></div>` : '';
 
     return `
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
         <p class="text-xs font-bold text-slate-800">${idx + 1}. ${q.soal}</p>
         ${imgHtml}
         <div class="space-y-2 text-xs text-slate-700">
-          <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
-            <input type="radio" name="soal_${q.id}" value="a" class="accent-emerald-700"> A. ${q.opsi_a}
+          <label class="flex flex-col gap-1 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
+            <div class="flex items-center gap-2">
+              <input type="radio" name="soal_${q.id}" value="a" class="accent-emerald-700"> A. ${q.opsi_a}
+            </div>
+            ${imgA}
           </label>
-          <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
-            <input type="radio" name="soal_${q.id}" value="b" class="accent-emerald-700"> B. ${q.opsi_b}
+
+          <label class="flex flex-col gap-1 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
+            <div class="flex items-center gap-2">
+              <input type="radio" name="soal_${q.id}" value="b" class="accent-emerald-700"> B. ${q.opsi_b}
+            </div>
+            ${imgB}
           </label>
-          <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
-            <input type="radio" name="soal_${q.id}" value="c" class="accent-emerald-700"> C. ${q.opsi_c}
+
+          <label class="flex flex-col gap-1 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
+            <div class="flex items-center gap-2">
+              <input type="radio" name="soal_${q.id}" value="c" class="accent-emerald-700"> C. ${q.opsi_c}
+            </div>
+            ${imgC}
           </label>
-          <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
-            <input type="radio" name="soal_${q.id}" value="d" class="accent-emerald-700"> D. ${q.opsi_d}
+
+          <label class="flex flex-col gap-1 p-2 rounded-lg border border-slate-100 hover:bg-emerald-50 cursor-pointer">
+            <div class="flex items-center gap-2">
+              <input type="radio" name="soal_${q.id}" value="d" class="accent-emerald-700"> D. ${q.opsi_d}
+            </div>
+            ${imgD}
           </label>
         </div>
       </div>
