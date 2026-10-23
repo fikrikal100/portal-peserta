@@ -205,12 +205,13 @@ async function prosesLogin() {
 
     if (data.role === 'admin') {
   document.getElementById('sectionAdmin').classList.remove('hidden');
-  aturTampilanAdmin(true); // <-- TAMBAHKAN BARIS INI
+  aturTampilanAdmin(true);
   loadBatchOptions();
   renderCalendar();
   onSKPFilterChange();
   loadDropdownMasterModulAdmin();
   loadDropdownMasterSoalAdmin();
+  loadDropdownJadwalMasterAdmin();
 } else {
   document.getElementById('sectionPeserta').classList.remove('hidden');
   aturTampilanAdmin(false); // <-- TAMBAHKAN BARIS INI
@@ -251,6 +252,7 @@ function checkAutoLogin() {
   onSKPFilterChange();
   loadDropdownMasterModulAdmin();
   loadDropdownMasterSoalAdmin();
+  loadDropdownJadwalMasterAdmin();
 } else {
   document.getElementById('sectionPeserta').classList.remove('hidden');
   aturTampilanAdmin(false); // <-- TAMBAHKAN BARIS INI
@@ -2957,12 +2959,13 @@ window.switchTabAdmin = function(tabName) {
     loadDropdownMasterModulAdmin();
     loadDatabaseModulAdmin();
   } else if (tabName === 'tryout') {
-    document.getElementById('tabAdminTryout').classList.remove('hidden');
-    document.getElementById('tabBtnAdminTryout').classList.add('bg-emerald-800', 'text-white');
-    loadDropdownMasterSoalAdmin();
-    loadDatabaseSoalAdmin();
-    loadRekapTryOutAdmin();
-  }
+  document.getElementById('tabAdminTryout').classList.remove('hidden');
+  document.getElementById('tabBtnAdminTryout').classList.add('bg-emerald-800', 'text-white');
+  loadDropdownMasterSoalAdmin();
+  loadDatabaseSoalAdmin();
+  loadRekapTryOutAdmin();
+  loadDropdownJadwalMasterAdmin();
+}
 };
 
 // ----------------------------------------------------
