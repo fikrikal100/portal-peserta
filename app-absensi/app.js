@@ -2153,7 +2153,7 @@ function loadDropdownJadwalMasterAdmin() {
   }
 }
 
-// 2. EVENT SAAT PILIH PROGRAM TRAINING (LOAD BATCH & PAKET SOAL AUTOMATIS)
+// EVENT SAAT PILIH PROGRAM TRAINING (FILTER BATCH & PAKET SOAL SESUAI training_id)
 async function onJadwalMasterChange() {
   const masterId = document.getElementById('adminSelectJadwalMaster').value;
   const selectBatch = document.getElementById('adminSelectJadwalBatch');
@@ -2167,39 +2167,31 @@ async function onJadwalMasterChange() {
   if (!masterId) return;
 
   try {
-    // 1. Load Batch Pelatihan (Tarik semua batch aktif, atau sesuaikan filter kolomnya)
+    // 1. Load Batch Pelatihan berdasarkan training_id
     const { data: listBatch, error: errBatch } = await supabaseClient
       .from('batches')
       .select('*')
-      .order('created_at', { ascending: false });
+      .eq('training_id', masterId); // <-- MENGGUNAKAN training_id
 
-    if (errBatch) console.error("Error Supabase Fetch Batches:", errBatch);
+    if (errBatch) console.error("Error Fetch Batches:", errBatch);
 
     if (listBatch && listBatch.length > 0) {
-      // Filter batch yang sesuai dengan master_id atau program (jika ada)
-      const filteredBatches = listBatch.filter(b => 
-        b.master_id === masterId || 
-        b.program_id === masterId || 
-        b.skp_id === masterId ||
-        !b.master_id // Jika kolom master_id tidak dipakai di tabel batches, tampilkan semua batch aktif
-      );
-
-      filteredBatches.forEach(b => {
-        // Ambil nilai id batch dan nama batch secara dinamis
-        const bId = b.batch_id || b.id || b.nama_batch;
-        const bLabel = b.nama_batch || b.batch_id || b.batch_name || bId;
+      listBatch.forEach(b => {
+        // Ambil ID batch dan nama/label batch
+        const bId = b.id || b.batch_id || b.id_batch;
+        const bLabel = b.nama_batch || b.batch_name || b.batch_id || `Batch ${bId}`;
         
         selectBatch.innerHTML += `<option value="${bId}">${bLabel}</option>`;
       });
     }
 
-    // 2. Load Paket Soal
-    const { data: listSoal } = await supabaseClient
+    // 2. Load Paket Soal berdasarkan master_id / training_id
+    const { data: listSoal, error: errSoal } = await supabaseClient
       .from('tryout_questions')
       .select('tryout_code')
       .eq('master_id', masterId);
 
-    if (listSoal && listSoal.length > 0) {
+    if (!errSoal && listSoal && listSoal.length > 0) {
       const uniqueCodes = [...new Set(listSoal.map(s => s.tryout_code))];
       uniqueCodes.forEach(code => {
         selectCode.innerHTML += `<option value="${code}">Paket ${code}</option>`;
@@ -2210,49 +2202,7 @@ async function onJadwalMasterChange() {
   }
 }
 
-// A. EVENT SAAT SELECT MASTER_ID DIUBAH (OTOMATIS FILTER BATCH & PAKET SOAL)
-async function onJadwalMasterChange() {
-  const masterId = document.getElementById('adminSelectJadwalMaster').value;
-  const selectBatch = document.getElementById('adminSelectJadwalBatch');
-  const selectCode = document.getElementById('adminSelectJadwalCode');
-
-  selectBatch.innerHTML = '<option value="">-- Pilih Batch Aktif --</option>';
-  selectCode.innerHTML = '<option value="">-- Pilih Paket Soal --</option>';
-
-  if (!masterId) return;
-
-  try {
-    // 1. Load Batch Pelatihan yang sesuai dengan master_id
-    const { data: listBatch } = await supabaseClient
-      .from('batches') // Sesuaikan jika nama tabel batch kamu berbeda
-      .select('*')
-      .eq('master_id', masterId)
-      .order('created_at', { ascending: false });
-
-    if (listBatch && listBatch.length > 0) {
-      listBatch.forEach(b => {
-        selectBatch.innerHTML += `<option value="${b.batch_id}">${b.nama_batch || b.batch_id}</option>`;
-      });
-    }
-
-    // 2. Load Paket Soal yang sudah ter-upload untuk master_id ini
-    const { data: listSoal } = await supabaseClient
-      .from('tryout_questions')
-      .select('tryout_code')
-      .eq('master_id', masterId);
-
-    if (listSoal && listSoal.length > 0) {
-      const uniqueCodes = [...new Set(listSoal.map(s => s.tryout_code))];
-      uniqueCodes.forEach(code => {
-        selectCode.innerHTML += `<option value="${code}">Paket ${code}</option>`;
-      });
-    }
-  } catch (err) {
-    console.error("Gagal load filter jadwal:", err);
-  }
-}
-
-// B. FUNGSI SIMPAN JADWAL KE SUPABASE
+// FUNGSI SIMPAN JADWAL KE SUPABASE
 async function simpanJadwalTryOutAdmin() {
   const masterId = document.getElementById('adminSelectJadwalMaster').value;
   const tryoutCode = document.getElementById('adminSelectJadwalCode').value;
@@ -2283,7 +2233,7 @@ async function simpanJadwalTryOutAdmin() {
       return;
     }
 
-    alert(`Jadwal Try Out Paket ${tryoutCode} berhasil dirilis untuk Batch ${batchId}!`);
+    alert(`Jadwal Try Out Paket ${tryoutCode} berhasil dirilis!`);
     
     if (typeof loadRekapTryOutAdmin === 'function') loadRekapTryOutAdmin();
 
