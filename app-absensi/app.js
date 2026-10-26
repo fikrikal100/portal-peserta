@@ -2931,33 +2931,77 @@ async function downloadHasilTryOutPeserta(resultId, masterId, tryoutCode) {
       ? new Date(result.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) 
       : '-';
 
-    // Generate HTML Pembahasan Soal
+    // Helper untuk merender gambar dengan aman
+    const renderImg = (urlRaw, maxH = "max-h-48") => {
+      if (!urlRaw || String(urlRaw).trim() === '' || urlRaw === 'null' || urlRaw === 'undefined') return '';
+      let finalUrl = typeof fixImageUrl === 'function' ? fixImageUrl(urlRaw) : urlRaw;
+      if (!finalUrl || finalUrl === '') finalUrl = urlRaw;
+      
+      return `
+        <div class="my-2">
+          <img src="${finalUrl}" class="${maxH} rounded-lg border border-slate-200 object-contain shadow-sm bg-white p-1" onerror="this.onerror=null; this.src='https://via.placeholder.com/250x120?text=Gambar+Gagal+Dimuat';">
+        </div>
+      `;
+    };
+
+    // Helper untuk mengambil isi teks/gambar opsi berdasarkan huruf (a, b, c, d)
+    const getOptionDetail = (d, letter) => {
+      if (!letter || letter === '-') return 'Tidak Dijawab';
+      const key = letter.toLowerCase();
+      const textMap = { 'a': d.opsi_a, 'b': d.opsi_b, 'c': d.opsi_c, 'd': d.opsi_d };
+      const imgMap = { 'a': d.img_opsi_a, 'b': d.img_opsi_b, 'c': d.img_opsi_c, 'd': d.img_opsi_d };
+      
+      const teks = textMap[key] || '';
+      const imgHtml = renderImg(imgMap[key], "max-h-32");
+      
+      return `<strong>${key.toUpperCase()}</strong>${teks ? `. ${teks}` : ''}${imgHtml}`;
+    };
+
     let pembahasanHtml = '';
     const details = result.jawaban_detail || [];
 
     if (details.length === 0) {
-      pembahasanHtml = `<p class="text-center text-slate-400 py-4 italic">Detail pembahasan tidak tersedia untuk riwayat ujian lama.</p>`;
+      pembahasanHtml = `<p class="text-center text-slate-400 py-4 italic">Detail pembahasan tidak tersedia untuk riwayat ujian ini.</p>`;
     } else {
       pembahasanHtml = details.map((d, idx) => {
         const statusBadge = d.is_correct 
-          ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">BENAR</span>` 
-          : `<span class="bg-rose-100 text-rose-800 text-[10px] px-2 py-0.5 rounded-full font-bold">SALAH / TIDAK DIJAWAB</span>`;
+          ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2.5 py-1 rounded-full font-bold">BENAR</span>` 
+          : `<span class="bg-rose-100 text-rose-800 text-[10px] px-2.5 py-1 rounded-full font-bold">SALAH / TIDAK DIJAWAB</span>`;
+
+        // Gambar utama soal (jika ada)
+        const imgSoalHtml = renderImg(d.image_url || d.gambar_url || d.gambar, "max-h-56");
+
+        // Detail teks & gambar jawaban peserta vs kunci
+        const detailJawabanUser = getOptionDetail(d, d.jawaban_user);
+        const detailKunci = getOptionDetail(d, d.kunci_jawaban);
 
         return `
-          <div class="mb-4 p-4 border border-slate-200 rounded-xl bg-slate-50 break-inside-avoid space-y-2">
-            <div class="flex justify-between items-start gap-2">
+          <div class="mb-5 p-4 border border-slate-200 rounded-xl bg-slate-50 break-inside-avoid space-y-3">
+            <div class="flex justify-between items-start gap-2 border-b border-slate-200 pb-2">
               <p class="font-bold text-slate-800 text-xs">${idx + 1}. ${d.soal}</p>
               ${statusBadge}
             </div>
+
+            ${imgSoalHtml}
+
+            <!-- Pilihan Opsi A, B, C, D Lengkap -->
+            <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200">
+              <div><strong>A.</strong> ${d.opsi_a || ''} ${renderImg(d.img_opsi_a, "max-h-24")}</div>
+              <div><strong>B.</strong> ${d.opsi_b || ''} ${renderImg(d.img_opsi_b, "max-h-24")}</div>
+              <div><strong>C.</strong> ${d.opsi_c || ''} ${renderImg(d.img_opsi_c, "max-h-24")}</div>
+              <div><strong>D.</strong> ${d.opsi_d || ''} ${renderImg(d.img_opsi_d, "max-h-24")}</div>
+            </div>
             
-            <div class="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-200">
-              <div class="p-2 rounded-lg ${d.is_correct ? 'bg-emerald-50 text-emerald-900 border border-emerald-200' : 'bg-rose-50 text-rose-900 border border-rose-200'}">
-                <span class="text-[10px] block text-slate-500 font-semibold">Jawaban Anda:</span>
-                <span class="font-bold uppercase">${d.jawaban_user}</span>
+            <!-- Perbandingan Jawaban Peserta vs Kunci -->
+            <div class="grid grid-cols-2 gap-3 text-xs pt-1">
+              <div class="p-2.5 rounded-xl ${d.is_correct ? 'bg-emerald-50 text-emerald-900 border border-emerald-200' : 'bg-rose-50 text-rose-900 border border-rose-200'}">
+                <span class="text-[10px] block text-slate-500 font-semibold mb-0.5">Jawaban Anda:</span>
+                <div>${detailJawabanUser}</div>
               </div>
-              <div class="p-2 rounded-lg bg-blue-50 text-blue-900 border border-blue-200">
-                <span class="text-[10px] block text-slate-500 font-semibold">Kunci Jawaban:</span>
-                <span class="font-bold uppercase">${d.kunci_jawaban}</span>
+
+              <div class="p-2.5 rounded-xl bg-blue-50 text-blue-900 border border-blue-200">
+                <span class="text-[10px] block text-slate-500 font-semibold mb-0.5">Kunci Jawaban Benar:</span>
+                <div>${detailKunci}</div>
               </div>
             </div>
           </div>
@@ -2979,7 +3023,7 @@ async function downloadHasilTryOutPeserta(resultId, masterId, tryoutCode) {
         </style>
       </head>
       <body class="bg-white p-8 font-sans text-slate-800">
-        <div class="max-w-2xl mx-auto space-y-6">
+        <div class="max-w-3xl mx-auto space-y-6">
           
           <!-- Header Ringkasan -->
           <div class="border border-slate-300 p-6 rounded-2xl shadow-sm">
@@ -2998,7 +3042,7 @@ async function downloadHasilTryOutPeserta(resultId, masterId, tryoutCode) {
             </div>
           </div>
 
-          <!-- Daftar Soal & Pembahasan -->
+          <!-- Lembar Pembahasan -->
           <div>
             <h3 class="font-bold text-slate-700 text-sm mb-3 border-b pb-1">Detail Lembar Jawaban & Pembahasan Soal:</h3>
             ${pembahasanHtml}
