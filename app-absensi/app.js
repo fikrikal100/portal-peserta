@@ -2806,28 +2806,43 @@ async function submitJawabanTryOutPeserta() {
   clearInterval(activeExamTimer);
   let totalSoal = currentExamQuestions.length;
   let totalBenar = 0;
-  
-  // Objek untuk menampung jawaban detail peserta per id soal
-  let userAnswersMap = {};
+  let detailJawabanList = [];
 
   currentExamQuestions.forEach(q => {
     const selected = document.querySelector(`input[name="soal_${q.id}"]:checked`);
-    const userAns = selected ? selected.value.toLowerCase().trim() : '';
-    userAnswersMap[q.id] = userAns; // simpan jawaban (a/b/c/d atau kosong)
+    const userAns = selected ? selected.value.toLowerCase().trim() : '-';
+    const kunciLower = (q.kunci || '').toLowerCase().trim();
 
-    if (userAns !== '') {
-      const kunciLower = (q.kunci || '').toLowerCase().trim();
-      const textAnsMap = {
-        'a': (q.opsi_a || '').toLowerCase().trim(),
-        'b': (q.opsi_b || '').toLowerCase().trim(),
-        'c': (q.opsi_c || '').toLowerCase().trim(),
-        'd': (q.opsi_d || '').toLowerCase().trim()
-      };
+    const textAnsMap = {
+      'a': (q.opsi_a || '').toLowerCase().trim(),
+      'b': (q.opsi_b || '').toLowerCase().trim(),
+      'c': (q.opsi_c || '').toLowerCase().trim(),
+      'd': (q.opsi_d || '').toLowerCase().trim()
+    };
 
-      if (userAns === kunciLower || textAnsMap[userAns] === kunciLower) {
-        totalBenar++;
-      }
+    const isCorrect = (userAns === kunciLower || (textAnsMap[userAns] && textAnsMap[userAns] === kunciLower));
+    
+    if (isCorrect) {
+      totalBenar++;
     }
+
+    // Catat detail per nomor soal
+    detailJawabanList.push({
+      soal_id: q.id,
+      soal: q.soal,
+      image_url: q.image_url || null,
+      opsi_a: q.opsi_a,
+      opsi_b: q.opsi_b,
+      opsi_c: q.opsi_c,
+      opsi_d: q.opsi_d,
+      img_opsi_a: q.img_opsi_a || null,
+      img_opsi_b: q.img_opsi_b || null,
+      img_opsi_c: q.img_opsi_c || null,
+      img_opsi_d: q.img_opsi_d || null,
+      jawaban_user: userAns,
+      kunci_jawaban: kunciLower,
+      is_correct: isCorrect
+    });
   });
 
   let totalSalah = totalSoal - totalBenar;
@@ -2843,7 +2858,7 @@ async function submitJawabanTryOutPeserta() {
     total_salah: totalSalah,
     score: score,
     status: status,
-    user_answers: userAnswersMap // <-- SIMPAN REKAP JAWABAN PESERTA
+    jawaban_detail: detailJawabanList // <-- SIMPAN DETAIL SOAL & JAWABAN
   };
 
   const { error } = await supabaseClient.from('tryout_results').insert([payload]);
@@ -2851,7 +2866,8 @@ async function submitJawabanTryOutPeserta() {
   if (error) {
     alert("⚠️ Gagal menyimpan rekap hasil ke database: " + error.message);
   } else {
-    alert(`📊 HASIL TRY OUT BERHASIL DICATAT!\n\nJumlah Benar: ${totalBenar} dari${totalSoal} Soal\nNilai Akhir: ${score}\nStatus:${status.toUpperCase()}`);
+    alert(`📊 HASIL TRY OUT BERHASIL DICATAT!\n\nJumlah Benar: ${totalBenar} dari ${totalSoal} Soal\nNilai Akhir: ${score}\nStatus: ${status.toUpperCase()}`);
+    
     loadRiwayatTryOutProfil();
     if (typeof bukaModalListPaketTryOut === 'function') {
       bukaModalListPaketTryOut(activeExamMasterId, document.getElementById('modalJudulFolderTryOut')?.innerText || '');
@@ -2901,7 +2917,6 @@ async function loadRiwayatTryOutProfil() {
 // ====================================================
 async function downloadHasilTryOutPeserta(resultId, masterId, tryoutCode) {
   try {
-    // 1. Ambil detail hasil dari Supabase
     const { data: result, error: errResult } = await supabaseClient
       .from('tryout_results')
       .select('*')
@@ -2916,13 +2931,46 @@ async function downloadHasilTryOutPeserta(resultId, masterId, tryoutCode) {
       ? new Date(result.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) 
       : '-';
 
-    // 2. Buka jendela browser baru untuk cetak document PDF
+    // Generate HTML Pembahasan Soal
+    let pembahasanHtml = '';
+    const details = result.jawaban_detail || [];
+
+    if (details.length === 0) {
+      pembahasanHtml = `<p class="text-center text-slate-400 py-4 italic">Detail pembahasan tidak tersedia untuk riwayat ujian lama.</p>`;
+    } else {
+      pembahasanHtml = details.map((d, idx) => {
+        const statusBadge = d.is_correct 
+          ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">BENAR</span>` 
+          : `<span class="bg-rose-100 text-rose-800 text-[10px] px-2 py-0.5 rounded-full font-bold">SALAH / TIDAK DIJAWAB</span>`;
+
+        return `
+          <div class="mb-4 p-4 border border-slate-200 rounded-xl bg-slate-50 break-inside-avoid space-y-2">
+            <div class="flex justify-between items-start gap-2">
+              <p class="font-bold text-slate-800 text-xs">${idx + 1}. ${d.soal}</p>
+              ${statusBadge}
+            </div>
+            
+            <div class="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-200">
+              <div class="p-2 rounded-lg ${d.is_correct ? 'bg-emerald-50 text-emerald-900 border border-emerald-200' : 'bg-rose-50 text-rose-900 border border-rose-200'}">
+                <span class="text-[10px] block text-slate-500 font-semibold">Jawaban Anda:</span>
+                <span class="font-bold uppercase">${d.jawaban_user}</span>
+              </div>
+              <div class="p-2 rounded-lg bg-blue-50 text-blue-900 border border-blue-200">
+                <span class="text-[10px] block text-slate-500 font-semibold">Kunci Jawaban:</span>
+                <span class="font-bold uppercase">${d.kunci_jawaban}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Hasil & Pembahasan Try Out - ${result.username}</title>
+        <title>Pembahasan Try Out - ${result.username}</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
           @media print {
@@ -2931,48 +2979,31 @@ async function downloadHasilTryOutPeserta(resultId, masterId, tryoutCode) {
         </style>
       </head>
       <body class="bg-white p-8 font-sans text-slate-800">
-        <div class="max-w-2xl mx-auto border border-slate-300 p-6 rounded-2xl shadow-sm">
-          <div class="border-b pb-4 mb-4 text-center">
-            <h2 class="text-xl font-bold text-emerald-800">MANDIRI MAHA DAYA</h2>
-            <p class="text-xs text-slate-500">Rekapitulasi Hasil Ujian & Pembahasan Try Out</p>
-          </div>
+        <div class="max-w-2xl mx-auto space-y-6">
+          
+          <!-- Header Ringkasan -->
+          <div class="border border-slate-300 p-6 rounded-2xl shadow-sm">
+            <div class="border-b pb-4 mb-4 text-center">
+              <h2 class="text-xl font-bold text-emerald-800">MANDIRI MAHA DAYA</h2>
+              <p class="text-xs text-slate-500">Lembar Pembahasan Hasil Try Out Ujian</p>
+            </div>
 
-          <div class="space-y-3 text-sm">
-            <div class="flex justify-between border-b py-1">
-              <span class="text-slate-500">Nama Peserta / Username:</span>
-              <span class="font-bold">${result.username}</span>
-            </div>
-            <div class="flex justify-between border-b py-1">
-              <span class="text-slate-500">Program Training:</span>
-              <span class="font-bold">${result.master_id}</span>
-            </div>
-            <div class="flex justify-between border-b py-1">
-              <span class="text-slate-500">Kode Paket Try Out:</span>
-              <span class="font-bold">${result.tryout_code}</span>
-            </div>
-            <div class="flex justify-between border-b py-1">
-              <span class="text-slate-500">Tanggal Pengerjaan:</span>
-              <span>${tanggalUjian}</span>
-            </div>
-            <div class="flex justify-between border-b py-1">
-              <span class="text-slate-500">Jumlah Benar / Total Soal:</span>
-              <span class="font-semibold">${result.total_benar} / ${result.total_soal} Soal</span>
-            </div>
-            <div class="flex justify-between border-b py-1">
-              <span class="text-slate-500">Nilai Akhir:</span>
-              <span class="text-lg font-bold text-emerald-700">${result.score}</span>
-            </div>
-            <div class="flex justify-between items-center py-2">
-              <span class="text-slate-500">Status Ujian:</span>
-              <span class="px-3 py-1 rounded-full text-xs font-bold ${result.status === 'Lulus' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
-                ${result.status ? result.status.toUpperCase() : '-'}
-              </span>
+            <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+              <div><span class="text-slate-500">Peserta:</span> <strong>${result.username}</strong></div>
+              <div><span class="text-slate-500">Program:</span> <strong>${result.master_id}</strong></div>
+              <div><span class="text-slate-500">Kode Tryout:</span> <strong>${result.tryout_code}</strong></div>
+              <div><span class="text-slate-500">Tanggal:</span> <span>${tanggalUjian}</span></div>
+              <div><span class="text-slate-500">Skor Akhir:</span> <strong class="text-emerald-700 text-sm">${result.score}</strong></div>
+              <div><span class="text-slate-500">Status:</span> <strong>${result.status}</strong></div>
             </div>
           </div>
 
-          <div class="mt-8 pt-4 border-t text-center text-[10px] text-slate-400">
-            Dokumen ini dicetak secara otomatis oleh Portal Ujian Try Out Mandiri Maha Daya.
+          <!-- Daftar Soal & Pembahasan -->
+          <div>
+            <h3 class="font-bold text-slate-700 text-sm mb-3 border-b pb-1">Detail Lembar Jawaban & Pembahasan Soal:</h3>
+            ${pembahasanHtml}
           </div>
+
         </div>
 
         <script>
@@ -2987,7 +3018,7 @@ async function downloadHasilTryOutPeserta(resultId, masterId, tryoutCode) {
     printWindow.document.close();
 
   } catch (err) {
-    alert("Gagal memuat rekap PDF: " + err.message);
+    alert("Gagal membuka pembahasan: " + err.message);
   }
 }
 
