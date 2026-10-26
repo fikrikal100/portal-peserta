@@ -1983,41 +1983,26 @@ async function hapusModulAdmin(id, fileName) {
   }
 }
 
-// ====================================================
-// 12. LOGIKA FITUR TRY OUT INTERAKTIF & BANK SOAL
-// ====================================================
-
-function loadDropdownMasterSoalAdmin() {
-  const selectForm = document.getElementById('adminSelectSoalMaster');
-  const selectFilter = document.getElementById('adminFilterSoalMaster');
-  const selectJadwal = document.getElementById('adminSelectMasterJadwal');
-  const selectImportMaster = document.getElementById('importSelectSoalMaster');
-
-  if (selectForm) selectForm.innerHTML = '<option value="">-- Pilih Program Training --</option>';
-  if (selectFilter) selectFilter.innerHTML = '<option value="">-- Semua Program Training --</option>';
-  if (selectJadwal) selectJadwal.innerHTML = '<option value="">-- Pilih Program Training --</option>';
-  if (selectImportMaster) selectImportMaster.innerHTML = '<option value="">-- Pilih Program Training --</option>';
-
-  KATALOG_MODUL_MASTER.forEach(m => {
-    const optHtml = `<option value="${m.master_id}">${m.nama_program}</option>`;
-    if (selectForm) selectForm.innerHTML += optHtml;
-    if (selectFilter) selectFilter.innerHTML += optHtml;
-    if (selectJadwal) selectJadwal.innerHTML += optHtml;
-    if (selectImportMaster) selectImportMaster.innerHTML += optHtml;
-  });
-}
-
-// SIMPAN SOAL ADMIN (KUNCI DIKONVERSI KE HURUF "a", "b", "c", atau "d")
+// SIMPAN SOAL ADMIN (MENDUKUNG GAMBAR SOAL & GAMBAR OPSI A-D)
 async function simpanSoalTryOutAdmin() {
   const editId = document.getElementById('adminSoalEditId').value;
   const masterId = document.getElementById('adminSelectSoalMaster').value;
   const tryoutCode = document.getElementById('adminInputSoalTryOutCode').value.trim();
   const soal = document.getElementById('adminTextareaSoal').value.trim();
   const imageUrlRaw = document.getElementById('adminInputSoalImageUrl')?.value.trim() || null;
+  
+  // Teks Opsi Jawaban
   const opsiA = document.getElementById('adminInputOpsiA').value.trim();
   const opsiB = document.getElementById('adminInputOpsiB').value.trim();
   const opsiC = document.getElementById('adminInputOpsiC').value.trim();
   const opsiD = document.getElementById('adminInputOpsiD').value.trim();
+
+  // Gambar Opsi Jawaban (Jika ada input elemen di HTML)
+  const imgOpsiA = document.getElementById('adminInputImgOpsiA')?.value.trim() || null;
+  const imgOpsiB = document.getElementById('adminInputImgOpsiB')?.value.trim() || null;
+  const imgOpsiC = document.getElementById('adminInputImgOpsiC')?.value.trim() || null;
+  const imgOpsiD = document.getElementById('adminInputImgOpsiD')?.value.trim() || null;
+
   let kunci = document.getElementById('adminSelectKunciSoal').value.trim().toLowerCase();
 
   if (!masterId || !tryoutCode || !soal || !opsiA || !opsiB || !opsiC || !opsiD || !kunci) {
@@ -2039,6 +2024,10 @@ async function simpanSoalTryOutAdmin() {
     opsi_b: opsiB,
     opsi_c: opsiC,
     opsi_d: opsiD,
+    img_opsi_a: fixImageUrl(imgOpsiA), // <-- TAMBAHAN DUKUNGAN GAMBAR OPSI
+    img_opsi_b: fixImageUrl(imgOpsiB),
+    img_opsi_c: fixImageUrl(imgOpsiC),
+    img_opsi_d: fixImageUrl(imgOpsiD),
     kunci: kunci
   };
 
@@ -2071,7 +2060,7 @@ async function simpanSoalTryOutAdmin() {
   }
 }
 
-// 1. IMPORT EXCEL SOAL MASSAL (DENGAN DROPDOWN PROGRAM & KODE TRYOUT OK)
+// 1. IMPORT EXCEL SOAL MASSAL (MENDUKUNG KOLOM GAMBAR OPSI A-D)
 async function importExcelSoalTryOut() {
   const masterId = document.getElementById('importSelectSoalMaster')?.value || '';
   const tryoutCode = document.getElementById('importInputSoalTryoutCode')?.value.trim().toUpperCase() || '';
@@ -2114,6 +2103,10 @@ async function importExcelSoalTryOut() {
           opsi_b: oB,
           opsi_c: oC,
           opsi_d: oD,
+          img_opsi_a: fixImageUrl(r.img_opsi_a || r.GambarOpsiA || null), // <-- READ DARI EXCEL
+          img_opsi_b: fixImageUrl(r.img_opsi_b || r.GambarOpsiB || null),
+          img_opsi_c: fixImageUrl(r.img_opsi_c || r.GambarOpsiC || null),
+          img_opsi_d: fixImageUrl(r.img_opsi_d || r.GambarOpsiD || null),
           kunci: rowKunci
         };
       }).filter(q => q.master_id && q.tryout_code && q.soal);
