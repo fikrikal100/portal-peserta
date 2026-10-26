@@ -3266,6 +3266,7 @@ window.tutupModalListPaketTryOut = tutupModalListPaketTryOut;
 window.mulaiTryOutPeserta = mulaiTryOutPeserta;
 window.submitJawabanTryOutPeserta = submitJawabanTryOutPeserta;
 window.loadRekapTryOutAdmin = loadRekapTryOutAdmin;
+window.downloadHasilTryOutPeserta = downloadHasilTryOutPeserta;
 
 // Kelola Password Admin
 window.bukaModalPassAdmin = bukaModalPassAdmin;
