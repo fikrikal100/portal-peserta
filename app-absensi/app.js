@@ -2806,13 +2806,17 @@ async function submitJawabanTryOutPeserta() {
   clearInterval(activeExamTimer);
   let totalSoal = currentExamQuestions.length;
   let totalBenar = 0;
+  
+  // Objek untuk menampung jawaban detail peserta per id soal
+  let userAnswersMap = {};
 
   currentExamQuestions.forEach(q => {
     const selected = document.querySelector(`input[name="soal_${q.id}"]:checked`);
-    if (selected) {
-      const userAns = selected.value.toLowerCase().trim();
-      const kunciLower = (q.kunci || '').toLowerCase().trim();
+    const userAns = selected ? selected.value.toLowerCase().trim() : '';
+    userAnswersMap[q.id] = userAns; // simpan jawaban (a/b/c/d atau kosong)
 
+    if (userAns !== '') {
+      const kunciLower = (q.kunci || '').toLowerCase().trim();
       const textAnsMap = {
         'a': (q.opsi_a || '').toLowerCase().trim(),
         'b': (q.opsi_b || '').toLowerCase().trim(),
@@ -2838,17 +2842,16 @@ async function submitJawabanTryOutPeserta() {
     total_benar: totalBenar,
     total_salah: totalSalah,
     score: score,
-    status: status
+    status: status,
+    user_answers: userAnswersMap // <-- SIMPAN REKAP JAWABAN PESERTA
   };
 
   const { error } = await supabaseClient.from('tryout_results').insert([payload]);
 
   if (error) {
-    alert("⚠️ Gagal menyimpan rekap hasil ke database: " + error.message + "\n(Pastikan RLS pada tabel tryout_results sudah diizinkan).");
+    alert("⚠️ Gagal menyimpan rekap hasil ke database: " + error.message);
   } else {
-    alert(`📊 HASIL TRY OUT BERHASIL DICATAT!\n\nJumlah Benar: ${totalBenar} dari ${totalSoal} Soal\nNilai Akhir: ${score}\nStatus: ${status.toUpperCase()}`);
-    
-    // Refresh riwayat di profil & modal list paket tryout
+    alert(`📊 HASIL TRY OUT BERHASIL DICATAT!\n\nJumlah Benar: ${totalBenar} dari${totalSoal} Soal\nNilai Akhir: ${score}\nStatus:${status.toUpperCase()}`);
     loadRiwayatTryOutProfil();
     if (typeof bukaModalListPaketTryOut === 'function') {
       bukaModalListPaketTryOut(activeExamMasterId, document.getElementById('modalJudulFolderTryOut')?.innerText || '');
@@ -2869,23 +2872,123 @@ async function loadRiwayatTryOutProfil() {
     .order('created_at', { ascending: false });
 
   if (!results || results.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-slate-400">Belum ada riwayat pengerjaan Try Out.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400">Belum ada riwayat pengerjaan Try Out.</td></tr>';
     return;
   }
 
   tbody.innerHTML = results.map(r => `
-    <tr class="border-b border-slate-100 text-xs">
+    <tr class="border-b border-slate-100 text-xs hover:bg-slate-50 transition">
       <td class="px-3 py-2 font-bold text-slate-700">${r.master_id}</td>
       <td class="px-3 py-2 text-slate-600">${r.tryout_code}</td>
-      <td class="px-3 py-2 text-center font-semibold text-slate-700">${r.total_benar} / ${r.total_soal}</td>
+      <td class="px-3 py-2 text-center font-semibold text-slate-700">${r.total_benar} /${r.total_soal}</td>
       <td class="px-3 py-2 text-center font-bold text-emerald-800 text-sm">${r.score}</td>
       <td class="px-3 py-2 text-center font-bold">
         <span class="${r.status === 'Lulus' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'} px-2 py-0.5 rounded-full text-[10px]">
           ${r.status}
         </span>
       </td>
+      <td class="px-3 py-2 text-center">
+        <button onclick="downloadHasilTryOutPeserta('${r.id}', '${r.master_id}', '${r.tryout_code}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-2.5 py-1 rounded-lg text-[10px] shadow transition flex items-center justify-center gap-1 mx-auto">
+          <i class="fa-solid fa-file-arrow-down"></i> Unduh Pembahasan
+        </button>
+      </td>
     </tr>
   `).join('');
+}
+
+// ====================================================
+// FITUR DOWNLOAD / CETAK HASIL & PEMBAHASAN TRY OUT
+// ====================================================
+async function downloadHasilTryOutPeserta(resultId, masterId, tryoutCode) {
+  try {
+    // 1. Ambil detail hasil dari Supabase
+    const { data: result, error: errResult } = await supabaseClient
+      .from('tryout_results')
+      .select('*')
+      .eq('id', resultId)
+      .single();
+
+    if (errResult || !result) {
+      return alert("⚠️ Data hasil Try Out tidak ditemukan!");
+    }
+
+    const tanggalUjian = result.created_at 
+      ? new Date(result.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) 
+      : '-';
+
+    // 2. Buka jendela browser baru untuk cetak document PDF
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Hasil & Pembahasan Try Out - ${result.username}</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+          @media print {
+            body { -webkit-print-color-adjust: exact; }
+          }
+        </style>
+      </head>
+      <body class="bg-white p-8 font-sans text-slate-800">
+        <div class="max-w-2xl mx-auto border border-slate-300 p-6 rounded-2xl shadow-sm">
+          <div class="border-b pb-4 mb-4 text-center">
+            <h2 class="text-xl font-bold text-emerald-800">MANDIRI MAHA DAYA</h2>
+            <p class="text-xs text-slate-500">Rekapitulasi Hasil Ujian & Pembahasan Try Out</p>
+          </div>
+
+          <div class="space-y-3 text-sm">
+            <div class="flex justify-between border-b py-1">
+              <span class="text-slate-500">Nama Peserta / Username:</span>
+              <span class="font-bold">${result.username}</span>
+            </div>
+            <div class="flex justify-between border-b py-1">
+              <span class="text-slate-500">Program Training:</span>
+              <span class="font-bold">${result.master_id}</span>
+            </div>
+            <div class="flex justify-between border-b py-1">
+              <span class="text-slate-500">Kode Paket Try Out:</span>
+              <span class="font-bold">${result.tryout_code}</span>
+            </div>
+            <div class="flex justify-between border-b py-1">
+              <span class="text-slate-500">Tanggal Pengerjaan:</span>
+              <span>${tanggalUjian}</span>
+            </div>
+            <div class="flex justify-between border-b py-1">
+              <span class="text-slate-500">Jumlah Benar / Total Soal:</span>
+              <span class="font-semibold">${result.total_benar} / ${result.total_soal} Soal</span>
+            </div>
+            <div class="flex justify-between border-b py-1">
+              <span class="text-slate-500">Nilai Akhir:</span>
+              <span class="text-lg font-bold text-emerald-700">${result.score}</span>
+            </div>
+            <div class="flex justify-between items-center py-2">
+              <span class="text-slate-500">Status Ujian:</span>
+              <span class="px-3 py-1 rounded-full text-xs font-bold ${result.status === 'Lulus' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
+                ${result.status ? result.status.toUpperCase() : '-'}
+              </span>
+            </div>
+          </div>
+
+          <div class="mt-8 pt-4 border-t text-center text-[10px] text-slate-400">
+            Dokumen ini dicetak secara otomatis oleh Portal Ujian Try Out Mandiri Maha Daya.
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+          }
+        </script>
+      </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+
+  } catch (err) {
+    alert("Gagal memuat rekap PDF: " + err.message);
+  }
 }
 
 // 2. REKAPITULASI NILAI TRY OUT ADMIN (DENGAN TRIPLE FILTER OK)
