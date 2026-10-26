@@ -2674,7 +2674,7 @@ function tutupModalListPaketTryOut() {
   document.getElementById('modalListPaketTryOut').classList.add('hidden');
 }
 
-// MULAI TRY OUT (DUKUNGAN GAMBAR SOAL & GAMBAR OPSI JAWABAN)
+// MULAI TRY OUT (DUKUNGAN GAMBAR SOAL & GAMBAR OPSI A-D FLEXIBLE)
 async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
   const { data: existingResult } = await supabaseClient
     .from('tryout_results')
@@ -2698,6 +2698,9 @@ async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
     return alert("Soal Try Out belum tersedia!");
   }
 
+  // Console log untuk memastikan isi data soal & kolom gambar opsi
+  console.log("Data Soal Dimuat:", questions);
+
   currentExamQuestions = [...questions].sort(() => Math.random() - 0.5);
   activeExamCode = tryoutCode;
   activeExamMasterId = masterId;
@@ -2706,36 +2709,39 @@ async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
   document.getElementById('tryoutExamTitle').innerText = `${masterId} - ${tryoutCode}`;
   
   const container = document.getElementById('containerSoalTryOutBody');
- container.innerHTML = currentExamQuestions.map((q, idx) => {
-    // Gambar Utama Soal
-    const fixedImg = typeof fixImageUrl === 'function' ? fixImageUrl(q.image_url) : q.image_url;
-    const imgHtml = (fixedImg && fixedImg.trim() !== '') 
+  container.innerHTML = currentExamQuestions.map((q, idx) => {
+    // 1. Gambar Utama Soal
+    const rawSoalImg = q.image_url || q.gambar_url || q.gambar || null;
+    const fixedImg = typeof fixImageUrl === 'function' ? fixImageUrl(rawSoalImg) : rawSoalImg;
+    const imgSoalHtml = (fixedImg && String(fixedImg).trim() !== '') 
       ? `<div class="my-2"><img src="${fixedImg}" alt="Gambar Soal ${idx+1}" class="max-h-64 rounded-xl border border-slate-200 object-contain shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x200?text=Gambar+Gagal+Dimuat';"></div>` 
       : '';
 
-    // Ambil URL Gambar Opsi (Pakai fixImageUrl jika ada, atau fallback langsung ke raw string)
-    const getOptImg = (url) => {
-      if (!url || url.trim() === '') return '';
-      const validUrl = typeof fixImageUrl === 'function' ? fixImageUrl(url) : url;
-      return validUrl ? validUrl : url; // Jika fixImageUrl return empty, pakai url asli
+    // 2. Helper Ambil URL Gambar Opsi (Dukung berbagai variasi nama kolom Supabase)
+    const renderOptImg = (urlRaw) => {
+      if (!urlRaw || String(urlRaw).trim() === '' || urlRaw === 'null' || urlRaw === 'undefined') return '';
+      let finalUrl = typeof fixImageUrl === 'function' ? fixImageUrl(urlRaw) : urlRaw;
+      if (!finalUrl || finalUrl === '') finalUrl = urlRaw; // Fallback jika fixImageUrl return empty
+      
+      return `
+        <div class="mt-2">
+          <img src="${finalUrl}" class="max-h-48 max-w-full rounded-xl border border-slate-200 object-contain shadow-sm bg-slate-50 p-1" onerror="this.onerror=null; this.src='https://via.placeholder.com/250x120?text=Gambar+Opsi+Gagal';">
+        </div>
+      `;
     };
 
-    const urlA = getOptImg(q.img_opsi_a);
-    const urlB = getOptImg(q.img_opsi_b);
-    const urlC = getOptImg(q.img_opsi_c);
-    const urlD = getOptImg(q.img_opsi_d);
-
-    const imgA = urlA ? `<div class="mt-2"><img src="${urlA}" class="max-h-40 rounded-lg border border-slate-200 object-contain shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/200x100?text=Gambar+Gagal';"></div>` : '';
-    const imgB = urlB ? `<div class="mt-2"><img src="${urlB}" class="max-h-40 rounded-lg border border-slate-200 object-contain shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/200x100?text=Gambar+Gagal';"></div>` : '';
-    const imgC = urlC ? `<div class="mt-2"><img src="${urlC}" class="max-h-40 rounded-lg border border-slate-200 object-contain shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/200x100?text=Gambar+Gagal';"></div>` : '';
-    const imgD = urlD ? `<div class="mt-2"><img src="${urlD}" class="max-h-40 rounded-lg border border-slate-200 object-contain shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/200x100?text=Gambar+Gagal';"></div>` : '';
+    // Ambil data gambar opsi A, B, C, D dengan fallback nama kolom
+    const imgA = renderOptImg(q.img_opsi_a || q.opsi_a_img || q.gambar_a || q.image_a);
+    const imgB = renderOptImg(q.img_opsi_b || q.opsi_b_img || q.gambar_b || q.image_b);
+    const imgC = renderOptImg(q.img_opsi_c || q.opsi_c_img || q.gambar_c || q.image_c);
+    const imgD = renderOptImg(q.img_opsi_d || q.opsi_d_img || q.gambar_d || q.image_d);
 
     return `
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
         <p class="text-xs font-bold text-slate-800">${idx + 1}. ${q.soal}</p>
-        ${imgHtml}
+        ${imgSoalHtml}
         <div class="space-y-2 text-xs text-slate-700">
-          <label class="flex flex-col gap-1 p-2.5 rounded-xl border border-slate-100 hover:bg-emerald-50 cursor-pointer transition">
+          <label class="flex flex-col gap-1 p-3 rounded-xl border border-slate-100 hover:bg-emerald-50 cursor-pointer transition">
             <div class="flex items-center gap-2">
               <input type="radio" name="soal_${q.id}" value="a" class="accent-emerald-700"> 
               <span class="font-medium">A. ${q.opsi_a || ''}</span>
@@ -2743,7 +2749,7 @@ async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
             ${imgA}
           </label>
 
-          <label class="flex flex-col gap-1 p-2.5 rounded-xl border border-slate-100 hover:bg-emerald-50 cursor-pointer transition">
+          <label class="flex flex-col gap-1 p-3 rounded-xl border border-slate-100 hover:bg-emerald-50 cursor-pointer transition">
             <div class="flex items-center gap-2">
               <input type="radio" name="soal_${q.id}" value="b" class="accent-emerald-700"> 
               <span class="font-medium">B. ${q.opsi_b || ''}</span>
@@ -2751,7 +2757,7 @@ async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
             ${imgB}
           </label>
 
-          <label class="flex flex-col gap-1 p-2.5 rounded-xl border border-slate-100 hover:bg-emerald-50 cursor-pointer transition">
+          <label class="flex flex-col gap-1 p-3 rounded-xl border border-slate-100 hover:bg-emerald-50 cursor-pointer transition">
             <div class="flex items-center gap-2">
               <input type="radio" name="soal_${q.id}" value="c" class="accent-emerald-700"> 
               <span class="font-medium">C. ${q.opsi_c || ''}</span>
@@ -2759,7 +2765,7 @@ async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
             ${imgC}
           </label>
 
-          <label class="flex flex-col gap-1 p-2.5 rounded-xl border border-slate-100 hover:bg-emerald-50 cursor-pointer transition">
+          <label class="flex flex-col gap-1 p-3 rounded-xl border border-slate-100 hover:bg-emerald-50 cursor-pointer transition">
             <div class="flex items-center gap-2">
               <input type="radio" name="soal_${q.id}" value="d" class="accent-emerald-700"> 
               <span class="font-medium">D. ${q.opsi_d || ''}</span>
