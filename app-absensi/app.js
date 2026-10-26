@@ -2946,7 +2946,7 @@ async function downloadHasilTryOutPeserta(resultId, masterId, tryoutCode) {
 
     // Helper untuk mengambil isi teks/gambar opsi berdasarkan huruf (a, b, c, d)
     const getOptionDetail = (d, letter) => {
-      if (!letter || letter === '-') return 'Tidak Dijawab';
+      if (!letter || letter === '-') return 'Tidak Terekam (Ujian Lama)';
       const key = letter.toLowerCase();
       const textMap = { 'a': d.opsi_a, 'b': d.opsi_b, 'c': d.opsi_c, 'd': d.opsi_d };
       const imgMap = { 'a': d.img_opsi_a, 'b': d.img_opsi_b, 'c': d.img_opsi_c, 'd': d.img_opsi_d };
@@ -2957,21 +2957,55 @@ async function downloadHasilTryOutPeserta(resultId, masterId, tryoutCode) {
       return `<strong>${key.toUpperCase()}</strong>${teks ? `. ${teks}` : ''}${imgHtml}`;
     };
 
-    let pembahasanHtml = '';
-    const details = result.jawaban_detail || [];
+    let details = result.jawaban_detail || [];
 
-    if (details.length === 0) {
-      pembahasanHtml = `<p class="text-center text-slate-400 py-4 italic">Detail pembahasan tidak tersedia untuk riwayat ujian ini.</p>`;
+    // FALLBACK: Jika riwayat ujian lama belum memiliki jawaban_detail, ambil daftar soal dari tryout_questions
+    if (!details || details.length === 0) {
+      const { data: qData } = await supabaseClient
+        .from('tryout_questions')
+        .select('*')
+        .eq('master_id', result.master_id)
+        .eq('tryout_code', result.tryout_code);
+
+      if (qData && qData.length > 0) {
+        details = qData.map(q => ({
+          soal_id: q.id,
+          soal: q.soal,
+          image_url: q.image_url,
+          opsi_a: q.opsi_a,
+          opsi_b: q.opsi_b,
+          opsi_c: q.opsi_c,
+          opsi_d: q.opsi_d,
+          img_opsi_a: q.img_opsi_a,
+          img_opsi_b: q.img_opsi_b,
+          img_opsi_c: q.img_opsi_c,
+          img_opsi_d: q.img_opsi_d,
+          jawaban_user: '-', // Penanda untuk data riwayat lama
+          kunci_jawaban: q.kunci || '-',
+          is_correct: false
+        }));
+      }
+    }
+
+    let pembahasanHtml = '';
+
+    if (!details || details.length === 0) {
+      pembahasanHtml = `<p class="text-center text-slate-400 py-4 italic">Detail pembahasan tidak ditemukan di bank soal.</p>`;
     } else {
       pembahasanHtml = details.map((d, idx) => {
-        const statusBadge = d.is_correct 
-          ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2.5 py-1 rounded-full font-bold">BENAR</span>` 
-          : `<span class="bg-rose-100 text-rose-800 text-[10px] px-2.5 py-1 rounded-full font-bold">SALAH / TIDAK DIJAWAB</span>`;
+        // Tampilan khusus jika riwayat lama (jawaban_user tidak terekam)
+        const isLegacy = (d.jawaban_user === '-');
+        
+        let statusBadge = '';
+        if (isLegacy) {
+          statusBadge = `<span class="bg-amber-100 text-amber-800 text-[10px] px-2.5 py-1 rounded-full font-bold">KUNCI JAWABAN</span>`;
+        } else {
+          statusBadge = d.is_correct 
+            ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2.5 py-1 rounded-full font-bold">BENAR</span>` 
+            : `<span class="bg-rose-100 text-rose-800 text-[10px] px-2.5 py-1 rounded-full font-bold">SALAH / TIDAK DIJAWAB</span>`;
+        }
 
-        // Gambar utama soal (jika ada)
         const imgSoalHtml = renderImg(d.image_url || d.gambar_url || d.gambar, "max-h-56");
-
-        // Detail teks & gambar jawaban peserta vs kunci
         const detailJawabanUser = getOptionDetail(d, d.jawaban_user);
         const detailKunci = getOptionDetail(d, d.kunci_jawaban);
 
@@ -2994,7 +3028,7 @@ async function downloadHasilTryOutPeserta(resultId, masterId, tryoutCode) {
             
             <!-- Perbandingan Jawaban Peserta vs Kunci -->
             <div class="grid grid-cols-2 gap-3 text-xs pt-1">
-              <div class="p-2.5 rounded-xl ${d.is_correct ? 'bg-emerald-50 text-emerald-900 border border-emerald-200' : 'bg-rose-50 text-rose-900 border border-rose-200'}">
+              <div class="p-2.5 rounded-xl ${!isLegacy && d.is_correct ? 'bg-emerald-50 text-emerald-900 border border-emerald-200' : 'bg-slate-100 text-slate-700 border border-slate-200'}">
                 <span class="text-[10px] block text-slate-500 font-semibold mb-0.5">Jawaban Anda:</span>
                 <div>${detailJawabanUser}</div>
               </div>
