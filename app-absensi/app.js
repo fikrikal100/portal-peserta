@@ -2697,13 +2697,13 @@ async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
     return alert("Soal Try Out belum tersedia!");
   }
 
-// 1. Ambil data soal dari Supabase (Pastikan selalu diurutkan berdasar ID secara default)
+// 1. Ambil data soal dari Supabase (diurutkan berdasar ID)
   const { data: questions, error } = await supabaseClient
     .from('tryout_questions')
     .select('*')
     .eq('master_id', masterId)
     .eq('tryout_code', tryoutCode)
-    .order('id', { ascending: true }); // <-- KUNCI 1: Pastikan urut ID dari Supabase
+    .order('id', { ascending: true });
 
   if (error || !questions || questions.length === 0) {
     return alert("Soal Try Out belum tersedia!");
@@ -2721,17 +2721,16 @@ async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
 
   const isRandom = schedule?.is_random ?? true;
 
-  // 3. Terapkan logika urutan soal (KUNCI 2: Gunakan slice() agar tidak mengacaukan array asli)
+  // 3. Terapkan logika urutan soal (Acak vs Berurut ID)
   if (isRandom) {
     currentExamQuestions = questions.slice().sort(() => Math.random() - 0.5);
   } else {
     currentExamQuestions = questions.slice().sort((a, b) => Number(a.id) - Number(b.id));
   }
   
-  // Console log untuk memastikan isi data soal & kolom gambar opsi
-  console.log("Data Soal Dimuat:", questions);
+  console.log("Status Acak Soal (is_random):", isRandom);
+  console.log("Data Soal Dimuat:", currentExamQuestions);
 
-  currentExamQuestions = [...questions].sort(() => Math.random() - 0.5);
   activeExamCode = tryoutCode;
   activeExamMasterId = masterId;
 
@@ -2740,6 +2739,7 @@ async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
   
   const container = document.getElementById('containerSoalTryOutBody');
   container.innerHTML = currentExamQuestions.map((q, idx) => {
+    
     // 1. Gambar Utama Soal
     const rawSoalImg = q.image_url || q.gambar_url || q.gambar || null;
     const fixedImg = typeof fixImageUrl === 'function' ? fixImageUrl(rawSoalImg) : rawSoalImg;
