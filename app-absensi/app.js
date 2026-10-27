@@ -2697,26 +2697,35 @@ async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
     return alert("Soal Try Out belum tersedia!");
   }
 
-// 1. Ambil status is_random dari jadwal TERBARU di Supabase
+// 1. Ambil data soal dari Supabase (Pastikan selalu diurutkan berdasar ID secara default)
+  const { data: questions, error } = await supabaseClient
+    .from('tryout_questions')
+    .select('*')
+    .eq('master_id', masterId)
+    .eq('tryout_code', tryoutCode)
+    .order('id', { ascending: true }); // <-- KUNCI 1: Pastikan urut ID dari Supabase
+
+  if (error || !questions || questions.length === 0) {
+    return alert("Soal Try Out belum tersedia!");
+  }
+
+  // 2. Ambil status is_random dari jadwal TERBARU
   const { data: schedule } = await supabaseClient
     .from('tryout_schedules')
     .select('is_random')
     .eq('master_id', masterId)
     .eq('tryout_code', tryoutCode)
-    .order('created_at', { ascending: false }) // Ambil yang paling baru dirilis
+    .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
 
   const isRandom = schedule?.is_random ?? true;
 
-  // Debugging di Console untuk memastikan nilai is_random yang dibaca
-  console.log("Status Acak Soal (is_random):", isRandom);
-
-  // 2. Terapkan logika urutan soal (Acak vs Berurut ID)
+  // 3. Terapkan logika urutan soal (KUNCI 2: Gunakan slice() agar tidak mengacaukan array asli)
   if (isRandom) {
-    currentExamQuestions = [...questions].sort(() => Math.random() - 0.5);
+    currentExamQuestions = questions.slice().sort(() => Math.random() - 0.5);
   } else {
-    currentExamQuestions = [...questions].sort((a, b) => a.id - b.id);
+    currentExamQuestions = questions.slice().sort((a, b) => Number(a.id) - Number(b.id));
   }
   
   // Console log untuk memastikan isi data soal & kolom gambar opsi
