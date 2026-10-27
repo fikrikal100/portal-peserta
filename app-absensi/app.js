@@ -2675,6 +2675,7 @@ function tutupModalListPaketTryOut() {
 
 // MULAI TRY OUT (DUKUNGAN GAMBAR SOAL & GAMBAR OPSI A-D FLEXIBLE)
 async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
+  // Cek apakah peserta sudah pernah mengerjakan
   const { data: existingResult } = await supabaseClient
     .from('tryout_results')
     .select('id')
@@ -2686,18 +2687,8 @@ async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
   if (existingResult) {
     return alert("⛔ Kesempatan Ujian Habis!\nAnda sudah mengerjakan Try Out ini sebelumnya. Akses ujian hanya diizinkan 1 kali.");
   }
-  
-  const { data: questions, error } = await supabaseClient
-    .from('tryout_questions')
-    .select('*')
-    .eq('master_id', masterId)
-    .eq('tryout_code', tryoutCode);
 
-  if (error || !questions || questions.length === 0) {
-    return alert("Soal Try Out belum tersedia!");
-  }
-
-// 1. Ambil data soal dari Supabase (diurutkan berdasar ID)
+  // 1. Ambil data soal dari Supabase (diurutkan berdasar ID)
   const { data: questions, error } = await supabaseClient
     .from('tryout_questions')
     .select('*')
@@ -2733,7 +2724,7 @@ async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
 
   activeExamCode = tryoutCode;
   activeExamMasterId = masterId;
-
+  
   tutupModalListPaketTryOut();
   document.getElementById('tryoutExamTitle').innerText = `${masterId} - ${tryoutCode}`;
   
