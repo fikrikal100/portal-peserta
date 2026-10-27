@@ -2230,19 +2230,18 @@ async function onJadwalMasterChange() {
 
 // FUNGSI SIMPAN JADWAL KE SUPABASE
 async function simpanJadwalTryOutAdmin() {
-  const masterId = document.getElementById('adminSelectJadwalMaster').value;
-  const tryoutCode = document.getElementById('adminSelectJadwalCode').value;
-  const trainingId = document.getElementById('adminSelectJadwalBatch').value;
-  const durasi = parseInt(document.getElementById('adminInputTryOutDurasi').value) || 60;
-  const startTime = document.getElementById('adminInputTryOutStart').value;
-  const endTime = document.getElementById('adminInputTryOutEnd').value;
+  const masterId = document.getElementById('adminSelectJadwalMaster')?.value;
+  const tryoutCode = document.getElementById('adminSelectJadwalCode')?.value;
+  const trainingId = document.getElementById('adminSelectJadwalBatch')?.value;
+  const durasi = parseInt(document.getElementById('adminInputTryOutDurasi')?.value) || 60;
+  const startTime = document.getElementById('adminInputTryOutStart')?.value;
+  const endTime = document.getElementById('adminInputTryOutEnd')?.value;
 
-  // BACAKAN CHECKBOX (Langkah 2)
+  // BACAKAN CHECKBOX
   const isRandom = document.getElementById('adminInputIsRandom')?.checked ?? true;
   
   if (!masterId || !tryoutCode || !trainingId || !startTime || !endTime) {
-    alert("Harap lengkapi seluruh form jadwal (Program, Paket, Batch Training, Durasi, dan Waktu)!");
-    return;
+    return alert("Harap lengkapi seluruh form jadwal (Program, Paket, Batch Training, Durasi, dan Waktu)!");
   }
 
   try {
@@ -2251,27 +2250,21 @@ async function simpanJadwalTryOutAdmin() {
       training_id: trainingId,
       tryout_code: tryoutCode,
       durasi_menit: durasi,
-      tgl_mulai: new Date(startTime).toISOString(),   // <-- Menggunakan tgl_mulai
-      tgl_selesai: new Date(endTime).toISOString(),    // <-- Menggunakan tgl_selesai
+      tgl_mulai: new Date(startTime).toISOString(),
+      tgl_selesai: new Date(endTime).toISOString(),
       is_random: isRandom
     };
 
-    try {
     const { error } = await supabaseClient.from('tryout_schedules').insert([payload]);
     if (error) throw error;
 
-    alert("✅ Jadwal Try Out berhasil dirilis!");
-    // Panggil ulang daftar jadwal jika ada
+    alert(`✅ Jadwal Try Out Paket ${tryoutCode} berhasil dirilis untuk ${trainingId}!`);
+    
+    if (typeof loadRekapTryOutAdmin === 'function') {
+      loadRekapTryOutAdmin();
+    }
   } catch (err) {
     alert("Gagal merilis jadwal: " + err.message);
-  }
-}
-
-    alert(`✅ Jadwal Try Out Paket ${tryoutCode} berhasil dirilis untuk ${trainingId}!`);
-    if (typeof loadRekapTryOutAdmin === 'function') loadRekapTryOutAdmin();
-
-  } catch (err) {
-    alert("Terjadi kesalahan: " + err.message);
   }
 }
 
@@ -2703,6 +2696,25 @@ async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
   if (error || !questions || questions.length === 0) {
     return alert("Soal Try Out belum tersedia!");
   }
+
+  // 1. Ambil status is_random dari jadwal Supabase
+const { data: schedule } = await supabaseClient
+  .from('tryout_schedules')
+  .select('is_random')
+  .eq('master_id', masterId)
+  .eq('tryout_code', tryoutCode)
+  .maybeSingle();
+
+const isRandom = schedule?.is_random ?? true;
+
+// 2. Terapkan logika urutan soal
+if (isRandom) {
+  // Acak soal
+  currentExamQuestions = [...questions].sort(() => Math.random() - 0.5);
+} else {
+  // Berurut sesuai ID / urutan input di Supabase
+  currentExamQuestions = [...questions].sort((a, b) => a.id - b.id);
+}
 
   // Console log untuk memastikan isi data soal & kolom gambar opsi
   console.log("Data Soal Dimuat:", questions);
