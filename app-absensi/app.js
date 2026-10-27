@@ -2252,7 +2252,7 @@ async function simpanJadwalTryOutAdmin() {
       tryout_code: tryoutCode,
       durasi_menit: durasi,
       tgl_mulai: new Date(startTime).toISOString(),   // <-- Menggunakan tgl_mulai
-      tgl_selesai: new Date(endTime).toISOString()    // <-- Menggunakan tgl_selesai
+      tgl_selesai: new Date(endTime).toISOString(),    // <-- Menggunakan tgl_selesai
       is_random: isRandom
     };
 
