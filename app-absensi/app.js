@@ -2697,25 +2697,28 @@ async function mulaiTryOutPeserta(masterId, tryoutCode, durasiMenit = 60) {
     return alert("Soal Try Out belum tersedia!");
   }
 
-  // 1. Ambil status is_random dari jadwal Supabase
-const { data: schedule } = await supabaseClient
-  .from('tryout_schedules')
-  .select('is_random')
-  .eq('master_id', masterId)
-  .eq('tryout_code', tryoutCode)
-  .maybeSingle();
+// 1. Ambil status is_random dari jadwal TERBARU di Supabase
+  const { data: schedule } = await supabaseClient
+    .from('tryout_schedules')
+    .select('is_random')
+    .eq('master_id', masterId)
+    .eq('tryout_code', tryoutCode)
+    .order('created_at', { ascending: false }) // Ambil yang paling baru dirilis
+    .limit(1)
+    .maybeSingle();
 
-const isRandom = schedule?.is_random ?? true;
+  const isRandom = schedule?.is_random ?? true;
 
-// 2. Terapkan logika urutan soal
-if (isRandom) {
-  // Acak soal
-  currentExamQuestions = [...questions].sort(() => Math.random() - 0.5);
-} else {
-  // Berurut sesuai ID / urutan input di Supabase
-  currentExamQuestions = [...questions].sort((a, b) => a.id - b.id);
-}
+  // Debugging di Console untuk memastikan nilai is_random yang dibaca
+  console.log("Status Acak Soal (is_random):", isRandom);
 
+  // 2. Terapkan logika urutan soal (Acak vs Berurut ID)
+  if (isRandom) {
+    currentExamQuestions = [...questions].sort(() => Math.random() - 0.5);
+  } else {
+    currentExamQuestions = [...questions].sort((a, b) => a.id - b.id);
+  }
+  
   // Console log untuk memastikan isi data soal & kolom gambar opsi
   console.log("Data Soal Dimuat:", questions);
 
