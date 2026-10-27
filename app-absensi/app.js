@@ -2237,6 +2237,9 @@ async function simpanJadwalTryOutAdmin() {
   const startTime = document.getElementById('adminInputTryOutStart').value;
   const endTime = document.getElementById('adminInputTryOutEnd').value;
 
+  // BACAKAN CHECKBOX (Langkah 2)
+  const isRandom = document.getElementById('adminInputIsRandom')?.checked ?? true;
+  
   if (!masterId || !tryoutCode || !trainingId || !startTime || !endTime) {
     alert("Harap lengkapi seluruh form jadwal (Program, Paket, Batch Training, Durasi, dan Waktu)!");
     return;
@@ -2250,16 +2253,19 @@ async function simpanJadwalTryOutAdmin() {
       durasi_menit: durasi,
       tgl_mulai: new Date(startTime).toISOString(),   // <-- Menggunakan tgl_mulai
       tgl_selesai: new Date(endTime).toISOString()    // <-- Menggunakan tgl_selesai
+      is_random: isRandom
     };
 
-    const { error } = await supabaseClient
-      .from('tryout_schedules')
-      .insert([payload]);
+    try {
+    const { error } = await supabaseClient.from('tryout_schedules').insert([payload]);
+    if (error) throw error;
 
-    if (error) {
-      alert("Gagal menyimpan jadwal: " + error.message);
-      return;
-    }
+    alert("✅ Jadwal Try Out berhasil dirilis!");
+    // Panggil ulang daftar jadwal jika ada
+  } catch (err) {
+    alert("Gagal merilis jadwal: " + err.message);
+  }
+}
 
     alert(`✅ Jadwal Try Out Paket ${tryoutCode} berhasil dirilis untuk ${trainingId}!`);
     if (typeof loadRekapTryOutAdmin === 'function') loadRekapTryOutAdmin();
