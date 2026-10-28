@@ -2952,41 +2952,41 @@ async function downloadHasilTryOutPeserta(resultId, masterId, tryoutCode) {
       ? new Date(result.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) 
       : '-';
 
-    // Helper untuk merender gambar dengan aman
-    const renderImg = (urlRaw, maxH = "max-h-48") => {
+    // Helper render gambar ringkas
+    const renderImg = (urlRaw, maxH = "max-h-32") => {
       if (!urlRaw || String(urlRaw).trim() === '' || urlRaw === 'null' || urlRaw === 'undefined') return '';
       let finalUrl = typeof fixImageUrl === 'function' ? fixImageUrl(urlRaw) : urlRaw;
       if (!finalUrl || finalUrl === '') finalUrl = urlRaw;
       
       return `
-        <div class="my-2">
-          <img src="${finalUrl}" class="${maxH} rounded-lg border border-slate-200 object-contain shadow-sm bg-white p-1" onerror="this.onerror=null; this.src='https://via.placeholder.com/250x120?text=Gambar+Gagal+Dimuat';">
+        <div class="my-1">
+          <img src="${finalUrl}" class="${maxH} rounded border border-slate-200 object-contain bg-white p-0.5" onerror="this.onerror=null; this.src='https://via.placeholder.com/150x80?text=Gambar+Gagal';">
         </div>
       `;
     };
 
-    // Helper untuk mengambil isi teks/gambar opsi berdasarkan huruf (a, b, c, d)
-    const getOptionDetail = (d, letter) => {
+    // Helper teks opsi ringkas
+    const getOptionText = (d, letter) => {
       if (!letter || letter === '-') return 'Tidak Terekam (Ujian Lama)';
       const key = letter.toLowerCase();
       const textMap = { 'a': d.opsi_a, 'b': d.opsi_b, 'c': d.opsi_c, 'd': d.opsi_d };
       const imgMap = { 'a': d.img_opsi_a, 'b': d.img_opsi_b, 'c': d.img_opsi_c, 'd': d.img_opsi_d };
       
       const teks = textMap[key] || '';
-      const imgHtml = renderImg(imgMap[key], "max-h-32");
-      
+      const imgHtml = renderImg(imgMap[key], "max-h-16");
       return `<strong>${key.toUpperCase()}</strong>${teks ? `. ${teks}` : ''}${imgHtml}`;
     };
 
     let details = result.jawaban_detail || [];
 
-    // FALLBACK: Jika riwayat ujian lama belum memiliki jawaban_detail, ambil daftar soal dari tryout_questions
+    // Fallback data ujian lama
     if (!details || details.length === 0) {
       const { data: qData } = await supabaseClient
         .from('tryout_questions')
         .select('*')
         .eq('master_id', result.master_id)
-        .eq('tryout_code', result.tryout_code);
+        .eq('tryout_code', result.tryout_code)
+        .order('id', { ascending: true });
 
       if (qData && qData.length > 0) {
         details = qData.map(q => ({
@@ -3001,7 +3001,7 @@ async function downloadHasilTryOutPeserta(resultId, masterId, tryoutCode) {
           img_opsi_b: q.img_opsi_b,
           img_opsi_c: q.img_opsi_c,
           img_opsi_d: q.img_opsi_d,
-          jawaban_user: '-', // Penanda untuk data riwayat lama
+          jawaban_user: '-',
           kunci_jawaban: q.kunci || '-',
           is_correct: false
         }));
@@ -3011,52 +3011,50 @@ async function downloadHasilTryOutPeserta(resultId, masterId, tryoutCode) {
     let pembahasanHtml = '';
 
     if (!details || details.length === 0) {
-      pembahasanHtml = `<p class="text-center text-slate-400 py-4 italic">Detail pembahasan tidak ditemukan di bank soal.</p>`;
+      pembahasanHtml = `<p class="text-center text-slate-400 py-2 italic text-xs">Detail pembahasan tidak ditemukan.</p>`;
     } else {
       pembahasanHtml = details.map((d, idx) => {
-        // Tampilan khusus jika riwayat lama (jawaban_user tidak terekam)
         const isLegacy = (d.jawaban_user === '-');
         
         let statusBadge = '';
         if (isLegacy) {
-          statusBadge = `<span class="bg-amber-100 text-amber-800 text-[10px] px-2.5 py-1 rounded-full font-bold">KUNCI JAWABAN</span>`;
+          statusBadge = `<span class="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">KUNCI JAWABAN</span>`;
         } else {
           statusBadge = d.is_correct 
-            ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2.5 py-1 rounded-full font-bold">BENAR</span>` 
-            : `<span class="bg-rose-100 text-rose-800 text-[10px] px-2.5 py-1 rounded-full font-bold">SALAH / TIDAK DIJAWAB</span>`;
+            ? `<span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">BENAR</span>` 
+            : `<span class="text-[9px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">SALAH</span>`;
         }
 
-        const imgSoalHtml = renderImg(d.image_url || d.gambar_url || d.gambar, "max-h-56");
-        const detailJawabanUser = getOptionDetail(d, d.jawaban_user);
-        const detailKunci = getOptionDetail(d, d.kunci_jawaban);
+        const imgSoalHtml = renderImg(d.image_url || d.gambar_url || d.gambar, "max-h-36");
+        const detailJawabanUser = getOptionText(d, d.jawaban_user);
+        const detailKunci = getOptionText(d, d.kunci_jawaban);
 
         return `
-          <div class="mb-5 p-4 border border-slate-200 rounded-xl bg-slate-50 break-inside-avoid space-y-3">
-            <div class="flex justify-between items-start gap-2 border-b border-slate-200 pb-2">
-              <p class="font-bold text-slate-800 text-xs">${idx + 1}. ${d.soal}</p>
+          <div class="py-2 border-b border-slate-200 break-inside-avoid text-[11px] leading-tight space-y-1">
+            <div class="flex justify-between items-start gap-2">
+              <p class="font-bold text-slate-800">${idx + 1}. ${d.soal}</p>
               ${statusBadge}
             </div>
 
             ${imgSoalHtml}
 
-            <!-- Pilihan Opsi A, B, C, D Lengkap -->
-            <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200">
-              <div><strong>A.</strong> ${d.opsi_a || ''} ${renderImg(d.img_opsi_a, "max-h-24")}</div>
-              <div><strong>B.</strong> ${d.opsi_b || ''} ${renderImg(d.img_opsi_b, "max-h-24")}</div>
-              <div><strong>C.</strong> ${d.opsi_c || ''} ${renderImg(d.img_opsi_c, "max-h-24")}</div>
-              <div><strong>D.</strong> ${d.opsi_d || ''} ${renderImg(d.img_opsi_d, "max-h-24")}</div>
+            <!-- Opsi Jawaban 2 Kolom Ringkas -->
+            <div class="grid grid-cols-2 gap-x-4 gap-y-0.5 text-slate-600 pl-3">
+              <div><strong>A.</strong> ${d.opsi_a || ''} ${renderImg(d.img_opsi_a, "max-h-16")}</div>
+              <div><strong>B.</strong> ${d.opsi_b || ''} ${renderImg(d.img_opsi_b, "max-h-16")}</div>
+              <div><strong>C.</strong> ${d.opsi_c || ''} ${renderImg(d.img_opsi_c, "max-h-16")}</div>
+              <div><strong>D.</strong> ${d.opsi_d || ''} ${renderImg(d.img_opsi_d, "max-h-16")}</div>
             </div>
             
-            <!-- Perbandingan Jawaban Peserta vs Kunci -->
-            <div class="grid grid-cols-2 gap-3 text-xs pt-1">
-              <div class="p-2.5 rounded-xl ${!isLegacy && d.is_correct ? 'bg-emerald-50 text-emerald-900 border border-emerald-200' : 'bg-slate-100 text-slate-700 border border-slate-200'}">
-                <span class="text-[10px] block text-slate-500 font-semibold mb-0.5">Jawaban Anda:</span>
-                <div>${detailJawabanUser}</div>
+            <!-- Jawaban Peserta vs Kunci (Segaris) -->
+            <div class="flex items-center gap-6 pl-3 pt-0.5 text-[10.5px]">
+              <div class="flex gap-1 items-center">
+                <span class="text-slate-500 font-medium">Jawaban Anda:</span>
+                <span class="${!isLegacy && d.is_correct ? 'text-emerald-700 font-bold' : 'text-slate-700 font-bold'}">${detailJawabanUser}</span>
               </div>
-
-              <div class="p-2.5 rounded-xl bg-blue-50 text-blue-900 border border-blue-200">
-                <span class="text-[10px] block text-slate-500 font-semibold mb-0.5">Kunci Jawaban Benar:</span>
-                <div>${detailKunci}</div>
+              <div class="flex gap-1 items-center">
+                <span class="text-slate-500 font-medium">Kunci Benar:</span>
+                <span class="text-blue-700 font-bold">${detailKunci}</span>
               </div>
             </div>
           </div>
@@ -3072,34 +3070,31 @@ async function downloadHasilTryOutPeserta(resultId, masterId, tryoutCode) {
         <title>Pembahasan Try Out - ${result.username}</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
+          @page { size: A4; margin: 10mm; }
           @media print {
             body { -webkit-print-color-adjust: exact; }
           }
         </style>
       </head>
-      <body class="bg-white p-8 font-sans text-slate-800">
-        <div class="max-w-3xl mx-auto space-y-6">
+      <body class="bg-white p-2 font-sans text-slate-800">
+        <div class="max-w-3xl mx-auto space-y-3">
           
-          <!-- Header Ringkasan -->
-          <div class="border border-slate-300 p-6 rounded-2xl shadow-sm">
-            <div class="border-b pb-4 mb-4 text-center">
-              <h2 class="text-xl font-bold text-emerald-800">MANDIRI MAHA DAYA</h2>
-              <p class="text-xs text-slate-500">Lembar Pembahasan Hasil Try Out Ujian</p>
+          <!-- Header Ringkasan Hemat Tempat -->
+          <div class="border-b-2 border-slate-800 pb-2 flex justify-between items-end">
+            <div>
+              <h2 class="text-lg font-extrabold text-emerald-800 leading-none">MANDIRI MAHA DAYA</h2>
+              <p class="text-[10px] text-slate-500">Lembar Pembahasan Hasil Try Out Ujian</p>
             </div>
-
-            <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+            <div class="text-[10px] text-right grid grid-cols-2 gap-x-3 gap-y-0.5">
               <div><span class="text-slate-500">Peserta:</span> <strong>${result.username}</strong></div>
-              <div><span class="text-slate-500">Program:</span> <strong>${result.master_id}</strong></div>
-              <div><span class="text-slate-500">Kode Tryout:</span> <strong>${result.tryout_code}</strong></div>
               <div><span class="text-slate-500">Tanggal:</span> <span>${tanggalUjian}</span></div>
-              <div><span class="text-slate-500">Skor Akhir:</span> <strong class="text-emerald-700 text-sm">${result.score}</strong></div>
-              <div><span class="text-slate-500">Status:</span> <strong>${result.status}</strong></div>
+              <div><span class="text-slate-500">Program / Paket:</span> <strong>${result.master_id} - ${result.tryout_code}</strong></div>
+              <div><span class="text-slate-500">Skor (Status):</span> <strong>${result.score} (${result.status})</strong></div>
             </div>
           </div>
 
-          <!-- Lembar Pembahasan -->
+          <!-- Daftar Pembahasan Soal Ringkas -->
           <div>
-            <h3 class="font-bold text-slate-700 text-sm mb-3 border-b pb-1">Detail Lembar Jawaban & Pembahasan Soal:</h3>
             ${pembahasanHtml}
           </div>
 
